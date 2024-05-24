@@ -9,7 +9,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 // Load vertex and fragment shaders
 import vertexShader from './shaders/vertexShader.glsl';
 import fragmentShader from './shaders/fragmentShader2.glsl';
-import { PI, floor } from 'three/examples/jsm/nodes/Nodes.js';
+import { PI, /* cameraPosition, */ floor } from 'three/examples/jsm/nodes/Nodes.js';
 
 // utils
 import { createRGBDataTexture } from './utils/dataTextureCreator.js';
@@ -35,18 +35,47 @@ async function loadModel() {
 
   return new Promise((resolve, reject) => {
     loader.load(
+      '/resources/my_cornell_2/gltf/my_cornell_2.gltf',
       // '/resources/my_cornell_3/gltf/my_cornell_3.gltf',
-      '/resources/cornell2/gltf/scene.gltf',
+      // '/resources/cornell2/gltf/scene.gltf',
 
       function (model) {
         var materialModelColor;
         //var obj = model;//.scene;
         var obj = model.scene;
-        //obj.updateMatrixWorld(true);
+        obj.updateMatrixWorld(true);
+
+        const boundingBox = new THREE.Box3().setFromObject(obj);
+        console.log("🚀 ~ returnnewPromise ~ boundingBox:", boundingBox)
+
+        const center = boundingBox.getCenter(new THREE.Vector3());
+        console.log("🚀 ~ returnnewPromise ~ center:", center)
+
+        // const translation = new THREE.Vector3(-center.x / 2, -center.y / 2, -center.z / 2);
+        const translation = new THREE.Vector3(-center.x, -center.y, -center.z);
+        // obj.geometry.center();
+
+        obj.traverse((child) => {
+          if (child.isMesh) {
+            child.position.add(translation);
+            // child.geometry.center();
+          }
+        });
+
+        // Update matrixWorld for each child
+        obj.traverse((child) => {
+          if (child.isMesh) {
+            child.updateMatrix();
+            child.updateMatrixWorld(true);
+          }
+        });
 
         // Now we find each Mesh...
         obj.traverseVisible(function (child) {
 
+          // child.updateMatrixWorld(true);
+
+          // child.position.add(translation);
 
           // Check if the child is a Mesh and has a material
           if (child instanceof THREE.Mesh) {
@@ -55,6 +84,7 @@ async function loadModel() {
 
             console.log(child.name);
             const geometry = child.geometry;
+            // geometry.center();
 
             // geometry.applyMatrix4(child.matrixWorld);
             // child.updateMatrixWorld();
@@ -180,20 +210,70 @@ try {
   console.log(e);
 }
 
-scene.updateMatrixWorld(true);
+// scene.updateMatrixWorld(true);
 
-const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+
+
+
+const canvas = document.getElementById('webgl-canvas');
+const gl = canvas.getContext('webgl2');
+
+if (!gl) {
+  console.error('WebGL 2 not supported');
+}
+
+
+
+// Adjust canvas size
+function resizeCanvasToDisplaySize() {
+  var width = gl.canvas.clientWidth;
+  var height = gl.canvas.clientHeight;
+  if (gl.canvas.width != width ||
+    gl.canvas.height != height) {
+    gl.canvas.width = width;
+    gl.canvas.height = height;
+  }
+}
+
+var width = gl.canvas.clientWidth;
+var height = gl.canvas.clientHeight;
+gl.canvas.width = width;
+gl.canvas.height = height;
+
+/* const boundingBox = new THREE.Box3().setFromObject(scene);
+console.log("🚀 ~ returnnewPromise ~ boundingBox:", boundingBox)
+
+const center = boundingBox.getCenter(new THREE.Vector3());
+console.log("🚀 ~ returnnewPromise ~ center:", center) */
+
+// const translation = new THREE.Vector3(-center.x / 2, -center.y / 2, -center.z / 2);
+// const translation = new THREE.Vector3(-center.x, -center.y, -center.z);
+
+
+const camera = new THREE.PerspectiveCamera(50, width / height, 0.1, 1000);
+
+// camera.lookAt(new THREE.Vector3(0, 0, 0));
+
+// camera.position.x += translation.x;
+// camera.position.y += translation.y;
+// camera.position.z += translation.z;
+camera.position.x += 12.4;
+// camera.position.y += 0;
+// camera.position.z += 0;
+camera.rotateY(PI_NUMBER / 2);
+// camera.rotateZ(PI_NUMBER);
+
+// camera.lookAt(new THREE.Vector3(0, 0, 0));
 
 // camera.position.x += 14;
 // camera.position.y += 5;
 // camera.position.z += 2;
-// camera.position.x += 0;
-// camera.position.y += 0;
-// camera.position.z += 0;
 // camera.lookAt(new THREE.Vector3(-4, -9.5, 8));
+
+
 // camera.lookAt(new THREE.Vector3(0,0,0));
 
-// 1. Calculate the bounding box of your scene
+/* // 1. Calculate the bounding box of your scene
 const boundingBox = new THREE.Box3().setFromObject(scene);
 console.log("🌸 ~ boundingBox:", boundingBox)
 
@@ -206,13 +286,13 @@ const radius = boundingBox.getSize(new THREE.Vector3()).length() / 2;
 console.log("🌸 ~ radius:", radius)
 
 // 4. Position the camera
-const cameraDistance = radius * 1; // Adjust this factor as needed
+const cameraDistance = radius * 20; // Adjust this factor as needed
 console.log("🌸 ~ cameraDistance:", cameraDistance)
 const cameraPosition = new THREE.Vector3().copy(center).add(new THREE.Vector3(0, 0, cameraDistance));
 console.log("🌸 ~ cameraPosition:", cameraPosition)
 
 // 5. Look at the center of the bounding box
-camera.lookAt(center);
+camera.lookAt(center); */
 
 // Set the camera's position and update its matrix
 // camera.position.copy(cameraPosition);
@@ -223,19 +303,95 @@ camera.lookAt(center);
 // camera.updateProjectionMatrix();
 
 
-let cameraSource = camera.position.clone().normalize();
-console.log("🌸 ~ cameraSource:", cameraSource)
+let cameraSource = camera.position.clone(); // no normalizar!!!!!
 let cameraDirection = new THREE.Vector3();
 camera.getWorldDirection(cameraDirection)
-console.log("🌸 ~ cameraDirection:", cameraDirection)
+
+function calculateImagePlaneVectors(camera) {
+  const fov = camera.fov * (Math.PI / 180); // Convert FOV to radians
+  const aspect = camera.aspect;
+
+  // Calculate the height and width of the near plane
+  const height = 2 * Math.tan(fov / 2) * camera.near;
+  const width = height * aspect;
+
+  // Get the camera's right and up direction vectors
+  const right = new THREE.Vector3();
+  const up = new THREE.Vector3();
+
+  camera.getWorldDirection(right);
+  right.cross(camera.up).normalize().multiplyScalar(width);
+
+  camera.getWorldDirection(up);
+  up.cross(right).normalize().multiplyScalar(height);
+
+  console.log("🚀 ~ calculateImagePlaneVectors ~ right:", right)
+  console.log("🚀 ~ calculateImagePlaneVectors ~ up:", up)
+  return { right, up };
+}
+
+// const planeVectors = calculateImagePlaneVectors(camera);
+// const cameraRight = planeVectors.right;
+// const cameraUp = planeVectors.up;
+// console.log("🚀 ~ cameraUp:", cameraUp)
+// console.log("🚀 ~ cameraRight:", cameraRight)
+
+
+function getImagePlaneDimensions(camera) {
+  const fov = camera.fov * (Math.PI / 180); // Convert FOV to radians
+  const aspect = camera.aspect;
+
+  // Calculate the height and width of the near plane
+  const height = 2 * Math.tan(fov / 2) * camera.near;
+  const width = height * aspect;
+
+  return { width, height };
+}
+
+// const planeDimensions = getImagePlaneDimensions(camera);
+// console.log("🚀 ~ planeDimensions:", planeDimensions)
+/* console.log("🚀 ~ planeDimensions:", planeDimensions)
+const cameraRight = new THREE.Vector3(-planeDimensions.right, 0, 0);
+const cameraUp = new THREE.Vector3(0, planeDimensions.up, 0); */
+
 const cameraUp = camera.up.clone();
 const cameraRight = new THREE.Vector3().crossVectors(cameraDirection, cameraUp).normalize();
+
+
 const cameraLeft = cameraRight.clone().negate();
 // const cameraMiddle = cameraSource.clone().sub(new THREE.Vector3(0.0, cameraSource.y, 0.0));
-const cameraMiddle = cameraSource.clone().add(cameraDirection.clone().multiplyScalar(0.1));
+const cameraMiddle = cameraSource.clone().add(cameraDirection.clone()/* .multiplyScalar(0.9) */); // multiplicar por escalar para cambiar posicion near plano frustum
+console.log("🚀 ~ cameraSource:", cameraSource)
+
+function getLeftBottomCorner(camera, width, height) {
+  const forward = new THREE.Vector3();
+  camera.getWorldDirection(forward);
+
+  // Calculate the right and up vectors
+  const right = new THREE.Vector3();
+  right.crossVectors(forward, camera.up).normalize().multiplyScalar(width / 2);
+
+  const up = new THREE.Vector3();
+  up.copy(camera.up).normalize().multiplyScalar(height / 2);
+
+  // Calculate the left bottom corner position
+  const leftBottomCorner = camera.position.clone()
+    .add(forward.multiplyScalar(camera.near))
+    .sub(right)
+    .sub(up);
+  console.log("🚀 ~ getLeftBottomCorner ~ leftBottomCorner:", leftBottomCorner)
+
+  return leftBottomCorner;
+}
+
+
+// const cameraLeftBottom = getLeftBottomCorner(camera, planeDimensions.width, planeDimensions.height);
 const cameraLeftBottom = cameraMiddle.clone()
   .sub(cameraRight.clone().multiplyScalar(0.5))
   .sub(cameraUp.clone().multiplyScalar(0.5));
+console.log("🚀 ~ cameraLeftBottom:", cameraLeftBottom)
+// cameraLeftBottom.x += -0.5; // esta escala se hace para que el plano "near" no esté tan pegado a la cámara
+console.log("🚀 ~ cameraLeftBottom:", cameraLeftBottom)
 
 // camera.rotateY(0.7853981633974483);
 
@@ -249,20 +405,6 @@ console.log("🌸 ~ normals:", normals)
 console.log("🌸 ~ colors:", colors)
 console.log("🌸 ~ emissions:", emissions) */
 
-
-const canvas = document.getElementById('webgl-canvas');
-const gl = canvas.getContext('webgl2');
-
-if (!gl) {
-  console.error('WebGL 2 not supported');
-}
-
-// Adjust canvas size
-function resizeCanvas() {
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
-  gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
-}
 
 // window.addEventListener('resize', resizeCanvas);
 // resizeCanvas();
@@ -290,8 +432,8 @@ const vertexCountLocation = gl.getUniformLocation(program, 'vertexCount');
 const triangleCountLocation = gl.getUniformLocation(program, 'triangleCount');
 
 
-gl.uniform2f(windowSizeLocation, gl.canvas.width, gl.canvas.height);
-gl.uniform3f(cameraSourceLocation, camera.position.x, camera.position.y, camera.position.z);
+gl.uniform2f(windowSizeLocation, width, height);
+gl.uniform3f(cameraSourceLocation, cameraSource.x, cameraSource.y, cameraSource.z);
 gl.uniform3f(cameraDirectionLocation, cameraDirection.x, cameraDirection.y, cameraDirection.z);
 gl.uniform3f(cameraUpLocation, cameraUp.x, cameraUp.y, cameraUp.z);
 gl.uniform3f(cameraRightLocation, cameraRight.x, cameraRight.y, cameraRight.z);
@@ -306,6 +448,12 @@ const vertices = new Float32Array([
   -1.0, 1.0, // Top-left
   1.0, 1.0  // Top-right
 ]);
+/* const vertices = new Float32Array([
+  -1.0, -1.0, // Bottom-left
+  1.0, -1.0, // Bottom-right
+  -1.0, 1.0, // Top-left
+  1.0, 1.0  // Top-right
+]); */
 
 // Create and bind vertex array object (VAO)
 const vao = gl.createVertexArray();
@@ -326,6 +474,11 @@ gl.bindVertexArray(null);
 
 // Render
 async function render() {
+  resizeCanvasToDisplaySize();
+  gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+  // gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+
+
   gl.clearColor(0.0, 0.0, 0.0, 1.0);
   gl.clear(gl.COLOR_BUFFER_BIT);
 

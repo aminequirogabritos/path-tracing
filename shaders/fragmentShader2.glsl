@@ -1,6 +1,6 @@
 #version 300 es
 #define MAX_PATH_LENGTH 10
-#define SAMPLE_COUNT 256
+#define SAMPLE_COUNT 200
 #define M_PI 3.141592653589793238462643
 
 #ifdef GL_ES
@@ -68,12 +68,12 @@ bool ray_triangle_intersection(out float out_t, vec3 origin, vec3 direction, Tri
 bool ray_mesh_intersection(out float out_t, out Triangle out_triangle, vec3 origin, vec3 direction) {
 
   out_t = 1.0e38f;
-  for (int i = 0; i < triangleCount; i++) {
+  for(int i = 0; i < triangleCount; i++) {
 
     Triangle triangle = getTriangleFromTextures(i);
 
     float t;
-    if (ray_triangle_intersection(t, origin, direction, triangle) && t < out_t) {
+    if(ray_triangle_intersection(t, origin, direction, triangle) && t < out_t) {
       out_t = t;
       out_triangle = triangle;
     }
@@ -94,17 +94,22 @@ vec2 get_random_numbers(inout uvec2 seed) {
   return vec2(seed) * 2.32830643654e-10f;
 }
 
-vec3 sample_sphere(vec2 random_numbers) {
+/* vec3 sample_sphere(vec2 random_numbers) {
   float z = 2.0f * random_numbers[1] - 1.0f;
   float phi = 2.0f * M_PI * random_numbers[0];
   float x = cos(phi) * sqrt(1.0f - z * z);
   float y = sin(phi) * sqrt(1.0f - z * z);
   return vec3(x, y, z);
-}
+} */
 
 vec3 sample_hemisphere(vec2 random_numbers, vec3 normal) {
-  vec3 direction = sample_sphere(random_numbers);
-  if (dot(normal, direction) < 0.0f)
+  // vec3 direction = sample_sphere(random_numbers);
+  float z = 2.0f * random_numbers[1] - 1.0f;
+  float phi = 2.0f * M_PI * random_numbers[0];
+  float x = cos(phi) * sqrt(1.0f - z * z);
+  float y = sin(phi) * sqrt(1.0f - z * z);
+  vec3 direction = vec3(x, y, z);
+  if(dot(normal, direction) < 0.0f)
     direction -= 2.0f * dot(normal, direction) * normal;
   return direction;
 }
@@ -112,10 +117,10 @@ vec3 sample_hemisphere(vec2 random_numbers, vec3 normal) {
 vec3 get_ray_radiance(vec3 origin, vec3 direction, inout uvec2 seed) {
   vec3 radiance = vec3(0.0f);
   vec3 throughput_weight = vec3(8.0f);
-  for (int i = 0; i < MAX_PATH_LENGTH; i++) {
+  for(int i = 0; i < MAX_PATH_LENGTH; i++) {
     float t;
     Triangle triangle;
-    if (ray_mesh_intersection(t, triangle, origin, direction)) {
+    if(ray_mesh_intersection(t, triangle, origin, direction)) {
       radiance += throughput_weight * triangle.emission;
       origin += t * direction;
       direction = sample_hemisphere(get_random_numbers(seed), triangle.normal);
@@ -133,8 +138,8 @@ void main() {
 
     // Compute the camera ray
   vec2 tex_coord = gl_FragCoord.xy / windowSize.xy;
-  // vec3 ray_direction = get_primary_ray_direction(tex_coord.x, tex_coord.y, cameraSource, cameraLeftBottom, cameraRight, cameraUp);
-  vec3 ray_direction = normalize(cameraDirection + tex_coord.x * cameraRight + tex_coord.y * cameraUp);
+  vec3 ray_direction = get_primary_ray_direction(tex_coord.x, tex_coord.y, cameraSource, cameraLeftBottom, cameraRight, cameraUp);
+  // vec3 ray_direction = normalize(cameraDirection + tex_coord.x * cameraRight + tex_coord.y * cameraUp);
 
   Triangle triangle;
   float t;
@@ -142,15 +147,14 @@ void main() {
   out_color.rgb = vec3(0.0f);
 
 // V1: simple ray tracing  
-  /* if (ray_mesh_intersection(t, triangle, cameraSource, ray_direction))
+  /* if(ray_mesh_intersection(t, triangle, cameraSource, ray_direction))
     out_color.rgb = triangle.color + triangle.emission; */
     // out_color = vec4( 1.0, 0.0, 0.3098028231594383, 1.0);
-
 
   uvec2 seed = uvec2(gl_FragCoord) ^ uvec2(13498 << 16);
     // Perform path tracing with SAMPLE_COUNT paths
   out_color.rgb = vec3(0.0f);
-  for (int i = 0; i != SAMPLE_COUNT; ++i) out_color.rgb += get_ray_radiance(cameraSource, ray_direction, seed);
+  for(int i = 0; i != SAMPLE_COUNT; ++i) out_color.rgb += get_ray_radiance(cameraSource, ray_direction, seed);
   out_color.rgb /= float(SAMPLE_COUNT);
 
   out_color.a = 1.0f;
