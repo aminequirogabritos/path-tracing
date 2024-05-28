@@ -1,6 +1,4 @@
 #version 300 es
-#define MAX_PATH_LENGTH 10
-#define SAMPLE_COUNT 200
 #define M_PI 3.141592653589793238462643
 
 #ifdef GL_ES
@@ -29,6 +27,15 @@ uniform vec3 cameraRight;
 uniform vec3 cameraLeftBottom;
 uniform int vertexCount;
 uniform int triangleCount;
+uniform int timestamp;
+uniform int maxPathLength;
+uniform int sampleCount;
+uniform int frameNumber;
+
+// in vec2 v_texCoord;
+// uniform sampler2D u_currentFrame;
+// uniform sampler2D u_accumulatedFrame;
+// uniform float u_alpha;
 
 // in vec2 vTexCoord;
 out vec4 outColor;
@@ -117,7 +124,7 @@ vec3 sample_hemisphere(vec2 random_numbers, vec3 normal) {
 vec3 get_ray_radiance(vec3 origin, vec3 direction, inout uvec2 seed) {
   vec3 radiance = vec3(0.0f);
   vec3 throughput_weight = vec3(8.0f);
-  for(int i = 0; i < MAX_PATH_LENGTH; i++) {
+  for(int i = 0; i < maxPathLength; i++) {
     float t;
     Triangle triangle;
     if(ray_mesh_intersection(t, triangle, origin, direction)) {
@@ -151,11 +158,11 @@ void main() {
     out_color.rgb = triangle.color + triangle.emission; */
     // out_color = vec4( 1.0, 0.0, 0.3098028231594383, 1.0);
 
-  uvec2 seed = uvec2(gl_FragCoord) ^ uvec2(13498 << 16);
-    // Perform path tracing with SAMPLE_COUNT paths
+  uvec2 seed = uvec2(gl_FragCoord) ^ uvec2(timestamp << 16);
+    // Perform path tracing with sampleCount paths
   out_color.rgb = vec3(0.0f);
-  for(int i = 0; i != SAMPLE_COUNT; ++i) out_color.rgb += get_ray_radiance(cameraSource, ray_direction, seed);
-  out_color.rgb /= float(SAMPLE_COUNT);
+  for(int i = 0; i != sampleCount; ++i) out_color.rgb += get_ray_radiance(cameraSource, ray_direction, seed);
+  out_color.rgb /= float(sampleCount);
 
   out_color.a = 1.0f;
 
@@ -173,5 +180,9 @@ void main() {
   // vec4 a= vec4( 1.0, 0.0, 0.3098028231594383, 1.0);
 
   outColor = out_color;
+
+  // vec4 currentColor = texture2D(u_currentFrame, v_texCoord);
+  // vec4 accumulatedColor = texture2D(u_accumulatedFrame, v_texCoord);
+  // outColor = mix(accumulatedColor, currentColor, u_alpha);
 
 }
