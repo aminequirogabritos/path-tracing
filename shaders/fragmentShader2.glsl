@@ -1,5 +1,6 @@
 #version 300 es
 #define M_PI 3.141592653589793238462643
+#define SCALING_FACTOR 2.0f
 
 #ifdef GL_ES
 precision highp float;
@@ -123,7 +124,7 @@ vec3 sample_hemisphere(vec2 random_numbers, vec3 normal) {
 
 vec3 get_ray_radiance(vec3 origin, vec3 direction, inout uvec2 seed) {
   vec3 radiance = vec3(0.0f);
-  vec3 throughput_weight = vec3(8.0f);
+  vec3 throughput_weight = vec3(1.0f);
   for(int i = 0; i < maxPathLength; i++) {
     float t;
     Triangle triangle;
@@ -131,7 +132,8 @@ vec3 get_ray_radiance(vec3 origin, vec3 direction, inout uvec2 seed) {
       radiance += throughput_weight * triangle.emission;
       origin += t * direction;
       direction = sample_hemisphere(get_random_numbers(seed), triangle.normal);
-      throughput_weight *= triangle.color * 2.0f * dot(triangle.normal, direction);
+      throughput_weight *= triangle.color * SCALING_FACTOR * dot(triangle.normal, direction);
+      
     } else
       break;
   }
@@ -158,11 +160,14 @@ void main() {
     out_color.rgb = triangle.color + triangle.emission; */
     // out_color = vec4( 1.0, 0.0, 0.3098028231594383, 1.0);
 
-  uvec2 seed = uvec2(gl_FragCoord) ^ uvec2(timestamp << 16);
+  uvec2 seed = uvec2(gl_FragCoord) ^ uvec2(1092773/* timestamp */ << 16);
     // Perform path tracing with sampleCount paths
   out_color.rgb = vec3(0.0f);
   for(int i = 0; i != sampleCount; ++i) out_color.rgb += get_ray_radiance(cameraSource, ray_direction, seed);
   out_color.rgb /= float(sampleCount);
+  // out_color.r = min(out_color.r, 1.0);
+  // out_color.g = min(out_color.g, 1.0);
+  // out_color.b = min(out_color.b, 1.0);
 
   out_color.a = 1.0f;
 
