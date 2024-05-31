@@ -112,28 +112,49 @@ vec2 get_random_numbers(inout uvec2 seed) {
 
 vec3 sample_hemisphere(vec2 random_numbers, vec3 normal) {
   // vec3 direction = sample_sphere(random_numbers);
-  float z = 2.0f * random_numbers[1] - 1.0f;
   float phi = 2.0f * M_PI * random_numbers[0];
-  float x = cos(phi) * sqrt(1.0f - z * z);
-  float y = sin(phi) * sqrt(1.0f - z * z);
-  vec3 direction = vec3(x, y, z);
-  if(dot(normal, direction) < 0.0f)
-    direction -= 2.0f * dot(normal, direction) * normal;
-  return direction;
+  float z = 2.0f * random_numbers[1] - 1.0f;
+
+  float cos_theta = sqrt(1.0f - random_numbers.y);
+  float sin_theta = sqrt(random_numbers.y);
+
+  // Compute local sample direction
+  vec3 local_dir = vec3(sin_theta * cos(phi), sin_theta * sin(phi), cos_theta);
+
+  // Create an orthonormal basis
+  vec3 up = abs(normal.z) < 0.999f ? vec3(0, 0, 1) : vec3(1, 0, 0);
+  vec3 tangent = normalize(cross(up, normal));
+  vec3 bitangent = cross(normal, tangent);
+
+  // Transform local direction to world space
+  vec3 sample_dir = local_dir.x * tangent + local_dir.y * bitangent + local_dir.z * normal;
+
+  return sample_dir;
 }
 
 vec3 get_ray_radiance(vec3 origin, vec3 direction, inout uvec2 seed) {
   vec3 radiance = vec3(0.0f);
-  vec3 throughput_weight = vec3(1.0f);
+  vec3 throughput_weight = vec3(8.0f);
   for(int i = 0; i < maxPathLength; i++) {
     float t;
     Triangle triangle;
     if(ray_mesh_intersection(t, triangle, origin, direction)) {
       radiance += throughput_weight * triangle.emission;
       origin += t * direction;
-      direction = sample_hemisphere(get_random_numbers(seed), triangle.normal);
-      throughput_weight *= triangle.color * SCALING_FACTOR * dot(triangle.normal, direction);
+      vec3 new_direction = sample_hemisphere(get_random_numbers(seed), triangle.normal);
+
+      // Update the throughput weight
+      float cos_theta = dot(new_direction, triangle.normal);
+      throughput_weight *= triangle.color * SCALING_FACTOR * (cos_theta / M_PI);
       
+      // Update the direction for the next bounce
+      direction = new_direction;
+
+/*       if(length(throughput_weight) < 0.001f) {
+        if(get_random_numbers(seed, ) > 0.1f)
+          break;
+        throughput_weight /= 0.1f;
+      } */
     } else
       break;
   }
