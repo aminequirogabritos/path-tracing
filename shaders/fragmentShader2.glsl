@@ -1,6 +1,6 @@
 #version 300 es
 #define M_PI 3.141592653589793238462643
-#define SCALING_FACTOR 2.0f
+#define SCALING_FACTOR 10.0f
 
 #ifdef GL_ES
 precision highp float;
@@ -134,18 +134,19 @@ vec3 sample_hemisphere(vec2 random_numbers, vec3 normal) {
 
 vec3 get_ray_radiance(vec3 origin, vec3 direction, inout uvec2 seed) {
   vec3 radiance = vec3(0.0f);
-  vec3 throughput_weight = vec3(8.0f);
+  vec3 throughput_weight = vec3(1.0f);
   for(int i = 0; i < maxPathLength; i++) {
     float t;
     Triangle triangle;
     if(ray_mesh_intersection(t, triangle, origin, direction)) {
-      radiance += throughput_weight * triangle.emission;
+      radiance += throughput_weight * (triangle.emission * SCALING_FACTOR);
       origin += t * direction;
+      
       vec3 new_direction = sample_hemisphere(get_random_numbers(seed), triangle.normal);
 
       // Update the throughput weight
       float cos_theta = dot(new_direction, triangle.normal);
-      throughput_weight *= triangle.color * SCALING_FACTOR * (cos_theta / M_PI);
+      throughput_weight *= triangle.color * (cos_theta / M_PI);
       
       // Update the direction for the next bounce
       direction = new_direction;

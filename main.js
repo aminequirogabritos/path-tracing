@@ -27,9 +27,9 @@ let emissions = [];
 let startTime, endTime;
 
 let frames = 1;
-let maxPathLength = 2;
-let sampleCount = 512;
-let canvasSize = 1024;
+let maxPathLength = 5;
+let sampleCount = 256;
+let canvasSize = 512;
 
 let objects = 0;
 let triangleCount = 0;
