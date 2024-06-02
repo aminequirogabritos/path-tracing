@@ -1,6 +1,7 @@
 #version 300 es
 #define M_PI 3.141592653589793238462643
-#define SCALING_FACTOR 10.0f
+#define M_1_PI 0.3183098861837907
+#define SCALING_FACTOR 2.0f
 
 #ifdef GL_ES
 precision highp float;
@@ -117,11 +118,9 @@ vec3 sample_hemisphere(vec2 random_numbers, vec3 normal) {
 
   float x = r * cos(theta);
   float y = r * sin(theta);
-  float z = sqrt(1.0 - x * x - y * y);
+  float z = sqrt(1.0f - x * x - y * y);
 
-  vec3 majorAxis = abs(normal.x) < 0.57735026919f ? vec3(1.0, 0.0, 0.0) : abs(normal.y) < 0.57735026919f ? vec3(0.0, 1.0, 0.0) : vec3(0.0, 0.0, 1.0);
-
-
+  vec3 majorAxis = abs(normal.x) < 0.57735026919f ? vec3(1.0f, 0.0f, 0.0f) : abs(normal.y) < 0.57735026919f ? vec3(0.0f, 1.0f, 0.0f) : vec3(0.0f, 0.0f, 1.0f);
 
   vec3 u = normalize(cross(normal, majorAxis));
   vec3 v = cross(normal, u);
@@ -141,14 +140,19 @@ vec3 get_ray_radiance(vec3 origin, vec3 direction, inout uvec2 seed) {
     Triangle triangle;
     if(ray_mesh_intersection(t, triangle, origin, direction)) {
       radiance += throughput_weight * (triangle.emission * SCALING_FACTOR);
+
       origin += t * direction;
-      
+
       vec3 new_direction = sample_hemisphere(get_random_numbers(seed), triangle.normal);
 
+      vec3 eval = triangle.color * M_1_PI * dot(new_direction, triangle.normal);
+
+      float pdf = dot(new_direction, triangle.normal) * M_1_PI;
+
       // Update the throughput weight
-      float cos_theta = dot(new_direction, triangle.normal);
-      throughput_weight *= triangle.color * (cos_theta / M_PI);
-      
+
+      throughput_weight *= eval / pdf;
+
       // Update the direction for the next bounce
       direction = new_direction;
 

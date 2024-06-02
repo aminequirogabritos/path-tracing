@@ -27,9 +27,9 @@ let emissions = [];
 let startTime, endTime;
 
 let frames = 1;
-let maxPathLength = 5;
-let sampleCount = 256;
-let canvasSize = 512;
+let maxPathLength = 10;
+let sampleCount = 512;
+let canvasSize = 1024;
 
 let objects = 0;
 let triangleCount = 0;
@@ -515,7 +515,7 @@ async function loadModel(url) {
 
               // get triangle's emission
               if (child.name == "Light")
-                emissions.push(...[3.0, 3.0, 3.0]);
+                emissions.push(...[10.0, 10.0, 10.0]);
               else
                 emissions.push(...[0.0, 0.0, 0.0]);
             }
