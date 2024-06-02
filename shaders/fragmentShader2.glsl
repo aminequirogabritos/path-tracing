@@ -112,24 +112,25 @@ vec2 get_random_numbers(inout uvec2 seed) {
 
 vec3 sample_hemisphere(vec2 random_numbers, vec3 normal) {
   // vec3 direction = sample_sphere(random_numbers);
-  float phi = 2.0f * M_PI * random_numbers[0];
-  float z = 2.0f * random_numbers[1] - 1.0f;
+  float theta = 2.0f * M_PI * random_numbers[0];
+  float r = sqrt(random_numbers[1]);
 
-  float cos_theta = sqrt(1.0f - random_numbers.y);
-  float sin_theta = sqrt(random_numbers.y);
+  float x = r * cos(theta);
+  float y = r * sin(theta);
+  float z = sqrt(1.0 - x * x - y * y);
 
-  // Compute local sample direction
-  vec3 local_dir = vec3(sin_theta * cos(phi), sin_theta * sin(phi), cos_theta);
+  vec3 majorAxis = abs(normal.x) < 0.57735026919f ? vec3(1.0, 0.0, 0.0) : abs(normal.y) < 0.57735026919f ? vec3(0.0, 1.0, 0.0) : vec3(0.0, 0.0, 1.0);
 
-  // Create an orthonormal basis
-  vec3 up = abs(normal.z) < 0.999f ? vec3(0, 0, 1) : vec3(1, 0, 0);
-  vec3 tangent = normalize(cross(up, normal));
-  vec3 bitangent = cross(normal, tangent);
+
+
+  vec3 u = normalize(cross(normal, majorAxis));
+  vec3 v = cross(normal, u);
+  vec3 w = normal;
 
   // Transform local direction to world space
-  vec3 sample_dir = local_dir.x * tangent + local_dir.y * bitangent + local_dir.z * normal;
+  vec3 sample_dir = x * u + y * v + z * w;
 
-  return sample_dir;
+  return normalize(sample_dir);
 }
 
 vec3 get_ray_radiance(vec3 origin, vec3 direction, inout uvec2 seed) {
