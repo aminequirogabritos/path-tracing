@@ -20,6 +20,7 @@ uniform sampler2D coordinatesTexture;
 uniform sampler2D normalsTexture;
 uniform sampler2D colorsTexture;
 uniform sampler2D emissionsTexture;
+uniform sampler2D lightIndicesTexture;
 
 uniform vec2 windowSize;
 uniform vec3 cameraSource;
@@ -29,6 +30,7 @@ uniform vec3 cameraRight;
 uniform vec3 cameraLeftBottom;
 uniform int vertexCount;
 uniform int triangleCount;
+uniform int lightIndicesCount;
 uniform int timestamp;
 uniform int maxPathLength;
 uniform int sampleCount;
@@ -103,14 +105,6 @@ vec2 get_random_numbers(inout uvec2 seed) {
   return vec2(seed) * 2.32830643654e-10f;
 }
 
-/* vec3 sample_sphere(vec2 random_numbers) {
-  float z = 2.0f * random_numbers[1] - 1.0f;
-  float phi = 2.0f * M_PI * random_numbers[0];
-  float x = cos(phi) * sqrt(1.0f - z * z);
-  float y = sin(phi) * sqrt(1.0f - z * z);
-  return vec3(x, y, z);
-} */
-
 vec3 sample_hemisphere(vec2 random_numbers, vec3 normal) {
   // vec3 direction = sample_sphere(random_numbers);
   float theta = 2.0f * M_PI * random_numbers[0];
@@ -132,6 +126,34 @@ vec3 sample_hemisphere(vec2 random_numbers, vec3 normal) {
   return normalize(sample_dir);
 }
 
+vec2 get_random_barycentric(inout uvec2 seed) {
+  vec2 rand = get_random_numbers(seed); // Get two random numbers between 0 and 1
+  float r1 = rand.x;
+  float r2 = rand.y;
+
+  // Ensure the random point lies within the triangle
+  if(r1 + r2 > 1.0f) {
+    r1 = 1.0f - r1;
+    r2 = 1.0f - r2;
+  }
+
+  return vec2(r1, r2);
+}
+
+void sample_random_light(inout uvec2 seed, inout Triangle lightTriangle, inout vec3 lightPoint, inout float lightPdf) {
+  int randomIndex = int(float(lightIndicesCount) * get_random_numbers(seed).x);
+  int lightIndex = int(texture(lightIndicesTexture, vec2(float(3 * randomIndex) / float(lightIndicesCount - 1), 0.0f)).x);
+  lightTriangle = getTriangleFromTextures(lightIndex);
+
+  vec2 r = get_random_barycentric(seed);
+
+  lightPoint = (1.0f - r.x - r.y) * lightTriangle.vertex0 + r.x * lightTriangle.vertex1 + r.y * lightTriangle.vertex2;
+
+  float area = 0.5f * length(cross(lightTriangle.vertex1 - lightTriangle.vertex0, lightTriangle.vertex2 - lightTriangle.vertex0));
+  lightPdf = 1.0f / (float(lightIndex) * area);
+
+}
+
 vec3 get_ray_radiance(vec3 origin, vec3 direction, inout uvec2 seed) {
   vec3 radiance = vec3(0.0f);
   vec3 throughput_weight = vec3(1.0f);
@@ -142,6 +164,27 @@ vec3 get_ray_radiance(vec3 origin, vec3 direction, inout uvec2 seed) {
       radiance += throughput_weight * (triangle.emission * SCALING_FACTOR);
 
       origin += t * direction;
+
+      if(triangle.emission.x > 0.0f || triangle.emission.y > 0.0f || triangle.emission.z > 0.0f)
+        break;
+      Triangle lightTriangle;
+      vec3 lightPoint = vec3(0.0f, 0.0f, 0.0f);
+      float lightPdf = 0.0f;
+      sample_random_light(seed, lightTriangle, lightPoint, lightPdf);
+
+      vec3 lightDirection = normalize(lightPoint - origin);
+      float lightDistance = length(lightPoint - origin);
+
+      // Check visibility of the light source
+      if(dot(triangle.normal, lightDirection) > 0.0f && dot(lightTriangle.normal, -lightDirection) > 0.0f) {
+        if(!ray_mesh_intersection(t, lightTriangle, lightPoint, lightDirection)) {
+          // Calculate direct light contribution
+          float solid_angle = dot(lightTriangle.normal, -lightDirection) / (lightDistance * lightDistance);
+          vec3 brdf = triangle.color * M_1_PI * dot(lightDirection, triangle.normal);
+          vec3 direct_light = lightTriangle.color * solid_angle * brdf * dot(triangle.normal, lightDirection);
+          radiance += throughput_weight * direct_light / lightPdf;
+        }
+      }
 
       vec3 new_direction = sample_hemisphere(get_random_numbers(seed), triangle.normal);
 
@@ -156,11 +199,11 @@ vec3 get_ray_radiance(vec3 origin, vec3 direction, inout uvec2 seed) {
       // Update the direction for the next bounce
       direction = new_direction;
 
-/*       if(length(throughput_weight) < 0.001f) {
-        if(get_random_numbers(seed, ) > 0.1f)
+      if(length(throughput_weight) < 0.001f) {
+        if(get_random_numbers(seed).x > 0.1f)
           break;
         throughput_weight /= 0.1f;
-      } */
+      }
     } else
       break;
   }

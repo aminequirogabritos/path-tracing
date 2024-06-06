@@ -23,13 +23,14 @@ let coordinates = [];
 let normals = [];
 let colors = [];
 let emissions = [];
+let lightIndices = [];
 
 let startTime, endTime;
 
 let frames = 1;
-let maxPathLength = 2;
+let maxPathLength = 5;
 let sampleCount = 512;
-let canvasSize = 1024;
+let canvasSize = 512;
 
 let objects = 0;
 let triangleCount = 0;
@@ -139,6 +140,7 @@ async function render(now, frameNumber) {
   uploadTexture(gl, program, normals, 'normalsTexture', (normals.length / 3), 1, 1);
   uploadTexture(gl, program, colors, 'colorsTexture', (colors.length / 3), 1, 2);
   uploadTexture(gl, program, emissions, 'emissionsTexture', (emissions.length / 3), 1, 3);
+  uploadTexture(gl, program, lightIndices, 'lightIndicesTexture', (lightIndices.length / 3), 1, 4);
 
   // Set uniforms
   const windowSizeLocation = gl.getUniformLocation(program, 'windowSize');
@@ -149,6 +151,7 @@ async function render(now, frameNumber) {
   const cameraLeftBottomLocation = gl.getUniformLocation(program, 'cameraLeftBottom');
   const vertexCountLocation = gl.getUniformLocation(program, 'vertexCount');
   const triangleCountLocation = gl.getUniformLocation(program, 'triangleCount');
+  const lightIndicesCountLocation = gl.getUniformLocation(program, 'lightIndicesCount');
   const timestampLocation = gl.getUniformLocation(program, 'timestamp');
   const maxPathLengthLocation = gl.getUniformLocation(program, 'maxPathLength');
   const sampleCountLocation = gl.getUniformLocation(program, 'sampleCount');
@@ -163,6 +166,7 @@ async function render(now, frameNumber) {
   gl.uniform3f(cameraLeftBottomLocation, cameraLeftBottom.x, cameraLeftBottom.y, cameraLeftBottom.z);
   gl.uniform1i(vertexCountLocation, parseInt(coordinates.length / 3));
   gl.uniform1i(triangleCountLocation, triangleCount);
+  gl.uniform1i(lightIndicesCountLocation, lightIndices.length);
   gl.uniform1i(timestampLocation, now);
   gl.uniform1i(maxPathLengthLocation, maxPathLength);
   gl.uniform1i(sampleCountLocation, sampleCount);
@@ -525,7 +529,16 @@ async function loadModel(url) {
         });
 
         console.log(coordinates.length);
-        // console.log("🌸 ~ coordinates.length:", coordinates.length)
+        console.log("🌸 ~ coordinates.length:", coordinates.length)
+
+        // armar arreglo de indices de triangulos de luces
+
+        for (let i = 0; i < emissions.length; i = i + 3) {
+          if (emissions[i] > 0.0 || emissions[i + 1] > 0.0 || emissions[i + 2] > 0.0)
+            lightIndices.push(i / 3);
+        }
+        console.log("🚀 ~ returnnewPromise ~ lightIndices:", lightIndices)
+            console.log("🌸 ~ triangleCount:", triangleCount)
 
         resolve(model);
       },
