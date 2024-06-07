@@ -30,7 +30,7 @@ let startTime, endTime;
 let frames = 1;
 let maxPathLength = 5;
 let sampleCount = 512;
-let canvasSize = 512;
+let canvasSize = 800;
 
 let objects = 0;
 let triangleCount = 0;
