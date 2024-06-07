@@ -1,7 +1,7 @@
 #version 300 es
 #define M_PI 3.141592653589793238462643
 #define M_1_PI 0.3183098861837907
-#define SCALING_FACTOR 2.0f
+#define SCALING_FACTOR 1.0f
 
 #ifdef GL_ES
 precision highp float;
@@ -163,40 +163,60 @@ vec3 get_ray_radiance(vec3 origin, vec3 direction, inout uvec2 seed) {
     if(ray_mesh_intersection(t, triangle, origin, direction)) {
       radiance += throughput_weight * (triangle.emission * SCALING_FACTOR);
 
-      origin += t * direction;
-
       if(triangle.emission.x > 0.0f || triangle.emission.y > 0.0f || triangle.emission.z > 0.0f)
         break;
+
+      vec3 rayTriangleIntersectionPoint = origin + t * direction;
+
+      // Next Event Estimation
+
       Triangle lightTriangle;
       vec3 lightPoint = vec3(0.0f, 0.0f, 0.0f);
       float lightPdf = 0.0f;
       sample_random_light(seed, lightTriangle, lightPoint, lightPdf);
 
-      vec3 lightDirection = normalize(lightPoint - origin);
-      float lightDistance = length(lightPoint - origin);
+      vec3 intersectionToLightDirection = normalize(lightPoint - rayTriangleIntersectionPoint);
+      float intersectionToLightDistance = length(lightPoint - rayTriangleIntersectionPoint);
 
       // Check visibility of the light source
-      if(dot(triangle.normal, lightDirection) > 0.0f && dot(lightTriangle.normal, -lightDirection) > 0.0f) {
-        if(!ray_mesh_intersection(t, lightTriangle, lightPoint, lightDirection)) {
+      if(dot(triangle.normal, intersectionToLightDirection) > 0.0f && dot(lightTriangle.normal, -intersectionToLightDirection) > 0.0f) {
+
+        Triangle blockingTriangle;
+        float tBlockingTriangle;
+        bool hits = ray_mesh_intersection(tBlockingTriangle, blockingTriangle, rayTriangleIntersectionPoint, intersectionToLightDirection);
+
+        // if doesn't hit anything or hits and it's a light source
+        if(!hits || (hits && blockingTriangle.emission != vec3(0.0f))) {
           // Calculate direct light contribution
-          float solid_angle = dot(lightTriangle.normal, -lightDirection) / (lightDistance * lightDistance);
-          vec3 brdf = triangle.color * M_1_PI * dot(lightDirection, triangle.normal);
-          vec3 direct_light = lightTriangle.color * solid_angle * brdf * dot(triangle.normal, lightDirection);
+          float solid_angle = max(dot(lightTriangle.normal, -intersectionToLightDirection), 0.0f) / (intersectionToLightDistance * intersectionToLightDistance);
+          vec3 brdf = triangle.color * M_1_PI * dot(triangle.normal, intersectionToLightDirection);
+          vec3 direct_light = lightTriangle.color * solid_angle * brdf;
           radiance += throughput_weight * direct_light / lightPdf;
         }
+
       }
 
       vec3 new_direction = sample_hemisphere(get_random_numbers(seed), triangle.normal);
 
-      vec3 eval = triangle.color * M_1_PI * dot(new_direction, triangle.normal);
+      float cos_theta = dot(new_direction, triangle.normal);
+      if(cos_theta < 0.0f) {
+        break; // Skip if the new direction is below the surface
+      }
 
-      float pdf = dot(new_direction, triangle.normal) * M_1_PI;
+      // vec3 eval = triangle.color * M_1_PI * dot(new_direction, triangle.normal);
+      // vec3 brdf = triangle.color * M_1_PI; // aka eval?
+
+      float pdf = cos_theta * M_1_PI;
 
       // Update the throughput weight
 
-      throughput_weight *= eval / pdf;
+      vec3 eval = triangle.color * M_1_PI;
+
+      // throughput_weight *= eval / pdf;
+      throughput_weight *= eval * cos_theta / pdf;
 
       // Update the direction for the next bounce
+      origin = rayTriangleIntersectionPoint;
       direction = new_direction;
 
       if(length(throughput_weight) < 0.001f) {

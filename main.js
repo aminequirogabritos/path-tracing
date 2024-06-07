@@ -536,6 +536,8 @@ async function loadModel(url) {
         for (let i = 0; i < emissions.length; i = i + 3) {
           if (emissions[i] > 0.0 || emissions[i + 1] > 0.0 || emissions[i + 2] > 0.0)
             lightIndices.push(i / 3);
+            lightIndices.push(i / 3);
+            lightIndices.push(i / 3);
         }
         console.log("🚀 ~ returnnewPromise ~ lightIndices:", lightIndices)
             console.log("🌸 ~ triangleCount:", triangleCount)
