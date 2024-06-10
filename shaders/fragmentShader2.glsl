@@ -23,6 +23,7 @@ uniform sampler2D emissionsTexture;
 uniform sampler2D lightIndicesTexture;
 
 uniform vec2 windowSize;
+uniform float aspectRatio;
 uniform vec3 cameraSource;
 uniform vec3 cameraDirection;
 uniform vec3 cameraUp;
@@ -236,7 +237,26 @@ void main() {
     // Define the camera position and the view plane
 
     // Compute the camera ray
-  vec2 tex_coord = gl_FragCoord.xy / windowSize.xy;
+  vec2 tex_coord = gl_FragCoord.xy / windowSize;
+
+  if(aspectRatio > 1.0f) {
+     // if width is bigger than height
+     // if image is wider
+    tex_coord.x *= aspectRatio;
+    tex_coord.x -=  0.125f;
+  } else if (aspectRatio < 1.0f) {
+    tex_coord.y /= aspectRatio;
+    tex_coord.y -=  0.125f;
+  };
+
+  // Adjust UV coordinates to maintain aspect ratio and center the image
+/*   vec2 aspectRatioUV = (tex_coord) * vec2(aspectRatio > 1.0 ? aspectRatio : 1.0, aspectRatio < 1.0 ? 1.0 / aspectRatio : 1.0); */
+
+/*   // Check if the UV coordinates are within the centered image area
+  if (aspectRatioUV.x < -1.0 || aspectRatioUV.x > 1.0 || aspectRatioUV.y < -1.0 || aspectRatioUV.y > 1.0) {
+    discard; // Discard the fragment outside the image area
+  } */
+
   vec3 ray_direction = get_primary_ray_direction(tex_coord.x, tex_coord.y, cameraSource, cameraLeftBottom, cameraRight, cameraUp);
   // vec3 ray_direction = normalize(cameraDirection + tex_coord.x * cameraRight + tex_coord.y * cameraUp);
 
