@@ -29,8 +29,8 @@ let startTime, endTime;
 
 let frames = 1;
 let maxPathLength = 2;
-let sampleCount = 10;
-let canvasSize = 128;
+let sampleCount = 256;
+let canvasSize = 256;
 
 let objects = 0;
 let triangleCount = 0;
@@ -43,8 +43,9 @@ try {
   let prevTS = performance.
     model = await loadModel(
       // '/resources/my_cornell_2/gltf/my_cornell_2.gltf'
-      '/resources/bedroom1/customGLTF/bedroom1.gltf'
+      // '/resources/bedroom1/customGLTF/bedroom1.gltf'
       // '/resources/my_cornell_3/gltf/my_cornell_3.gltf'
+      '/resources/my_cornell_4/gltf/my_cornell_4.gltf'
       // '/resources/cornell2/gltf/scene.gltf'
     );
   scene = model.scene;
@@ -63,11 +64,11 @@ const canvas = document.createElement('canvas');
 // canvas.height = canvasSize * 0.8;
 // canvas.width = canvasSize * 1;
 
-canvas.height = canvasSize * 1;
-canvas.width = canvasSize * 0.8;
+// canvas.height = canvasSize * 1;
+// canvas.width = canvasSize * 0.8;
 
-// canvas.height = canvasSize;
-// canvas.width = canvasSize;
+canvas.height = canvasSize;
+canvas.width = canvasSize;
 document.getElementById('canvas-container').appendChild(canvas);
 
 
@@ -93,8 +94,8 @@ gl.canvas.height = height;
 
 const camera = new THREE.PerspectiveCamera(50, width / height, 0.1, 1000);
 
-// camera.position.x += 12.4;
-// camera.rotateY(PI_NUMBER / 2);
+camera.position.x += 12.4;
+camera.rotateY(PI_NUMBER / 2);
 
 let cameraSource = camera.position.clone(); // no normalizar!!!!!
 let cameraDirection = new THREE.Vector3();
