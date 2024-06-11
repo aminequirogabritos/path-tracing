@@ -28,9 +28,9 @@ let lightIndices = [];
 let startTime, endTime;
 
 let frames = 1;
-let maxPathLength = 3;
-let sampleCount = 256;
-let canvasSize = 100;
+let maxPathLength = 2;
+let sampleCount = 10;
+let canvasSize = 128;
 
 let objects = 0;
 let triangleCount = 0;
@@ -93,8 +93,8 @@ gl.canvas.height = height;
 
 const camera = new THREE.PerspectiveCamera(50, width / height, 0.1, 1000);
 
-camera.position.x += 12.4;
-camera.rotateY(PI_NUMBER / 2);
+// camera.position.x += 12.4;
+// camera.rotateY(PI_NUMBER / 2);
 
 let cameraSource = camera.position.clone(); // no normalizar!!!!!
 let cameraDirection = new THREE.Vector3();
