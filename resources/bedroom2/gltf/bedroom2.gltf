@@ -3,6 +3,9 @@
 		"generator":"Khronos glTF Blender I/O v4.1.63",
 		"version":"2.0"
 	},
+	"extensionsUsed":[
+		"KHR_materials_emissive_strength"
+	],
 	"scene":0,
 	"scenes":[
 		{
@@ -195,6 +198,416 @@
 			]
 		}
 	],
+	"materials":[
+		{
+			"doubleSided":true,
+			"emissiveFactor":[
+				1,
+				1,
+				1
+			],
+			"extensions":{
+				"KHR_materials_emissive_strength":{
+					"emissiveStrength":10
+				}
+			},
+			"name":"lambert38SG",
+			"pbrMetallicRoughness":{
+				"metallicFactor":0
+			}
+		},
+		{
+			"doubleSided":true,
+			"name":"initialShadingGroup",
+			"pbrMetallicRoughness":{
+				"baseColorFactor":[
+					0.9130986332893372,
+					0.9130986332893372,
+					0.715693473815918,
+					1
+				],
+				"metallicFactor":0
+			}
+		},
+		{
+			"doubleSided":true,
+			"name":"lambert10SG",
+			"pbrMetallicRoughness":{
+				"baseColorFactor":[
+					0.7900000214576721,
+					0.28999999165534973,
+					0.03999999910593033,
+					1
+				],
+				"metallicFactor":0
+			}
+		},
+		{
+			"doubleSided":true,
+			"name":"lambert11SG",
+			"pbrMetallicRoughness":{
+				"baseColorFactor":[
+					0.029999999329447746,
+					0.12999999523162842,
+					0.07000000029802322,
+					1
+				],
+				"metallicFactor":0
+			}
+		},
+		{
+			"doubleSided":true,
+			"name":"lambert12SG",
+			"pbrMetallicRoughness":{
+				"baseColorFactor":[
+					0.30000001192092896,
+					0.019999999552965164,
+					0.07000000029802322,
+					1
+				],
+				"metallicFactor":0
+			}
+		},
+		{
+			"doubleSided":true,
+			"name":"lambert13SG",
+			"pbrMetallicRoughness":{
+				"baseColorFactor":[
+					0.8199999928474426,
+					0.3499999940395355,
+					0.03999999910593033,
+					1
+				],
+				"metallicFactor":0
+			}
+		},
+		{
+			"doubleSided":true,
+			"name":"lambert14SG",
+			"pbrMetallicRoughness":{
+				"baseColorFactor":[
+					0.07999999821186066,
+					0.009999999776482582,
+					0.019999999552965164,
+					1
+				],
+				"metallicFactor":0
+			}
+		},
+		{
+			"doubleSided":true,
+			"name":"lambert15SG",
+			"pbrMetallicRoughness":{
+				"baseColorFactor":[
+					0.1599999964237213,
+					0.8899999856948853,
+					0.4000000059604645,
+					1
+				],
+				"metallicFactor":0
+			}
+		},
+		{
+			"doubleSided":true,
+			"name":"lambert16SG",
+			"pbrMetallicRoughness":{
+				"baseColorFactor":[
+					0.9700000286102295,
+					0.23999999463558197,
+					0.03999999910593033,
+					1
+				],
+				"metallicFactor":0
+			}
+		},
+		{
+			"doubleSided":true,
+			"name":"lambert17SG",
+			"pbrMetallicRoughness":{
+				"baseColorFactor":[
+					0.4099999964237213,
+					0.10000000149011612,
+					0.15000000596046448,
+					1
+				],
+				"metallicFactor":0
+			}
+		},
+		{
+			"doubleSided":true,
+			"name":"lambert18SG",
+			"pbrMetallicRoughness":{
+				"baseColorFactor":[
+					0.8899999856948853,
+					0.5600000023841858,
+					0.30000001192092896,
+					1
+				],
+				"metallicFactor":0
+			}
+		},
+		{
+			"doubleSided":true,
+			"name":"lambert23SG",
+			"pbrMetallicRoughness":{
+				"baseColorFactor":[
+					0.18134236335754395,
+					0.3231506049633026,
+					0.4999902844429016,
+					1
+				],
+				"metallicFactor":0
+			}
+		},
+		{
+			"doubleSided":true,
+			"name":"lambert25SG",
+			"pbrMetallicRoughness":{
+				"metallicFactor":0
+			}
+		},
+		{
+			"doubleSided":true,
+			"name":"lambert27SG",
+			"pbrMetallicRoughness":{
+				"baseColorFactor":[
+					0.23027247190475464,
+					0.3735773265361786,
+					0.4992239475250244,
+					1
+				],
+				"metallicFactor":0
+			}
+		},
+		{
+			"doubleSided":true,
+			"name":"lambert28SG",
+			"pbrMetallicRoughness":{
+				"baseColorFactor":[
+					0.5,
+					0.5,
+					0.5,
+					1
+				],
+				"metallicFactor":0
+			}
+		},
+		{
+			"doubleSided":true,
+			"name":"lambert30SG",
+			"pbrMetallicRoughness":{
+				"metallicFactor":0
+			}
+		},
+		{
+			"doubleSided":true,
+			"name":"lambert33SG",
+			"pbrMetallicRoughness":{
+				"baseColorFactor":[
+					0.11953993141651154,
+					0.18116171658039093,
+					0.2501578629016876,
+					1
+				],
+				"metallicFactor":0
+			}
+		},
+		{
+			"doubleSided":true,
+			"name":"lambert35SG",
+			"pbrMetallicRoughness":{
+				"baseColorFactor":[
+					0.49917250871658325,
+					0.20795147120952606,
+					0.17374342679977417,
+					1
+				],
+				"metallicFactor":0
+			}
+		},
+		{
+			"doubleSided":true,
+			"name":"lambert37SG",
+			"pbrMetallicRoughness":{
+				"baseColorFactor":[
+					0.9130986332893372,
+					0.9130986332893372,
+					0.715693473815918,
+					1
+				],
+				"metallicFactor":0
+			}
+		},
+		{
+			"doubleSided":true,
+			"name":"lambert3SG",
+			"pbrMetallicRoughness":{
+				"baseColorFactor":[
+					0.4699999988079071,
+					0.029999999329447746,
+					0,
+					1
+				],
+				"metallicFactor":0
+			}
+		},
+		{
+			"doubleSided":true,
+			"name":"lambert4SG",
+			"pbrMetallicRoughness":{
+				"baseColorFactor":[
+					0.18000000715255737,
+					0.019999999552965164,
+					0.009999999776482582,
+					1
+				],
+				"metallicFactor":0
+			}
+		},
+		{
+			"doubleSided":true,
+			"name":"lambert19SG",
+			"pbrMetallicRoughness":{
+				"baseColorFactor":[
+					0.18447408080101013,
+					0.21222653985023499,
+					0.22696220874786377,
+					1
+				],
+				"metallicFactor":0
+			}
+		},
+		{
+			"doubleSided":true,
+			"name":"lambert5SG",
+			"pbrMetallicRoughness":{
+				"baseColorFactor":[
+					0.23999999463558197,
+					0.05000000074505806,
+					0.03999999910593033,
+					1
+				],
+				"metallicFactor":0
+			}
+		},
+		{
+			"doubleSided":true,
+			"name":"lambert6SG",
+			"pbrMetallicRoughness":{
+				"baseColorFactor":[
+					0.9130986332893372,
+					0.9130986332893372,
+					0.715693473815918,
+					1
+				],
+				"metallicFactor":0
+			}
+		},
+		{
+			"doubleSided":true,
+			"name":"lambert7SG",
+			"pbrMetallicRoughness":{
+				"baseColorFactor":[
+					0.3400000035762787,
+					0.009999999776482582,
+					0.009999999776482582,
+					1
+				],
+				"metallicFactor":0
+			}
+		},
+		{
+			"doubleSided":true,
+			"name":"lambert8SG",
+			"pbrMetallicRoughness":{
+				"baseColorFactor":[
+					0.41999998688697815,
+					0,
+					0.019999999552965164,
+					1
+				],
+				"metallicFactor":0
+			}
+		},
+		{
+			"doubleSided":true,
+			"name":"lambert9SG",
+			"pbrMetallicRoughness":{
+				"baseColorFactor":[
+					0.07000000029802322,
+					0.07000000029802322,
+					0.15000000596046448,
+					1
+				],
+				"metallicFactor":0
+			}
+		},
+		{
+			"doubleSided":true,
+			"name":"lambert22SG",
+			"pbrMetallicRoughness":{
+				"baseColorFactor":[
+					0.9599999785423279,
+					0.800000011920929,
+					0.23000000417232513,
+					1
+				],
+				"metallicFactor":0
+			}
+		},
+		{
+			"doubleSided":true,
+			"name":"lambert24SG",
+			"pbrMetallicRoughness":{
+				"baseColorFactor":[
+					0.5711221098899841,
+					0.31855452060699463,
+					0.15292732417583466,
+					1
+				],
+				"metallicFactor":0
+			}
+		},
+		{
+			"doubleSided":true,
+			"name":"lambert2SG",
+			"pbrMetallicRoughness":{
+				"baseColorFactor":[
+					0.05000000074505806,
+					0.12999999523162842,
+					0,
+					1
+				],
+				"metallicFactor":0
+			}
+		},
+		{
+			"doubleSided":true,
+			"name":"lambert32SG",
+			"pbrMetallicRoughness":{
+				"baseColorFactor":[
+					0.20137391984462738,
+					0.5515411496162415,
+					0.7633654475212097,
+					1
+				],
+				"metallicFactor":0
+			}
+		},
+		{
+			"doubleSided":true,
+			"name":"lambert36SG",
+			"pbrMetallicRoughness":{
+				"baseColorFactor":[
+					0.9130986332893372,
+					0.9130986332893372,
+					0.715693473815918,
+					1
+				],
+				"metallicFactor":0
+			}
+		}
+	],
 	"meshes":[
 		{
 			"name":"Object_7",
@@ -205,7 +618,8 @@
 						"NORMAL":1,
 						"TANGENT":2
 					},
-					"indices":3
+					"indices":3,
+					"material":0
 				}
 			]
 		},
@@ -218,7 +632,8 @@
 						"NORMAL":5,
 						"TANGENT":6
 					},
-					"indices":7
+					"indices":7,
+					"material":1
 				}
 			]
 		},
@@ -231,7 +646,8 @@
 						"NORMAL":9,
 						"TANGENT":10
 					},
-					"indices":11
+					"indices":11,
+					"material":2
 				}
 			]
 		},
@@ -244,7 +660,8 @@
 						"NORMAL":13,
 						"TANGENT":14
 					},
-					"indices":15
+					"indices":15,
+					"material":3
 				}
 			]
 		},
@@ -257,7 +674,8 @@
 						"NORMAL":17,
 						"TANGENT":18
 					},
-					"indices":19
+					"indices":19,
+					"material":4
 				}
 			]
 		},
@@ -270,7 +688,8 @@
 						"NORMAL":21,
 						"TANGENT":22
 					},
-					"indices":23
+					"indices":23,
+					"material":5
 				}
 			]
 		},
@@ -283,7 +702,8 @@
 						"NORMAL":25,
 						"TANGENT":26
 					},
-					"indices":15
+					"indices":15,
+					"material":6
 				}
 			]
 		},
@@ -296,7 +716,8 @@
 						"NORMAL":28,
 						"TANGENT":29
 					},
-					"indices":30
+					"indices":30,
+					"material":7
 				}
 			]
 		},
@@ -309,7 +730,8 @@
 						"NORMAL":32,
 						"TANGENT":33
 					},
-					"indices":34
+					"indices":34,
+					"material":8
 				}
 			]
 		},
@@ -322,7 +744,8 @@
 						"NORMAL":36,
 						"TANGENT":37
 					},
-					"indices":38
+					"indices":38,
+					"material":9
 				}
 			]
 		},
@@ -335,7 +758,8 @@
 						"NORMAL":40,
 						"TANGENT":41
 					},
-					"indices":42
+					"indices":42,
+					"material":10
 				}
 			]
 		},
@@ -348,7 +772,8 @@
 						"NORMAL":44,
 						"TANGENT":45
 					},
-					"indices":46
+					"indices":46,
+					"material":1
 				}
 			]
 		},
@@ -361,7 +786,8 @@
 						"NORMAL":48,
 						"TANGENT":49
 					},
-					"indices":50
+					"indices":50,
+					"material":11
 				}
 			]
 		},
@@ -374,7 +800,8 @@
 						"NORMAL":52,
 						"TANGENT":53
 					},
-					"indices":54
+					"indices":54,
+					"material":12
 				}
 			]
 		},
@@ -387,7 +814,8 @@
 						"NORMAL":56,
 						"TANGENT":57
 					},
-					"indices":58
+					"indices":58,
+					"material":13
 				}
 			]
 		},
@@ -400,7 +828,8 @@
 						"NORMAL":60,
 						"TANGENT":61
 					},
-					"indices":62
+					"indices":62,
+					"material":14
 				}
 			]
 		},
@@ -413,7 +842,8 @@
 						"NORMAL":64,
 						"TANGENT":65
 					},
-					"indices":66
+					"indices":66,
+					"material":15
 				}
 			]
 		},
@@ -426,7 +856,8 @@
 						"NORMAL":68,
 						"TANGENT":69
 					},
-					"indices":70
+					"indices":70,
+					"material":16
 				}
 			]
 		},
@@ -439,7 +870,8 @@
 						"NORMAL":72,
 						"TANGENT":73
 					},
-					"indices":74
+					"indices":74,
+					"material":17
 				}
 			]
 		},
@@ -452,7 +884,8 @@
 						"NORMAL":76,
 						"TANGENT":77
 					},
-					"indices":78
+					"indices":78,
+					"material":18
 				}
 			]
 		},
@@ -465,7 +898,8 @@
 						"NORMAL":80,
 						"TANGENT":81
 					},
-					"indices":82
+					"indices":82,
+					"material":19
 				}
 			]
 		},
@@ -478,7 +912,8 @@
 						"NORMAL":84,
 						"TANGENT":85
 					},
-					"indices":86
+					"indices":86,
+					"material":20
 				}
 			]
 		},
@@ -491,7 +926,8 @@
 						"NORMAL":88,
 						"TANGENT":89
 					},
-					"indices":90
+					"indices":90,
+					"material":21
 				}
 			]
 		},
@@ -504,7 +940,8 @@
 						"NORMAL":92,
 						"TANGENT":93
 					},
-					"indices":94
+					"indices":94,
+					"material":22
 				}
 			]
 		},
@@ -517,7 +954,8 @@
 						"NORMAL":96,
 						"TANGENT":97
 					},
-					"indices":98
+					"indices":98,
+					"material":23
 				}
 			]
 		},
@@ -530,7 +968,8 @@
 						"NORMAL":100,
 						"TANGENT":101
 					},
-					"indices":102
+					"indices":102,
+					"material":24
 				}
 			]
 		},
@@ -543,7 +982,8 @@
 						"NORMAL":104,
 						"TANGENT":105
 					},
-					"indices":106
+					"indices":106,
+					"material":24
 				}
 			]
 		},
@@ -556,7 +996,8 @@
 						"NORMAL":108,
 						"TANGENT":109
 					},
-					"indices":50
+					"indices":50,
+					"material":25
 				}
 			]
 		},
@@ -569,7 +1010,8 @@
 						"NORMAL":111,
 						"TANGENT":112
 					},
-					"indices":113
+					"indices":113,
+					"material":26
 				}
 			]
 		},
@@ -582,7 +1024,8 @@
 						"NORMAL":115,
 						"TANGENT":116
 					},
-					"indices":54
+					"indices":54,
+					"material":27
 				}
 			]
 		},
@@ -595,7 +1038,8 @@
 						"NORMAL":118,
 						"TANGENT":119
 					},
-					"indices":54
+					"indices":54,
+					"material":28
 				}
 			]
 		},
@@ -608,7 +1052,8 @@
 						"NORMAL":121,
 						"TANGENT":122
 					},
-					"indices":123
+					"indices":123,
+					"material":29
 				}
 			]
 		},
@@ -621,7 +1066,8 @@
 						"NORMAL":125,
 						"TANGENT":126
 					},
-					"indices":15
+					"indices":15,
+					"material":30
 				}
 			]
 		},
@@ -634,7 +1080,8 @@
 						"NORMAL":128,
 						"TANGENT":129
 					},
-					"indices":130
+					"indices":130,
+					"material":31
 				}
 			]
 		}
