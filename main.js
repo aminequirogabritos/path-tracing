@@ -28,8 +28,8 @@ let lightIndices = [];
 let startTime, endTime;
 
 let frames = 1;
-let maxPathLength = 2;
-let sampleCount = 256;
+let maxPathLength = 4;
+let sampleCount = 128;
 let canvasSize = 256;
 
 let objects = 0;
@@ -95,7 +95,7 @@ gl.canvas.height = height;
 
 const camera = new THREE.PerspectiveCamera(50, width / height, 0.1, 1000);
 
-camera.position.x += 12.4;
+camera.position.x += 120.4;
 camera.rotateY(PI_NUMBER / 2);
 
 let cameraSource = camera.position.clone(); // no normalizar!!!!!
@@ -482,19 +482,20 @@ async function loadModel(url) {
           }
         });
 
-        console.log(coordinates.length);
         console.log("🌸 ~ coordinates.length:", coordinates.length)
 
         // armar arreglo de indices de triangulos de luces
-
         for (let i = 0; i < emissions.length; i = i + 3) {
-          if (emissions[i] > 0.0 || emissions[i + 1] > 0.0 || emissions[i + 2] > 0.0)
+          if (emissions[i] > 0.0 || emissions[i + 1] > 0.0 || emissions[i + 2] > 0.0) {
             lightIndices.push(i / 3);
-          lightIndices.push(i / 3);
-          lightIndices.push(i / 3);
+            lightIndices.push(i / 3);
+            lightIndices.push(i / 3);
+          }
         }
-        console.log("🚀 ~ returnnewPromise ~ lightIndices:", lightIndices)
+        console.log("🚀 lightIndices:", lightIndices)
         console.log("🌸 ~ triangleCount:", triangleCount)
+        console.log("🚀 ~ colors:", colors)
+
 
         resolve(model);
       },
