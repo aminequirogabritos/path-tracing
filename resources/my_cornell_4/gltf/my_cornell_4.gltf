@@ -136,7 +136,7 @@
 		},
 		{
 			"mesh":6,
-			"name":"Light",
+			"name":"NotLight",
 			"rotation":[
 				0.7071068286895752,
 				0,
@@ -156,7 +156,7 @@
 		},
 		{
 			"mesh":7,
-			"name":"LeftWall.001",
+			"name":"Light",
 			"rotation":[
 				-0.7071068286895752,
 				0,
