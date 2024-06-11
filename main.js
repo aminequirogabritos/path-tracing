@@ -30,7 +30,7 @@ let startTime, endTime;
 let frames = 1;
 let maxPathLength = 5;
 let sampleCount = 512;
-let canvasSize = 800;
+let canvasSize = 200;
 
 let objects = 0;
 let triangleCount = 0;
@@ -59,7 +59,14 @@ try {
 
 // const canvas = document.getElementById('webgl-canvas');
 const canvas = document.createElement('canvas');
-canvas.width = canvas.height = canvasSize;
+// canvas.height = canvasSize * 0.8;
+// canvas.width = canvasSize * 1;
+
+canvas.height = canvasSize * 1;
+canvas.width = canvasSize * 0.8;
+
+// canvas.height = canvasSize;
+// canvas.width = canvasSize;
 document.getElementById('canvas-container').appendChild(canvas);
 
 
@@ -104,7 +111,7 @@ const cameraRight = new THREE.Vector3().crossVectors(cameraDirection, cameraUp).
 
 const cameraLeft = cameraRight.clone().negate();
 // const cameraMiddle = cameraSource.clone().sub(new THREE.Vector3(0.0, cameraSource.y, 0.0));
-const cameraMiddle = cameraSource.clone().add(cameraDirection.clone()/* .multiplyScalar(0.9) */); // multiplicar por escalar para cambiar posicion near plano frustum
+const cameraMiddle = cameraSource.clone().add(cameraDirection.clone()/* .multiplyScalar(1.2) */); // multiplicar por escalar para cambiar posicion near plano frustum
 console.log("🚀 ~ cameraSource:", cameraSource)
 
 
@@ -144,6 +151,7 @@ async function render(now, frameNumber) {
 
   // Set uniforms
   const windowSizeLocation = gl.getUniformLocation(program, 'windowSize');
+  const aspectRatioLocation = gl.getUniformLocation(program, 'aspectRatio');
   const cameraSourceLocation = gl.getUniformLocation(program, 'cameraSource');
   const cameraDirectionLocation = gl.getUniformLocation(program, 'cameraDirection');
   const cameraUpLocation = gl.getUniformLocation(program, 'cameraUp');
@@ -159,6 +167,7 @@ async function render(now, frameNumber) {
 
 
   gl.uniform2f(windowSizeLocation, width, height);
+  gl.uniform1f(aspectRatioLocation, width / height);
   gl.uniform3f(cameraSourceLocation, cameraSource.x, cameraSource.y, cameraSource.z);
   gl.uniform3f(cameraDirectionLocation, cameraDirection.x, cameraDirection.y, cameraDirection.z);
   gl.uniform3f(cameraUpLocation, cameraUp.x, cameraUp.y, cameraUp.z);
@@ -206,24 +215,9 @@ async function render(now, frameNumber) {
   gl.useProgram(program);
   gl.bindVertexArray(vao);
 
-  // // Bind current frame and accumulated frame textures
-  // gl.activeTexture(gl.TEXTURE4);
-  // gl.bindTexture(gl.TEXTURE_2D, currentFramebuffer.texture);
-  // // gl.uniform1i(gl.getUniformLocation(program, 'u_currentFrame'), 4); // Use texture unit 4
-
-  // gl.activeTexture(gl.TEXTURE5);
-  // gl.bindTexture(gl.TEXTURE_2D, previousFramebuffer.texture);
-  // // gl.uniform1i(gl.getUniformLocation(program, 'u_accumulatedFrame'), 5); // Use texture unit 5
-
-  // // Set blending factor
-  // // gl.uniform1f(gl.getUniformLocation(program, 'u_alpha'), 0.1);
 
 
   //-.-------------
-
-  // gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
-  // gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
-
 
   // Draw the fullscreen quad
   gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
@@ -284,17 +278,7 @@ fps: ${fps}`);
 
 await renderAsync(frames);
 
-// render();
-// requestAnimationFrame(render);
 
-/* function render() {
-  gl.clearColor(0.0, 0.0, 0.0, 1.0);  // Set clear color to black
-  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-  gl.drawArrays(gl.TRIANGLES, 0, 6);
-  requestAnimationFrame(render);
-}
-
-render(); */
 
 // -------------------------------------------------------------------------------------
 // -------------------------------------------------------------------------------------
@@ -427,32 +411,6 @@ async function loadModel(url) {
 
             console.log(child.name);
             const geometry = child.geometry;
-            // geometry.center();
-
-            // geometry.applyMatrix4(child.matrixWorld);
-            // child.updateMatrixWorld();
-
-            /*             let mappedCoordinatesArray;
-                        if (geometry.index !== null) {
-                          mappedCoordinatesArray = mapCoordinates(geometry.attributes.position.array, geometry.getIndex().array);
-            
-                        } else {
-                          mappedCoordinatesArray = geometry.attributes.position.array;
-                        }
-            
-                        for (let i = 0; i < mappedCoordinatesArray.length / 3; i++) {
-            
-                          let originalVertex = new THREE.Vector3(mappedCoordinatesArray[3 * i], mappedCoordinatesArray[3 * i + 1], mappedCoordinatesArray[3 * i + 2]);
-                          let updatedVertex = originalVertex.applyMatrix4(child.matrixWorld);
-            
-                          // console.log(updatedVertex);
-            
-                          mappedCoordinatesArray[3 * i] = updatedVertex.x;
-                          mappedCoordinatesArray[3 * i + 1] = updatedVertex.y;
-                          mappedCoordinatesArray[3 * i + 2] = updatedVertex.z;
-            
-                        }
-                        console.log("🌸 ~ mappedCoordinatesArray:", mappedCoordinatesArray) */
 
             // Ensure the geometry is not indexed, for simplicity
             // console.log("🌸 ~ child.geometry:", child.geometry.attributes.position.array.toString())
@@ -487,9 +445,6 @@ async function loadModel(url) {
 
             vertexCount += mappedCoordinatesArray.length / 3;
             triangleCount += mappedCoordinatesArray.length / 9;
-            // console.log("🌸 ~ triangleCount:", triangleCount)
-            // const numFaces = triangleCount + geometry.index.count / 3;
-            // const triangleIndices = new Float32Array(geometry.attributes.position.count);
 
             // for each triangle
             for (let i = 0; i < mappedCoordinatesArray.length / 9; i++) {
@@ -501,11 +456,6 @@ async function loadModel(url) {
               var triangle = new THREE.Triangle(vertex0, vertex1, vertex2);
               let triangleNormal = new THREE.Vector3();
               triangle.getNormal(triangleNormal);
-
-              // const edge1 = new THREE.Vector3();
-              // edge1.subVectors(vertex1, vertex0).normalize();
-              // const edge2 = new THREE.Vector3();
-              // edge2.subVectors(vertex2, vertex0).normalize();
 
               // const normal = new THREE.Vector3().crossVectors(edge1, edge2);
               // normals.push(...[normal.x, normal.y, normal.z]);
@@ -536,11 +486,11 @@ async function loadModel(url) {
         for (let i = 0; i < emissions.length; i = i + 3) {
           if (emissions[i] > 0.0 || emissions[i + 1] > 0.0 || emissions[i + 2] > 0.0)
             lightIndices.push(i / 3);
-            lightIndices.push(i / 3);
-            lightIndices.push(i / 3);
+          lightIndices.push(i / 3);
+          lightIndices.push(i / 3);
         }
         console.log("🚀 ~ returnnewPromise ~ lightIndices:", lightIndices)
-            console.log("🌸 ~ triangleCount:", triangleCount)
+        console.log("🌸 ~ triangleCount:", triangleCount)
 
         resolve(model);
       },
