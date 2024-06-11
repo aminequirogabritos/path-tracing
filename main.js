@@ -44,8 +44,9 @@ try {
     model = await loadModel(
       // '/resources/my_cornell_2/gltf/my_cornell_2.gltf'
       // '/resources/bedroom1/customGLTF/bedroom1.gltf'
+      '/resources/bedroom2/gltf/bedroom2.gltf'
       // '/resources/my_cornell_3/gltf/my_cornell_3.gltf'
-      '/resources/my_cornell_4/gltf/my_cornell_4.gltf'
+      // '/resources/my_cornell_4/gltf/my_cornell_4.gltf'
       // '/resources/cornell2/gltf/scene.gltf'
     );
   scene = model.scene;
