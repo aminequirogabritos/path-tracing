@@ -28,9 +28,9 @@ let lightIndices = [];
 let startTime, endTime;
 
 let frames = 1;
-let maxPathLength = 5;
-let sampleCount = 512;
-let canvasSize = 200;
+let maxPathLength = 3;
+let sampleCount = 256;
+let canvasSize = 100;
 
 let objects = 0;
 let triangleCount = 0;
@@ -42,7 +42,8 @@ try {
   console.log("b4 loading");
   let prevTS = performance.
     model = await loadModel(
-      '/resources/my_cornell_2/gltf/my_cornell_2.gltf'
+      // '/resources/my_cornell_2/gltf/my_cornell_2.gltf'
+      '/resources/bedroom1/customGLTF/bedroom1.gltf'
       // '/resources/my_cornell_3/gltf/my_cornell_3.gltf'
       // '/resources/cornell2/gltf/scene.gltf'
     );
@@ -369,6 +370,7 @@ async function loadModel(url) {
       function (model) {
         var materialModelColor;
         //var obj = model;//.scene;
+        console.log("🚀 ~ returnnewPromise ~ model:", model)
         var obj = model.scene;
         obj.updateMatrixWorld(true);
 
