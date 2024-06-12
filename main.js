@@ -1,4 +1,14 @@
 const PI_NUMBER = 3.14159265359;
+const SLEEP_TIME = 10000;
+
+
+let frames = 60;
+let maxPathLength = 3;
+let sampleCount = 10;
+let canvasSize = 256;
+
+
+// ------------------------------------------------------------------
 
 import * as THREE from 'three';
 import Stats from 'three/examples/jsm/libs/stats.module.js';
@@ -19,6 +29,8 @@ import fragmentShader from './shaders/fragmentShader2.glsl';
 
 //const loader = new OBJLoader();
 
+
+
 let coordinates = [];
 let normals = [];
 let colors = [];
@@ -27,10 +39,7 @@ let lightIndices = [];
 
 let startTime, endTime;
 
-let frames = 1;
-let maxPathLength = 4;
-let sampleCount = 100;
-let canvasSize = 120;
+
 
 let objects = 0;
 let triangleCount = 0;
@@ -145,7 +154,33 @@ console.log("🚀 ~ cameraLeftBottom:", cameraLeftBottom)
 
 // let then = 0;
 
+const framebuffers = [];
+const textures = [];
+for (let i = 0; i < 2; i++) {
+  const framebuffer = gl.createFramebuffer();
+  gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
 
+  const texture = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, texture);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.canvas.width, gl.canvas.height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+
+  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0);
+
+  if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE) {
+    console.error('Framebuffer is not complete');
+  }
+
+  framebuffers.push(framebuffer);
+  textures.push(texture);
+}
+
+gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
 
 // Render
 async function render(now, frameNumber) {
@@ -220,29 +255,47 @@ async function render(now, frameNumber) {
   // Unbind VAO
   gl.bindVertexArray(null);
 
+  // Determine the current and previous framebuffers
+  const currentFramebuffer = framebuffers[frameNumber % 2];
+  const previousTexture = textures[(frameNumber + 1) % 2];
+
+  // Bind the current framebuffer for rendering
+  gl.bindFramebuffer(gl.FRAMEBUFFER, currentFramebuffer);
 
   gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
   gl.clearColor(0.0, 0.0, 0.0, 1.0);
   gl.clear(gl.COLOR_BUFFER_BIT);
 
-  // Render to current framebuffer
+  // Set the previous frame's texture as an input
+  const previousFrameTextureLocation = gl.getUniformLocation(program, 'previousFrameTexture');
+  gl.activeTexture(gl.TEXTURE5);
+  gl.bindTexture(gl.TEXTURE_2D, previousTexture);
+  gl.uniform1i(previousFrameTextureLocation, 5);
+
+  // Render to the current framebuffer
   gl.useProgram(program);
   gl.bindVertexArray(vao);
-
-
-
-  //-.-------------
-
-  // Draw the fullscreen quad
   gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-  gl.finish();  // Ensure all commands are completed
+  gl.finish();
 
+  // Unbind the framebuffer
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
   gl.bindVertexArray(null);
-  // // Swap framebuffers
-  // // [currentFramebuffer, previousFramebuffer] = [previousFramebuffer, currentFramebuffer];
 
+  // Bind the default framebuffer (screen) and draw the final image
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+  gl.clear(gl.COLOR_BUFFER_BIT);
+  gl.useProgram(program);
 
-  // gl.bindVertexArray(null);
+  // Set the current framebuffer's texture as an input
+  gl.activeTexture(gl.TEXTURE0);
+  gl.bindTexture(gl.TEXTURE_2D, textures[frameNumber % 2]);
+
+  // Draw the final image to the screen
+  gl.bindVertexArray(vao);
+  gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+  gl.bindVertexArray(null);
 
 }
 
@@ -285,9 +338,16 @@ fps: ${fps}`);
 
     previousTime = endTime;
 
+    await sleep(SLEEP_TIME);
     stats.end();
 
   }
+
+
+  let finishTimestamp = performance.now();
+
+  console.log("time spent: "+(finishTimestamp/1000)-(beforeRenderTime/1000))
+
 }
 
 await renderAsync(frames);
@@ -493,7 +553,7 @@ async function loadModel(url) {
           }
         });
 
-        console.log("🌸 ~ coordinates.length:", coordinates.length)
+        // console.log("🌸 ~ coordinates.length:", coordinates.length)
 
         // armar arreglo de indices de triangulos de luces
         for (let i = 0; i < emissions.length; i = i + 3) {
@@ -505,7 +565,7 @@ async function loadModel(url) {
         }
         console.log("🚀 lightIndices:", lightIndices)
         console.log("🌸 ~ triangleCount:", triangleCount)
-        console.log("🚀 ~ colors:", colors)
+        // console.log("🚀 ~ colors:", colors)
 
 
         resolve(model);

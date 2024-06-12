@@ -1,7 +1,7 @@
 #version 300 es
 #define M_PI 3.141592653589793238462643
 #define M_1_PI 0.3183098861837907
-#define SCALING_FACTOR 5.0f
+#define SCALING_FACTOR 10.0f
 
 #ifdef GL_ES
 precision highp float;
@@ -21,7 +21,6 @@ uniform sampler2D normalsTexture;
 uniform sampler2D colorsTexture;
 uniform sampler2D emissionsTexture;
 uniform sampler2D lightIndicesTexture;
-uniform sampler2D previousFrameTexture;
 
 uniform vec2 windowSize;
 uniform float aspectRatio;
@@ -154,7 +153,7 @@ bool is_light_visible(vec3 origin, vec3 light_point, Triangle light_triangle, ve
   return true;
 }
 
-void sample_random_light(inout uvec2 seed, inout Triangle lightTriangle, inout vec3 lightPoint, inout float lightPdf, vec3 origin) {
+void sample_random_light(inout uvec2 seed, inout Triangle lightTriangle, inout vec3 lightPoint, inout float lightPdf) {
   const int max_attempts = 10;
   int attempts = 0;
   bool visible = false;
@@ -171,9 +170,6 @@ void sample_random_light(inout uvec2 seed, inout Triangle lightTriangle, inout v
 
     float area = 0.5f * length(cross(lightTriangle.vertex1 - lightTriangle.vertex0, lightTriangle.vertex2 - lightTriangle.vertex0));
     lightPdf = 1.0f / (float(lightIndex) * area);
-
-    vec3 direction = normalize(lightPoint - origin);
-    visible = is_light_visible(origin, lightPoint, lightTriangle, direction);
   }
 }
 
@@ -196,7 +192,7 @@ vec3 get_ray_radiance(vec3 origin, vec3 direction, inout uvec2 seed) {
       Triangle lightTriangle;
       vec3 lightPoint = vec3(0.0f, 0.0f, 0.0f);
       float lightPdf = 0.0f;
-      sample_random_light(seed, lightTriangle, lightPoint, lightPdf, rayTriangleIntersectionPoint);
+      sample_random_light(seed, lightTriangle, lightPoint, lightPdf);
 
       vec3 intersectionToLightDirection = normalize(lightPoint - rayTriangleIntersectionPoint);
       float intersectionToLightDistance = length(lightPoint - rayTriangleIntersectionPoint);
@@ -271,27 +267,55 @@ void main() {
     tex_coord.y -= 0.125f;
   };
 
+  // Adjust UV coordinates to maintain aspect ratio and center the image
+/*   vec2 aspectRatioUV = (tex_coord) * vec2(aspectRatio > 1.0 ? aspectRatio : 1.0, aspectRatio < 1.0 ? 1.0 / aspectRatio : 1.0); */
+
+/*   // Check if the UV coordinates are within the centered image area
+  if (aspectRatioUV.x < -1.0 || aspectRatioUV.x > 1.0 || aspectRatioUV.y < -1.0 || aspectRatioUV.y > 1.0) {
+    discard; // Discard the fragment outside the image area
+  } */
+
   vec3 ray_direction = get_primary_ray_direction(tex_coord.x, tex_coord.y, cameraSource, cameraLeftBottom, cameraRight, cameraUp);
+  // vec3 ray_direction = normalize(cameraDirection + tex_coord.x * cameraRight + tex_coord.y * cameraUp);
 
-  vec4 currentColor;
-  currentColor.rgb = vec3(0.0f);
-  currentColor.a = 1.0f;
+  Triangle triangle;
+  float t;
+  vec4 out_color;
+  out_color.rgb = vec3(0.0f);
 
-  uvec2 seed = uvec2(gl_FragCoord) ^ uvec2(timestamp << 16);
+// V1: simple ray tracing  
+  /* if(ray_mesh_intersection(t, triangle, cameraSource, ray_direction))
+    out_color.rgb = triangle.color + triangle.emission; */
+    // out_color = vec4( 1.0, 0.0, 0.3098028231594383, 1.0);
 
-  // Perform path tracing with sampleCount paths
-  for(int i = 0; i != sampleCount; ++i) {
-    currentColor.rgb += get_ray_radiance(cameraSource, ray_direction, seed);
-  }
-  currentColor.rgb /= float(sampleCount);
+  uvec2 seed = uvec2(gl_FragCoord) ^ uvec2(1092773/* timestamp */ << 16);
+    // Perform path tracing with sampleCount paths
+  out_color.rgb = vec3(0.0f);
+  for(int i = 0; i != sampleCount; ++i) out_color.rgb += get_ray_radiance(cameraSource, ray_direction, seed);
+  out_color.rgb /= float(sampleCount);
+  // out_color.r = min(out_color.r, 1.0);
+  // out_color.g = min(out_color.g, 1.0);
+  // out_color.b = min(out_color.b, 1.0);
 
-    // Get the color from the previous frame
-  vec4 previousColor = vec4(texture(previousFrameTexture, tex_coord).rgb, 1.0f);
+  out_color.a = 1.0f;
 
-    // Blend the current color with the previous color
-  float blendFactor = 1.0f / float(frameNumber + 1);
-  vec4 blendedColor = mix(previousColor, currentColor, blendFactor);
+  // Triangle t2 = getTriangleFromTextures(0);
+  //fragColor = out_color;
+  // outColor = vec4(0.0f, 1.0f, 0.0f, 1.0f);
+  // outColor = vec4(t2.color, 1.0);
+  // outColor = vec4( vTexCoord.xy, 0.0, 1.0);
+  // outColor = vec4( tex_coord, 0.0, 1.0);
 
-  outColor = vec4(blendedColor.rgb, 1.0f);
+  // outColor = texture(colorsTexture, vec2(float(28.0 / float(triangleCount -  1)), 0.0f));
+
+  // outColor = vec4(t2.emission, 1.0);
+  // outColor = vec4(t2.emission, 1.0);
+  // vec4 a= vec4( 1.0, 0.0, 0.3098028231594383, 1.0);
+
+  outColor = out_color;
+
+  // vec4 currentColor = texture2D(u_currentFrame, v_texCoord);
+  // vec4 accumulatedColor = texture2D(u_accumulatedFrame, v_texCoord);
+  // outColor = mix(accumulatedColor, currentColor, u_alpha);
 
 }
