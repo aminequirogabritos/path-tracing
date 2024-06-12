@@ -28,9 +28,9 @@ let lightIndices = [];
 let startTime, endTime;
 
 let frames = 1;
-let maxPathLength = 2;
-let sampleCount = 256;
-let canvasSize = 256;
+let maxPathLength = 4;
+let sampleCount = 100;
+let canvasSize = 120;
 
 let objects = 0;
 let triangleCount = 0;
@@ -72,6 +72,13 @@ canvas.height = canvasSize;
 canvas.width = canvasSize;
 document.getElementById('canvas-container').appendChild(canvas);
 
+/* // Turn off automatic recovery
+canvas.set
+
+// Restore the context when the mouse is clicked.
+window.addEventListener("mousedown", function () {
+  canvas.restoreContext();
+}); */
 
 const gl = canvas.getContext('webgl2');
 
@@ -95,8 +102,12 @@ gl.canvas.height = height;
 
 const camera = new THREE.PerspectiveCamera(50, width / height, 0.1, 1000);
 
-camera.position.x += 12.4;
-camera.rotateY(PI_NUMBER / 2);
+camera.position.x += 13.4;
+camera.position.y += 6.0;
+// camera.position.z += 25.4;
+camera.lookAt(0, 0, 0);
+camera.rotateY(PI_NUMBER / 8);
+camera.rotateX(PI_NUMBER / 30);
 
 let cameraSource = camera.position.clone(); // no normalizar!!!!!
 let cameraDirection = new THREE.Vector3();
@@ -245,7 +256,7 @@ async function renderAsync(times) {
 
   var stats = new Stats();
   stats.showPanel(0); // 0: fps, 1: ms, 2: mb, 3+: custom
-  document.body.appendChild(stats.dom);
+  // document.body.appendChild(stats.dom);
 
   // Render each frame with a different color
   for (let i = 0; i < times; i++) {
@@ -482,19 +493,20 @@ async function loadModel(url) {
           }
         });
 
-        console.log(coordinates.length);
         console.log("🌸 ~ coordinates.length:", coordinates.length)
 
         // armar arreglo de indices de triangulos de luces
-
         for (let i = 0; i < emissions.length; i = i + 3) {
-          if (emissions[i] > 0.0 || emissions[i + 1] > 0.0 || emissions[i + 2] > 0.0)
+          if (emissions[i] > 0.0 || emissions[i + 1] > 0.0 || emissions[i + 2] > 0.0) {
             lightIndices.push(i / 3);
-          lightIndices.push(i / 3);
-          lightIndices.push(i / 3);
+            lightIndices.push(i / 3);
+            lightIndices.push(i / 3);
+          }
         }
-        console.log("🚀 ~ returnnewPromise ~ lightIndices:", lightIndices)
+        console.log("🚀 lightIndices:", lightIndices)
         console.log("🌸 ~ triangleCount:", triangleCount)
+        console.log("🚀 ~ colors:", colors)
+
 
         resolve(model);
       },
