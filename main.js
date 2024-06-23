@@ -2,11 +2,11 @@ const PI_NUMBER = 3.14159265359;
 const SLEEP_TIME = 20000;
 
 
-let frames = 4;
+let frames = 5;
 let maxPathLength = 3;
 let sampleCount = 2;
-let canvasSize = 700;
-
+let canvasSize = 256;
+let quadSize = 64;
 
 // ------------------------------------------------------------------
 
@@ -268,24 +268,38 @@ async function render(now, frameNumber) {
   const currentFramebuffer = framebuffers[frameNumber % 2];
   const previousTexture = textures[(frameNumber + 1) % 2];
 
+  // Divide the screen into smaller quads
+  const quadSize = 32; // Size of each small quad (adjust as needed)
+  const numQuadsX = Math.ceil(gl.canvas.width / quadSize);
+  const numQuadsY = Math.ceil(gl.canvas.height / quadSize);
+
   // Bind the current framebuffer for rendering
   gl.bindFramebuffer(gl.FRAMEBUFFER, currentFramebuffer);
-
   gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
   gl.clearColor(0.0, 0.0, 0.0, 1.0);
   gl.clear(gl.COLOR_BUFFER_BIT);
 
-  // Set the previous frame's texture as an input
-  const previousFrameTextureLocation = gl.getUniformLocation(program, 'previousFrameTexture');
-  gl.activeTexture(gl.TEXTURE5);
-  gl.bindTexture(gl.TEXTURE_2D, previousTexture);
-  gl.uniform1i(previousFrameTextureLocation, 5);
+  // Render each small quad sequentially
+  for (let y = 0; y < numQuadsY; y++) {
+    console.log("quadY ", y);
+    for (let x = 0; x < numQuadsX; x++) {
+      console.log("quadX ", x);
 
-  // Render to the current framebuffer
-  gl.useProgram(program);
-  gl.bindVertexArray(vao);
-  gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-  gl.finish();
+      const offsetX = x * quadSize;
+      const offsetY = y * quadSize;
+      const width = Math.min(quadSize, gl.canvas.width - offsetX);
+      const height = Math.min(quadSize, gl.canvas.height - offsetY);
+
+      // Set the viewport to the current quad
+      gl.viewport(offsetX, offsetY, width, height);
+
+      // Render the quad
+      gl.useProgram(program);
+      gl.bindVertexArray(vao);
+      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+      gl.finish();
+    }
+  }
 
   // Unbind the framebuffer
   gl.bindFramebuffer(gl.FRAMEBUFFER, null);
@@ -355,7 +369,7 @@ fps: ${fps}`);
 
   let finishTimestamp = performance.now();
 
-  console.log("time spent: " + ((finishTimestamp/1000)-(beforeRenderTime/1000)));
+  console.log("time spent: " + ((finishTimestamp / 1000) - (beforeRenderTime / 1000)));
 
 }
 
