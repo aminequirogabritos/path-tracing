@@ -1,7 +1,7 @@
 #version 300 es
 #define M_PI 3.141592653589793238462643
 #define M_1_PI 0.3183098861837907
-#define SCALING_FACTOR 5.0f
+#define SCALING_FACTOR 0.1f
 
 #ifdef GL_ES
 precision highp float;
@@ -37,6 +37,7 @@ uniform int timestamp;
 uniform int maxPathLength;
 uniform int sampleCount;
 uniform int frameNumber;
+uniform int totalFrames;
 
 // in vec2 v_texCoord;
 // uniform sampler2D u_currentFrame;
@@ -184,7 +185,7 @@ vec3 get_ray_radiance(vec3 origin, vec3 direction, inout uvec2 seed) {
     float t;
     Triangle triangle;
     if(ray_mesh_intersection(t, triangle, origin, direction)) {
-      radiance += throughput_weight * (triangle.emission * SCALING_FACTOR);
+      radiance += throughput_weight * (triangle.emission * (SCALING_FACTOR));
 
       if(triangle.emission.x > 0.0f || triangle.emission.y > 0.0f || triangle.emission.z > 0.0f)
         break;
@@ -214,7 +215,7 @@ vec3 get_ray_radiance(vec3 origin, vec3 direction, inout uvec2 seed) {
           float solid_angle = max(dot(lightTriangle.normal, -intersectionToLightDirection), 0.0f) / (intersectionToLightDistance * intersectionToLightDistance);
           vec3 brdf = triangle.color * M_1_PI * dot(triangle.normal, intersectionToLightDirection);
           vec3 direct_light = lightTriangle.color * solid_angle * brdf;
-          radiance += throughput_weight * direct_light / lightPdf;
+          radiance += throughput_weight * (SCALING_FACTOR) * direct_light / lightPdf;
         }
 
       }
@@ -284,13 +285,17 @@ void main() {
     currentColor.rgb += get_ray_radiance(cameraSource, ray_direction, seed);
   }
   currentColor.rgb /= float(sampleCount);
+  currentColor.rgb = clamp(currentColor.rgb, 0.0f, 1.0f);
 
-    // Get the color from the previous frame
+  // Get the color from the previous frame
   vec4 previousColor = vec4(texture(previousFrameTexture, tex_coord).rgb, 1.0f);
 
-    // Blend the current color with the previous color
+  // Blend the current color with the previous color
   float blendFactor = 1.0f / float(frameNumber + 1);
   vec4 blendedColor = mix(previousColor, currentColor, blendFactor);
+
+    // Apply exposure control
+/*   vec3 finalColor = vec3(1.0) - exp(-blendedColor.rgb * 0.5); */
 
   outColor = vec4(blendedColor.rgb, 1.0f);
 

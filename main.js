@@ -1,11 +1,11 @@
 const PI_NUMBER = 3.14159265359;
-const SLEEP_TIME = 10000;
+const SLEEP_TIME = 20000;
 
 
-let frames = 60;
+let frames = 4;
 let maxPathLength = 3;
-let sampleCount = 10;
-let canvasSize = 256;
+let sampleCount = 2;
+let canvasSize = 700;
 
 
 // ------------------------------------------------------------------
@@ -53,7 +53,8 @@ try {
     model = await loadModel(
       // '/resources/my_cornell_2/gltf/my_cornell_2.gltf'
       // '/resources/bedroom1/customGLTF/bedroom1.gltf'
-      '/resources/bedroom2/gltf/bedroom2.gltf'
+      // '/resources/bedroom2/gltf/bedroom2.gltf'
+      '/resources/bedroom2/gltf/v3/bedroom2.gltf'
       // '/resources/my_cornell_3/gltf/my_cornell_3.gltf'
       // '/resources/my_cornell_4/gltf/my_cornell_4.gltf'
       // '/resources/cornell2/gltf/scene.gltf'
@@ -111,12 +112,18 @@ gl.canvas.height = height;
 
 const camera = new THREE.PerspectiveCamera(50, width / height, 0.1, 1000);
 
-camera.position.x += 13.4;
-camera.position.y += 6.0;
-// camera.position.z += 25.4;
+// camera coordinates for room v3
+camera.position.x += 16;
+// camera.position.y += 6.0;
+camera.position.z -= 8;
 camera.lookAt(0, 0, 0);
-camera.rotateY(PI_NUMBER / 8);
-camera.rotateX(PI_NUMBER / 30);
+camera.rotateY(0.08);
+
+
+// camera coordinates for cornell box
+// camera.position.x += 12.4;
+// camera.rotateY(PI_NUMBER / 2);
+
 
 let cameraSource = camera.position.clone(); // no normalizar!!!!!
 let cameraDirection = new THREE.Vector3();
@@ -213,6 +220,7 @@ async function render(now, frameNumber) {
   const maxPathLengthLocation = gl.getUniformLocation(program, 'maxPathLength');
   const sampleCountLocation = gl.getUniformLocation(program, 'sampleCount');
   const frameNumberLocation = gl.getUniformLocation(program, 'frameNumber');
+  const totalFramesLocation = gl.getUniformLocation(program, 'totalFrames');
 
 
   gl.uniform2f(windowSizeLocation, width, height);
@@ -229,6 +237,7 @@ async function render(now, frameNumber) {
   gl.uniform1i(maxPathLengthLocation, maxPathLength);
   gl.uniform1i(sampleCountLocation, sampleCount);
   gl.uniform1i(frameNumberLocation, frameNumber);
+  gl.uniform1i(totalFramesLocation, frames);
 
   // Full screen quad vertices (triangle strip)
   const vertices = new Float32Array([
@@ -346,7 +355,7 @@ fps: ${fps}`);
 
   let finishTimestamp = performance.now();
 
-  console.log("time spent: "+(finishTimestamp/1000)-(beforeRenderTime/1000))
+  console.log("time spent: " + ((finishTimestamp/1000)-(beforeRenderTime/1000)));
 
 }
 
@@ -544,7 +553,7 @@ async function loadModel(url) {
 
               // get triangle's emission
               if (child.name == "Light")
-                emissions.push(...[10.0, 10.0, 10.0]);
+                emissions.push(...[1.0, 1.0, 1.0]);
               else
                 emissions.push(...[0.0, 0.0, 0.0]);
             }
