@@ -38,13 +38,10 @@ uniform int maxPathLength;
 uniform int sampleCount;
 uniform int frameNumber;
 uniform int totalFrames;
+uniform int quadX;
+uniform int quadY;
+uniform int quadSize;
 
-// in vec2 v_texCoord;
-// uniform sampler2D u_currentFrame;
-// uniform sampler2D u_accumulatedFrame;
-// uniform float u_alpha;
-
-// in vec2 vTexCoord;
 out vec4 outColor;
 
 Triangle getTriangleFromTextures(int index) {
@@ -260,8 +257,9 @@ void main() {
     // Define the camera position and the view plane
 
     // Compute the camera ray
-  vec2 tex_coord = gl_FragCoord.xy / windowSize;
-
+  // vec2 tex_coord = gl_FragCoord.xy / windowSize;
+  vec2 tex_coord = (gl_FragCoord.xy + vec2(float(quadX * quadSize), float(quadY * quadSize)) ) / windowSize;
+/* 
   if(aspectRatio > 1.0f) {
      // if width is bigger than height
      // if image is wider
@@ -270,7 +268,7 @@ void main() {
   } else if(aspectRatio < 1.0f) {
     tex_coord.y /= aspectRatio;
     tex_coord.y -= 0.125f;
-  };
+  }; */
 
   vec3 ray_direction = get_primary_ray_direction(tex_coord.x, tex_coord.y, cameraSource, cameraLeftBottom, cameraRight, cameraUp);
 

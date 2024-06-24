@@ -1,12 +1,13 @@
 const PI_NUMBER = 3.14159265359;
-const SLEEP_TIME = 20000;
+const SLEEP_TIME = 1000;
+const SLEEP_TIME_BETWEEN_QUADS = 100;
 
 
-let frames = 5;
+let frames = 1;
 let maxPathLength = 3;
 let sampleCount = 2;
-let canvasSize = 256;
-let quadSize = 64;
+let canvasSize = 128;
+let quadSize = 16;
 
 // ------------------------------------------------------------------
 
@@ -192,10 +193,19 @@ function sleep(ms) {
 // Render
 async function render(now, frameNumber) {
 
+  // Divide the screen into smaller quads
+  // const quadSize = 32; // Size of each small quad (adjust as needed)
+  const numQuadsX = Math.ceil(gl.canvas.width / quadSize);
+  console.log("🚀 ~ render ~ numQuadsX:", numQuadsX)
+  const numQuadsY = Math.ceil(gl.canvas.height / quadSize);
+  console.log("🚀 ~ render ~ numQuadsY:", numQuadsY)
+
   const vertexShaderSource = createShader(gl, gl.VERTEX_SHADER, vertexShader);
   const fragmentShaderSource = createShader(gl, gl.FRAGMENT_SHADER, fragmentShader);
 
   const program = createProgram(gl, vertexShaderSource, fragmentShaderSource);
+  
+  
   gl.useProgram(program);
 
   //function uploadTexture(gl, program, data, name, width, height, index)
@@ -221,6 +231,9 @@ async function render(now, frameNumber) {
   const sampleCountLocation = gl.getUniformLocation(program, 'sampleCount');
   const frameNumberLocation = gl.getUniformLocation(program, 'frameNumber');
   const totalFramesLocation = gl.getUniformLocation(program, 'totalFrames');
+  const quadXLocation = gl.getUniformLocation(program, 'quadX');
+  const quadYLocation = gl.getUniformLocation(program, 'quadY');
+  const quadSizeLocation = gl.getUniformLocation(program, 'quadSize');
 
 
   gl.uniform2f(windowSizeLocation, width, height);
@@ -238,6 +251,7 @@ async function render(now, frameNumber) {
   gl.uniform1i(sampleCountLocation, sampleCount);
   gl.uniform1i(frameNumberLocation, frameNumber);
   gl.uniform1i(totalFramesLocation, frames);
+  gl.uniform1i(quadSizeLocation, quadSize);
 
   // Full screen quad vertices (triangle strip)
   const vertices = new Float32Array([
@@ -268,11 +282,6 @@ async function render(now, frameNumber) {
   const currentFramebuffer = framebuffers[frameNumber % 2];
   const previousTexture = textures[(frameNumber + 1) % 2];
 
-  // Divide the screen into smaller quads
-  const quadSize = 32; // Size of each small quad (adjust as needed)
-  const numQuadsX = Math.ceil(gl.canvas.width / quadSize);
-  const numQuadsY = Math.ceil(gl.canvas.height / quadSize);
-
   // Bind the current framebuffer for rendering
   gl.bindFramebuffer(gl.FRAMEBUFFER, currentFramebuffer);
   gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
@@ -281,23 +290,26 @@ async function render(now, frameNumber) {
 
   // Render each small quad sequentially
   for (let y = 0; y < numQuadsY; y++) {
-    console.log("quadY ", y);
     for (let x = 0; x < numQuadsX; x++) {
-      console.log("quadX ", x);
+      console.log("quadX ", x, " quadY ", y);
 
       const offsetX = x * quadSize;
       const offsetY = y * quadSize;
-      const width = Math.min(quadSize, gl.canvas.width - offsetX);
-      const height = Math.min(quadSize, gl.canvas.height - offsetY);
+      const viewportWidth = Math.min(quadSize, width - offsetX);
+      const viewportHeight = Math.min(quadSize, height - offsetY);
+
+      gl.uniform1i(quadXLocation, x);
+      gl.uniform1i(quadYLocation, y);
 
       // Set the viewport to the current quad
-      gl.viewport(offsetX, offsetY, width, height);
+      gl.viewport(offsetX, offsetY, viewportWidth, viewportHeight);
 
       // Render the quad
       gl.useProgram(program);
       gl.bindVertexArray(vao);
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
       gl.finish();
+      await sleep(SLEEP_TIME_BETWEEN_QUADS);
     }
   }
 
@@ -331,16 +343,16 @@ async function renderAsync(times) {
   let beforeRenderTime = performance.now();
 
   var stats = new Stats();
-  stats.showPanel(0); // 0: fps, 1: ms, 2: mb, 3+: custom
+  // stats.showPanel(0); // 0: fps, 1: ms, 2: mb, 3+: custom
   // document.body.appendChild(stats.dom);
 
   // Render each frame with a different color
   for (let i = 0; i < times; i++) {
 
-    stats.begin();
+    // stats.begin();
 
     const startTime = performance.now();
-    render(performance.now(), i + 1);
+    await render(performance.now(), i + 1);
 
     await new Promise(requestAnimationFrame); // Wait for the next animation frame
     const endTime = performance.now();
@@ -362,7 +374,7 @@ fps: ${fps}`);
     previousTime = endTime;
 
     await sleep(SLEEP_TIME);
-    stats.end();
+    // stats.end();
 
   }
 
