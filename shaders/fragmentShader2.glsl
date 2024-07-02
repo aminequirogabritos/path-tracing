@@ -184,8 +184,10 @@ vec3 get_ray_radiance(vec3 origin, vec3 direction, inout uvec2 seed) {
     if(ray_mesh_intersection(t, triangle, origin, direction)) {
       radiance += throughput_weight * (triangle.emission * (SCALING_FACTOR));
 
-      if(triangle.emission.x > 0.0f || triangle.emission.y > 0.0f || triangle.emission.z > 0.0f)
+      if(triangle.emission.x > 0.0f || triangle.emission.y > 0.0f || triangle.emission.z > 0.0f) {
+        // return triangle.color;
         break;
+      }
 
       vec3 rayTriangleIntersectionPoint = origin + t * direction;
 
@@ -258,8 +260,9 @@ void main() {
 
     // Compute the camera ray
   // vec2 tex_coord = gl_FragCoord.xy / windowSize;
-  vec2 tex_coord = (gl_FragCoord.xy + vec2(float(quadX * quadSize), float(quadY * quadSize)) ) / windowSize;
-/* 
+  vec2 tex_coord = (gl_FragCoord.xy /* + vec2(float(quadX * quadSize), float(quadY * quadSize)) */) / windowSize;
+  // vec2 tex_coord = (gl_FragCoord.xy + vec2(float(max(quadX * quadSize), windowSize.x), float(max(quadY * quadSize, windowSize.y)))) / windowSize;
+
   if(aspectRatio > 1.0f) {
      // if width is bigger than height
      // if image is wider
@@ -268,7 +271,7 @@ void main() {
   } else if(aspectRatio < 1.0f) {
     tex_coord.y /= aspectRatio;
     tex_coord.y -= 0.125f;
-  }; */
+  };
 
   vec3 ray_direction = get_primary_ray_direction(tex_coord.x, tex_coord.y, cameraSource, cameraLeftBottom, cameraRight, cameraUp);
 
@@ -291,6 +294,7 @@ void main() {
   // Blend the current color with the previous color
   float blendFactor = 1.0f / float(frameNumber + 1);
   vec4 blendedColor = mix(previousColor, currentColor, blendFactor);
+  // vec4 blendedColor = mix(previousColor, currentColor, 0.2);
 
     // Apply exposure control
 /*   vec3 finalColor = vec3(1.0) - exp(-blendedColor.rgb * 0.5); */

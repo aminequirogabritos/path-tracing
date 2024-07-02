@@ -1,12 +1,12 @@
 const PI_NUMBER = 3.14159265359;
-const SLEEP_TIME = 1000;
+const SLEEP_TIME = 500;
 const SLEEP_TIME_BETWEEN_QUADS = 100;
 
 
-let frames = 1;
-let maxPathLength = 3;
-let sampleCount = 2;
-let canvasSize = 128;
+let frames = 3;
+let maxPathLength = 5;
+let sampleCount = 5;
+let canvasSize = 64;
 let quadSize = 16;
 
 // ------------------------------------------------------------------
@@ -21,6 +21,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 // Load vertex and fragment shaders
 import vertexShader from './shaders/vertexShader.glsl';
 import fragmentShader from './shaders/fragmentShader2.glsl';
+// import { texture } from 'three/examples/jsm/nodes/Nodes.js';
 // import { PI, floor } from 'three/examples/jsm/nodes/Nodes.js';
 
 // utils
@@ -40,7 +41,10 @@ let lightIndices = [];
 
 let startTime, endTime;
 
-
+let textureIndex = 0;
+function getTextureIndexAndIncrease() {
+  return textureIndex++;
+}
 
 let objects = 0;
 let triangleCount = 0;
@@ -97,7 +101,8 @@ if (!gl) {
   console.error('WebGL 2 not supported');
 }
 
-
+gl.getParameter(gl.MAX_TEXTURE_SIZE)
+console.log("🚀 ~ gl.getParameter(gl.MAX_TEXTURE_SIZE):", gl.getParameter(gl.MAX_TEXTURE_SIZE))
 
 var width = gl.canvas.clientWidth;
 var height = gl.canvas.clientHeight;
@@ -162,27 +167,71 @@ console.log("🚀 ~ cameraLeftBottom:", cameraLeftBottom)
 
 // let then = 0;
 
-const framebuffers = [];
-const textures = [];
-for (let i = 0; i < 2; i++) {
-  const framebuffer = gl.createFramebuffer();
-  gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
+let framebuffers = [];
+let textures = [];
+let textureIndices = [];
 
-  const texture = gl.createTexture();
-  gl.bindTexture(gl.TEXTURE_2D, texture);
-  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.canvas.width, gl.canvas.height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
 
-  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0);
+//set texture1
+let framebuffer = gl.createFramebuffer();
+gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
 
-  if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE) {
-    console.error('Framebuffer is not complete');
-  }
+let texture = gl.createTexture();
+gl.activeTexture(gl.TEXTURE0 + getTextureIndexAndIncrease());
+textureIndices.push(textureIndex);
+gl.bindTexture(gl.TEXTURE_2D, texture);
+gl.texImage2D(gl.TEXTURE_2D,
+  0,
+  gl.RGBA,
+  gl.canvas.width,
+  gl.canvas.height,
+  0,
+  gl.RGBA,
+  gl.UNSIGNED_BYTE,
+  null);
+gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
 
-  framebuffers.push(framebuffer);
-  textures.push(texture);
+gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0);
+
+if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE) {
+  console.error('Framebuffer is not complete');
 }
+
+framebuffers.push(framebuffer);
+textures.push(texture);
+
+
+// set texture2
+framebuffer = gl.createFramebuffer();
+gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
+
+texture = gl.createTexture();
+gl.activeTexture(gl.TEXTURE0 + getTextureIndexAndIncrease());
+textureIndices.push(textureIndex);
+gl.bindTexture(gl.TEXTURE_2D, texture);
+gl.texImage2D(gl.TEXTURE_2D,
+  0,
+  gl.RGBA,
+  gl.canvas.width,
+  gl.canvas.height,
+  0,
+  gl.RGBA,
+  gl.UNSIGNED_BYTE,
+  null);
+gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+
+gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0);
+
+if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE) {
+  console.error('Framebuffer is not complete');
+}
+
+framebuffers.push(framebuffer);
+textures.push(texture);
+
+////////
 
 gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 
@@ -190,97 +239,90 @@ function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+
+
+const vertexShaderSource = createShader(gl, gl.VERTEX_SHADER, vertexShader);
+const fragmentShaderSource = createShader(gl, gl.FRAGMENT_SHADER, fragmentShader);
+
+const program = createProgram(gl, vertexShaderSource, fragmentShaderSource);
+
+
+gl.useProgram(program);
+
+// Full screen quad vertices (triangle strip)
+const vertices = new Float32Array([
+  -1.0, -1.0, // Bottom-left
+  1.0, -1.0, // Bottom-right
+  -1.0, 1.0, // Top-left
+  1.0, 1.0  // Top-right
+]);
+
+// Create and bind vertex array object (VAO)
+const vao = gl.createVertexArray();
+gl.bindVertexArray(vao);
+
+// Create vertex buffer
+const vertexBuffer = gl.createBuffer();
+gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+
+// Bind vertex attributes
+const positionLocation = gl.getAttribLocation(program, 'position');
+gl.enableVertexAttribArray(positionLocation);
+gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
+
+// Unbind VAO
+gl.bindVertexArray(null);
+
 // Render
 async function render(now, frameNumber) {
 
   // Divide the screen into smaller quads
   // const quadSize = 32; // Size of each small quad (adjust as needed)
   const numQuadsX = Math.ceil(gl.canvas.width / quadSize);
-  console.log("🚀 ~ render ~ numQuadsX:", numQuadsX)
   const numQuadsY = Math.ceil(gl.canvas.height / quadSize);
-  console.log("🚀 ~ render ~ numQuadsY:", numQuadsY)
 
-  const vertexShaderSource = createShader(gl, gl.VERTEX_SHADER, vertexShader);
-  const fragmentShaderSource = createShader(gl, gl.FRAGMENT_SHADER, fragmentShader);
-
-  const program = createProgram(gl, vertexShaderSource, fragmentShaderSource);
-  
-  
-  gl.useProgram(program);
 
   //function uploadTexture(gl, program, data, name, width, height, index)
-  uploadTexture(gl, program, coordinates, 'coordinatesTexture', (coordinates.length / 3), 1, 0);
-  uploadTexture(gl, program, normals, 'normalsTexture', (normals.length / 3), 1, 1);
-  uploadTexture(gl, program, colors, 'colorsTexture', (colors.length / 3), 1, 2);
-  uploadTexture(gl, program, emissions, 'emissionsTexture', (emissions.length / 3), 1, 3);
-  uploadTexture(gl, program, lightIndices, 'lightIndicesTexture', (lightIndices.length / 3), 1, 4);
+  uploadTexture(gl, program, coordinates, 'coordinatesTexture', (coordinates.length / 3), 1, getTextureIndexAndIncrease());
+  uploadTexture(gl, program, normals, 'normalsTexture', (normals.length / 3), 1, getTextureIndexAndIncrease());
+  uploadTexture(gl, program, colors, 'colorsTexture', (colors.length / 3), 1, getTextureIndexAndIncrease());
+  uploadTexture(gl, program, emissions, 'emissionsTexture', (emissions.length / 3), 1, getTextureIndexAndIncrease());
+  uploadTexture(gl, program, lightIndices, 'lightIndicesTexture', (lightIndices.length / 3), 1, getTextureIndexAndIncrease());
 
   // Set uniforms
-  const windowSizeLocation = gl.getUniformLocation(program, 'windowSize');
-  const aspectRatioLocation = gl.getUniformLocation(program, 'aspectRatio');
-  const cameraSourceLocation = gl.getUniformLocation(program, 'cameraSource');
-  const cameraDirectionLocation = gl.getUniformLocation(program, 'cameraDirection');
-  const cameraUpLocation = gl.getUniformLocation(program, 'cameraUp');
-  const cameraRightLocation = gl.getUniformLocation(program, 'cameraRight');
-  const cameraLeftBottomLocation = gl.getUniformLocation(program, 'cameraLeftBottom');
-  const vertexCountLocation = gl.getUniformLocation(program, 'vertexCount');
-  const triangleCountLocation = gl.getUniformLocation(program, 'triangleCount');
-  const lightIndicesCountLocation = gl.getUniformLocation(program, 'lightIndicesCount');
-  const timestampLocation = gl.getUniformLocation(program, 'timestamp');
-  const maxPathLengthLocation = gl.getUniformLocation(program, 'maxPathLength');
-  const sampleCountLocation = gl.getUniformLocation(program, 'sampleCount');
-  const frameNumberLocation = gl.getUniformLocation(program, 'frameNumber');
-  const totalFramesLocation = gl.getUniformLocation(program, 'totalFrames');
   const quadXLocation = gl.getUniformLocation(program, 'quadX');
   const quadYLocation = gl.getUniformLocation(program, 'quadY');
-  const quadSizeLocation = gl.getUniformLocation(program, 'quadSize');
 
 
-  gl.uniform2f(windowSizeLocation, width, height);
-  gl.uniform1f(aspectRatioLocation, width / height);
-  gl.uniform3f(cameraSourceLocation, cameraSource.x, cameraSource.y, cameraSource.z);
-  gl.uniform3f(cameraDirectionLocation, cameraDirection.x, cameraDirection.y, cameraDirection.z);
-  gl.uniform3f(cameraUpLocation, cameraUp.x, cameraUp.y, cameraUp.z);
-  gl.uniform3f(cameraRightLocation, cameraRight.x, cameraRight.y, cameraRight.z);
-  gl.uniform3f(cameraLeftBottomLocation, cameraLeftBottom.x, cameraLeftBottom.y, cameraLeftBottom.z);
-  gl.uniform1i(vertexCountLocation, parseInt(coordinates.length / 3));
-  gl.uniform1i(triangleCountLocation, triangleCount);
-  gl.uniform1i(lightIndicesCountLocation, lightIndices.length);
-  gl.uniform1i(timestampLocation, now);
-  gl.uniform1i(maxPathLengthLocation, maxPathLength);
-  gl.uniform1i(sampleCountLocation, sampleCount);
-  gl.uniform1i(frameNumberLocation, frameNumber);
-  gl.uniform1i(totalFramesLocation, frames);
-  gl.uniform1i(quadSizeLocation, quadSize);
+  gl.uniform2f(gl.getUniformLocation(program, 'windowSize'), width, height);
+  gl.uniform1f(gl.getUniformLocation(program, 'aspectRatio'), width / height);
+  gl.uniform3f(gl.getUniformLocation(program, 'cameraSource'), cameraSource.x, cameraSource.y, cameraSource.z);
+  gl.uniform3f(gl.getUniformLocation(program, 'cameraDirection'), cameraDirection.x, cameraDirection.y, cameraDirection.z);
+  gl.uniform3f(gl.getUniformLocation(program, 'cameraUp'), cameraUp.x, cameraUp.y, cameraUp.z);
+  gl.uniform3f(gl.getUniformLocation(program, 'cameraRight'), cameraRight.x, cameraRight.y, cameraRight.z);
+  gl.uniform3f(gl.getUniformLocation(program, 'cameraLeftBottom'), cameraLeftBottom.x, cameraLeftBottom.y, cameraLeftBottom.z);
+  gl.uniform1i(gl.getUniformLocation(program, 'vertexCount'), parseInt(coordinates.length / 3));
+  gl.uniform1i(gl.getUniformLocation(program, 'triangleCount'), triangleCount);
+  gl.uniform1i(gl.getUniformLocation(program, 'lightIndicesCount'), lightIndices.length);
+  gl.uniform1i(gl.getUniformLocation(program, 'timestamp'), now);
+  gl.uniform1i(gl.getUniformLocation(program, 'maxPathLength'), maxPathLength);
+  gl.uniform1i(gl.getUniformLocation(program, 'sampleCount'), sampleCount);
+  gl.uniform1i(gl.getUniformLocation(program, 'frameNumber'), frameNumber);
+  gl.uniform1i(gl.getUniformLocation(program, 'totalFrames'), frames);
 
-  // Full screen quad vertices (triangle strip)
-  const vertices = new Float32Array([
-    -1.0, -1.0, // Bottom-left
-    1.0, -1.0, // Bottom-right
-    -1.0, 1.0, // Top-left
-    1.0, 1.0  // Top-right
-  ]);
-
-  // Create and bind vertex array object (VAO)
-  const vao = gl.createVertexArray();
-  gl.bindVertexArray(vao);
-
-  // Create vertex buffer
-  const vertexBuffer = gl.createBuffer();
-  gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
-  gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
-
-  // Bind vertex attributes
-  const positionLocation = gl.getAttribLocation(program, 'position');
-  gl.enableVertexAttribArray(positionLocation);
-  gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
-
-  // Unbind VAO
-  gl.bindVertexArray(null);
+  gl.uniform1i(gl.getUniformLocation(program, 'quadSize'), quadSize);
 
   // Determine the current and previous framebuffers
   const currentFramebuffer = framebuffers[frameNumber % 2];
   const previousTexture = textures[(frameNumber + 1) % 2];
+
+  // Set the previous frame's texture as an input
+  const previousFrameTextureLocation = gl.getUniformLocation(program, 'previousFrameTexture');
+  gl.activeTexture(gl.TEXTURE0 + textureIndices[0]);
+  gl.bindTexture(gl.TEXTURE_2D, previousTexture);
+  gl.uniform1i(previousFrameTextureLocation, textureIndices[0]);
+
 
   // Bind the current framebuffer for rendering
   gl.bindFramebuffer(gl.FRAMEBUFFER, currentFramebuffer);
@@ -303,12 +345,14 @@ async function render(now, frameNumber) {
 
       // Set the viewport to the current quad
       gl.viewport(offsetX, offsetY, viewportWidth, viewportHeight);
+      // gl.viewport(offsetX, offsetY, quadSize, quadSize);
 
       // Render the quad
       gl.useProgram(program);
       gl.bindVertexArray(vao);
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-      gl.finish();
+      // gl.finish();
+      gl.flush();
       await sleep(SLEEP_TIME_BETWEEN_QUADS);
     }
   }
@@ -324,18 +368,24 @@ async function render(now, frameNumber) {
   gl.useProgram(program);
 
   // Set the current framebuffer's texture as an input
-  gl.activeTexture(gl.TEXTURE0);
+  gl.activeTexture(gl.TEXTURE0 + textureIndices[1]);
   gl.bindTexture(gl.TEXTURE_2D, textures[frameNumber % 2]);
 
   // Draw the final image to the screen
   gl.bindVertexArray(vao);
   gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+  // Call this after each significant WebGL call
+  checkGLError();
+
+  gl.flush();
   gl.bindVertexArray(null);
 
 }
 
 const fpsElem = document.querySelector("#fps");
 const avgFpsElem = document.querySelector("#avg-fps");
+
+// ---------------------------------------------------------------------------------
 
 async function renderAsync(times) {
 
@@ -346,7 +396,6 @@ async function renderAsync(times) {
   // stats.showPanel(0); // 0: fps, 1: ms, 2: mb, 3+: custom
   // document.body.appendChild(stats.dom);
 
-  // Render each frame with a different color
   for (let i = 0; i < times; i++) {
 
     // stats.begin();
@@ -399,6 +448,16 @@ await renderAsync(frames);
 // -------------------------------------------------------------------------------------
 // -------------------------------------------------------------------------------------
 // -------------------------------------------------------------------------------------
+
+function checkGLError() {
+  const error = gl.getError();
+  if (error !== gl.NO_ERROR) {
+    console.error('WebGL Error:', error);
+  }
+}
+
+
+
 
 function createShader(gl, type, source) {
   const shader = gl.createShader(type);
