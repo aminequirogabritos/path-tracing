@@ -1,13 +1,13 @@
 const PI_NUMBER = 3.14159265359;
 const SLEEP_TIME = 500;
-const SLEEP_TIME_BETWEEN_QUADS = 100;
+const SLEEP_TIME_BETWEEN_QUADS = 200;
 
 
 let frames = 3;
 let maxPathLength = 5;
 let sampleCount = 5;
-let canvasSize = 64;
-let quadSize = 16;
+let canvasSize = 1024;
+let quadSize = 32;
 
 // ------------------------------------------------------------------
 
@@ -19,8 +19,10 @@ import Stats from 'three/examples/jsm/libs/stats.module.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 // Load vertex and fragment shaders
-import vertexShader from './shaders/vertexShader.glsl';
-import fragmentShader from './shaders/fragmentShader2.glsl';
+import vertexShaderPathTracing from './shaders/vertexShader.glsl';
+import vertexShaderOutput from './shaders/vertexShader.glsl';
+import fragmentShaderPathTracing from './shaders/fragmentShader_pathTracing.glsl';
+import fragmentShaderOutput from './shaders/fragmentShader_output.glsl';
 // import { texture } from 'three/examples/jsm/nodes/Nodes.js';
 // import { PI, floor } from 'three/examples/jsm/nodes/Nodes.js';
 
@@ -101,8 +103,12 @@ if (!gl) {
   console.error('WebGL 2 not supported');
 }
 
-gl.getParameter(gl.MAX_TEXTURE_SIZE)
-console.log("🚀 ~ gl.getParameter(gl.MAX_TEXTURE_SIZE):", gl.getParameter(gl.MAX_TEXTURE_SIZE))
+const maxTextureSize = gl.getParameter(gl.MAX_TEXTURE_SIZE);
+console.log("🚀 ~ maxTextureSize:", maxTextureSize)
+if (512 > maxTextureSize) {
+  console.error('El tamaño de la textura excede el tamaño máximo soportado:', maxTextureSize);
+}
+
 
 var width = gl.canvas.clientWidth;
 var height = gl.canvas.clientHeight;
@@ -171,65 +177,34 @@ let framebuffers = [];
 let textures = [];
 let textureIndices = [];
 
+// Create framebuffer and texture
+function createFramebufferAndTexture(gl, width, height) {
+  let framebuffer = gl.createFramebuffer();
+  gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
 
-//set texture1
-let framebuffer = gl.createFramebuffer();
-gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
+  let texture = gl.createTexture();
+  let textureIndex = getTextureIndexAndIncrease();
+  gl.activeTexture(gl.TEXTURE0 + textureIndex);
+  gl.bindTexture(gl.TEXTURE_2D, texture);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
 
-let texture = gl.createTexture();
-gl.activeTexture(gl.TEXTURE0 + getTextureIndexAndIncrease());
-textureIndices.push(textureIndex);
-gl.bindTexture(gl.TEXTURE_2D, texture);
-gl.texImage2D(gl.TEXTURE_2D,
-  0,
-  gl.RGBA,
-  gl.canvas.width,
-  gl.canvas.height,
-  0,
-  gl.RGBA,
-  gl.UNSIGNED_BYTE,
-  null);
-gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0);
 
-gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0);
+  if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE) {
+    console.error('Framebuffer is not complete');
+  }
 
-if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE) {
-  console.error('Framebuffer is not complete');
+  framebuffers.push(framebuffer);
+  textures.push(texture);
+  textureIndices.push(textureIndex);
 }
 
-framebuffers.push(framebuffer);
-textures.push(texture);
+createFramebufferAndTexture(gl, width, height);
+createFramebufferAndTexture(gl, width, height);
+// set textureOutput
 
-
-// set texture2
-framebuffer = gl.createFramebuffer();
-gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
-
-texture = gl.createTexture();
-gl.activeTexture(gl.TEXTURE0 + getTextureIndexAndIncrease());
-textureIndices.push(textureIndex);
-gl.bindTexture(gl.TEXTURE_2D, texture);
-gl.texImage2D(gl.TEXTURE_2D,
-  0,
-  gl.RGBA,
-  gl.canvas.width,
-  gl.canvas.height,
-  0,
-  gl.RGBA,
-  gl.UNSIGNED_BYTE,
-  null);
-gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-
-gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0);
-
-if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE) {
-  console.error('Framebuffer is not complete');
-}
-
-framebuffers.push(framebuffer);
-textures.push(texture);
 
 ////////
 
@@ -241,13 +216,17 @@ function sleep(ms) {
 
 
 
-const vertexShaderSource = createShader(gl, gl.VERTEX_SHADER, vertexShader);
-const fragmentShaderSource = createShader(gl, gl.FRAGMENT_SHADER, fragmentShader);
+const vertexShaderPathTracingSource = createShader(gl, gl.VERTEX_SHADER, vertexShaderPathTracing);
+const vertexShaderOutputSource = createShader(gl, gl.VERTEX_SHADER, vertexShaderOutput);
 
-const program = createProgram(gl, vertexShaderSource, fragmentShaderSource);
+const fragmentShaderPathTracingSource = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderPathTracing);
+const fragmentShaderOutputSource = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderOutput);
+
+const programPathTracing = createProgram(gl, vertexShaderPathTracingSource, fragmentShaderPathTracingSource);
+const programOutput = createProgram(gl, vertexShaderOutputSource, fragmentShaderOutputSource);
 
 
-gl.useProgram(program);
+// gl.useProgram(programPathTracing);
 
 // Full screen quad vertices (triangle strip)
 const vertices = new Float32Array([
@@ -258,8 +237,8 @@ const vertices = new Float32Array([
 ]);
 
 // Create and bind vertex array object (VAO)
-const vao = gl.createVertexArray();
-gl.bindVertexArray(vao);
+const vaoPathTracing = gl.createVertexArray();
+gl.bindVertexArray(vaoPathTracing);
 
 // Create vertex buffer
 const vertexBuffer = gl.createBuffer();
@@ -267,66 +246,80 @@ gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
 gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
 
 // Bind vertex attributes
-const positionLocation = gl.getAttribLocation(program, 'position');
-gl.enableVertexAttribArray(positionLocation);
-gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
+const positionLocationPathTracing = gl.getAttribLocation(programPathTracing, 'position');
+gl.enableVertexAttribArray(positionLocationPathTracing);
+gl.vertexAttribPointer(positionLocationPathTracing, 2, gl.FLOAT, false, 0, 0);
 
-// Unbind VAO
+
+// Create and bind VAO for simple program
+const vaoOutput = gl.createVertexArray();
+gl.bindVertexArray(vaoOutput);
+
+const simpleVertexBuffer = gl.createBuffer();
+gl.bindBuffer(gl.ARRAY_BUFFER, simpleVertexBuffer);
+gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+
+const positionLocationOutput = gl.getAttribLocation(programOutput, 'position');
+gl.enableVertexAttribArray(positionLocationOutput);
+gl.vertexAttribPointer(positionLocationOutput, 2, gl.FLOAT, false, 0, 0);
+
 gl.bindVertexArray(null);
 
 // Render
 async function render(now, frameNumber) {
 
+  gl.useProgram(programPathTracing);
+
   // Divide the screen into smaller quads
   // const quadSize = 32; // Size of each small quad (adjust as needed)
-  const numQuadsX = Math.ceil(gl.canvas.width / quadSize);
-  const numQuadsY = Math.ceil(gl.canvas.height / quadSize);
+  const numQuadsX = Math.ceil(width / quadSize);
+  const numQuadsY = Math.ceil(height / quadSize);
 
 
   //function uploadTexture(gl, program, data, name, width, height, index)
-  uploadTexture(gl, program, coordinates, 'coordinatesTexture', (coordinates.length / 3), 1, getTextureIndexAndIncrease());
-  uploadTexture(gl, program, normals, 'normalsTexture', (normals.length / 3), 1, getTextureIndexAndIncrease());
-  uploadTexture(gl, program, colors, 'colorsTexture', (colors.length / 3), 1, getTextureIndexAndIncrease());
-  uploadTexture(gl, program, emissions, 'emissionsTexture', (emissions.length / 3), 1, getTextureIndexAndIncrease());
-  uploadTexture(gl, program, lightIndices, 'lightIndicesTexture', (lightIndices.length / 3), 1, getTextureIndexAndIncrease());
+  uploadTexture(gl, programPathTracing, coordinates, 'coordinatesTexture', (coordinates.length / 3), 1, getTextureIndexAndIncrease());
+  uploadTexture(gl, programPathTracing, normals, 'normalsTexture', (normals.length / 3), 1, getTextureIndexAndIncrease());
+  uploadTexture(gl, programPathTracing, colors, 'colorsTexture', (colors.length / 3), 1, getTextureIndexAndIncrease());
+  uploadTexture(gl, programPathTracing, emissions, 'emissionsTexture', (emissions.length / 3), 1, getTextureIndexAndIncrease());
+  uploadTexture(gl, programPathTracing, lightIndices, 'lightIndicesTexture', (lightIndices.length / 3), 1, getTextureIndexAndIncrease());
 
   // Set uniforms
-  const quadXLocation = gl.getUniformLocation(program, 'quadX');
-  const quadYLocation = gl.getUniformLocation(program, 'quadY');
+  const quadXLocation = gl.getUniformLocation(programPathTracing, 'quadX');
+  const quadYLocation = gl.getUniformLocation(programPathTracing, 'quadY');
 
 
-  gl.uniform2f(gl.getUniformLocation(program, 'windowSize'), width, height);
-  gl.uniform1f(gl.getUniformLocation(program, 'aspectRatio'), width / height);
-  gl.uniform3f(gl.getUniformLocation(program, 'cameraSource'), cameraSource.x, cameraSource.y, cameraSource.z);
-  gl.uniform3f(gl.getUniformLocation(program, 'cameraDirection'), cameraDirection.x, cameraDirection.y, cameraDirection.z);
-  gl.uniform3f(gl.getUniformLocation(program, 'cameraUp'), cameraUp.x, cameraUp.y, cameraUp.z);
-  gl.uniform3f(gl.getUniformLocation(program, 'cameraRight'), cameraRight.x, cameraRight.y, cameraRight.z);
-  gl.uniform3f(gl.getUniformLocation(program, 'cameraLeftBottom'), cameraLeftBottom.x, cameraLeftBottom.y, cameraLeftBottom.z);
-  gl.uniform1i(gl.getUniformLocation(program, 'vertexCount'), parseInt(coordinates.length / 3));
-  gl.uniform1i(gl.getUniformLocation(program, 'triangleCount'), triangleCount);
-  gl.uniform1i(gl.getUniformLocation(program, 'lightIndicesCount'), lightIndices.length);
-  gl.uniform1i(gl.getUniformLocation(program, 'timestamp'), now);
-  gl.uniform1i(gl.getUniformLocation(program, 'maxPathLength'), maxPathLength);
-  gl.uniform1i(gl.getUniformLocation(program, 'sampleCount'), sampleCount);
-  gl.uniform1i(gl.getUniformLocation(program, 'frameNumber'), frameNumber);
-  gl.uniform1i(gl.getUniformLocation(program, 'totalFrames'), frames);
+  gl.uniform2f(gl.getUniformLocation(programPathTracing, 'windowSize'), width, height);
+  gl.uniform1f(gl.getUniformLocation(programPathTracing, 'aspectRatio'), width / height);
+  gl.uniform3f(gl.getUniformLocation(programPathTracing, 'cameraSource'), cameraSource.x, cameraSource.y, cameraSource.z);
+  gl.uniform3f(gl.getUniformLocation(programPathTracing, 'cameraDirection'), cameraDirection.x, cameraDirection.y, cameraDirection.z);
+  gl.uniform3f(gl.getUniformLocation(programPathTracing, 'cameraUp'), cameraUp.x, cameraUp.y, cameraUp.z);
+  gl.uniform3f(gl.getUniformLocation(programPathTracing, 'cameraRight'), cameraRight.x, cameraRight.y, cameraRight.z);
+  gl.uniform3f(gl.getUniformLocation(programPathTracing, 'cameraLeftBottom'), cameraLeftBottom.x, cameraLeftBottom.y, cameraLeftBottom.z);
+  gl.uniform1i(gl.getUniformLocation(programPathTracing, 'vertexCount'), parseInt(coordinates.length / 3));
+  gl.uniform1i(gl.getUniformLocation(programPathTracing, 'triangleCount'), triangleCount);
+  gl.uniform1i(gl.getUniformLocation(programPathTracing, 'lightIndicesCount'), lightIndices.length);
+  gl.uniform1i(gl.getUniformLocation(programPathTracing, 'timestamp'), now);
+  gl.uniform1i(gl.getUniformLocation(programPathTracing, 'maxPathLength'), maxPathLength);
+  gl.uniform1i(gl.getUniformLocation(programPathTracing, 'sampleCount'), sampleCount);
+  gl.uniform1i(gl.getUniformLocation(programPathTracing, 'frameNumber'), frameNumber);
+  gl.uniform1i(gl.getUniformLocation(programPathTracing, 'totalFrames'), frames);
 
-  gl.uniform1i(gl.getUniformLocation(program, 'quadSize'), quadSize);
+  gl.uniform1i(gl.getUniformLocation(programPathTracing, 'quadSize'), quadSize);
 
   // Determine the current and previous framebuffers
   const currentFramebuffer = framebuffers[frameNumber % 2];
   const previousTexture = textures[(frameNumber + 1) % 2];
 
   // Set the previous frame's texture as an input
-  const previousFrameTextureLocation = gl.getUniformLocation(program, 'previousFrameTexture');
-  gl.activeTexture(gl.TEXTURE0 + textureIndices[0]);
+  const previousFrameTextureLocation = gl.getUniformLocation(programPathTracing, 'previousFrameTexture');
+  gl.activeTexture(gl.TEXTURE0 + textureIndices[frameNumber % 2]);
   gl.bindTexture(gl.TEXTURE_2D, previousTexture);
-  gl.uniform1i(previousFrameTextureLocation, textureIndices[0]);
+  gl.uniform1i(previousFrameTextureLocation, textureIndices[frameNumber % 2]);
 
 
   // Bind the current framebuffer for rendering
   gl.bindFramebuffer(gl.FRAMEBUFFER, currentFramebuffer);
-  gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+  gl.viewport(0, 0, width, height);
   gl.clearColor(0.0, 0.0, 0.0, 1.0);
   gl.clear(gl.COLOR_BUFFER_BIT);
 
@@ -348,8 +341,8 @@ async function render(now, frameNumber) {
       // gl.viewport(offsetX, offsetY, quadSize, quadSize);
 
       // Render the quad
-      gl.useProgram(program);
-      gl.bindVertexArray(vao);
+      gl.useProgram(programPathTracing);
+      gl.bindVertexArray(vaoPathTracing);
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
       // gl.finish();
       gl.flush();
@@ -357,27 +350,23 @@ async function render(now, frameNumber) {
     }
   }
 
-  // Unbind the framebuffer
   gl.bindFramebuffer(gl.FRAMEBUFFER, null);
   gl.bindVertexArray(null);
 
-  // Bind the default framebuffer (screen) and draw the final image
-  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-  gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+  gl.useProgram(programOutput);
+  gl.bindVertexArray(vaoOutput);
+  
+  const simpleTexture = textures[frameNumber % 2];
+  const simpleTextureLocation = gl.getUniformLocation(programOutput, 'u_texture');
+
+  gl.activeTexture(gl.TEXTURE0 + textureIndices[frameNumber % 2]);
+  gl.bindTexture(gl.TEXTURE_2D, simpleTexture);
+  gl.uniform1i(simpleTextureLocation, textureIndices[frameNumber % 2]);
+
+  gl.viewport(0, 0, width, height);
   gl.clear(gl.COLOR_BUFFER_BIT);
-  gl.useProgram(program);
-
-  // Set the current framebuffer's texture as an input
-  gl.activeTexture(gl.TEXTURE0 + textureIndices[1]);
-  gl.bindTexture(gl.TEXTURE_2D, textures[frameNumber % 2]);
-
-  // Draw the final image to the screen
-  gl.bindVertexArray(vao);
   gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-  // Call this after each significant WebGL call
-  checkGLError();
 
-  gl.flush();
   gl.bindVertexArray(null);
 
 }
