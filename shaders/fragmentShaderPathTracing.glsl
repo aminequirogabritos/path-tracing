@@ -292,7 +292,9 @@ void main() {
   vec4 previousColor = vec4(texture(previousFrameTexture, tex_coord).rgb, 1.0f);
 
   // Blend the current color with the previous color
-  float blendFactor = 1.0f / float(frameNumber + 1);
+  // float blendFactor = 0.5;
+  // float blendFactor = 1.0f / float(frameNumber + 1);
+  float blendFactor = 1.0 - (float(frameNumber)) / ((float(totalFrames) + 1.0) * 2.0);
   vec4 blendedColor = mix(previousColor, currentColor, blendFactor);
   // vec4 blendedColor = mix(previousColor, currentColor, 0.2);
 

@@ -3,11 +3,11 @@ const SLEEP_TIME = 500;
 const SLEEP_TIME_BETWEEN_QUADS = 200;
 
 
-let frames = 3;
+let frames = 10;
 let maxPathLength = 5;
 let sampleCount = 5;
-let canvasSize = 1024;
-let quadSize = 32;
+let canvasSize = 512;
+let quadSize = 27;
 
 // ------------------------------------------------------------------
 
@@ -21,8 +21,8 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 // Load vertex and fragment shaders
 import vertexShaderPathTracing from './shaders/vertexShader.glsl';
 import vertexShaderOutput from './shaders/vertexShader.glsl';
-import fragmentShaderPathTracing from './shaders/fragmentShader_pathTracing.glsl';
-import fragmentShaderOutput from './shaders/fragmentShader_output.glsl';
+import fragmentShaderPathTracing from './shaders/fragmentShaderPathTracing.glsl';
+import fragmentShaderOutput from './shaders/fragmentShaderOutput.glsl';
 // import { texture } from 'three/examples/jsm/nodes/Nodes.js';
 // import { PI, floor } from 'three/examples/jsm/nodes/Nodes.js';
 
@@ -271,7 +271,6 @@ async function render(now, frameNumber) {
   gl.useProgram(programPathTracing);
 
   // Divide the screen into smaller quads
-  // const quadSize = 32; // Size of each small quad (adjust as needed)
   const numQuadsX = Math.ceil(width / quadSize);
   const numQuadsY = Math.ceil(height / quadSize);
 
