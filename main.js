@@ -9,7 +9,15 @@ let sampleCount = 5;
 let canvasSize = 512;
 let quadSize = 27;
 
+
+// classes
+
+import * as UniformType from './src/uniform';
+import Uniform from './src/uniform';
+
 // ------------------------------------------------------------------
+
+
 
 import * as THREE from 'three';
 import Stats from 'three/examples/jsm/libs/stats.module.js';
@@ -40,6 +48,10 @@ let normals = [];
 let colors = [];
 let emissions = [];
 let lightIndices = [];
+
+
+let uniforms = [];
+
 
 let startTime, endTime;
 
@@ -177,29 +189,22 @@ let framebuffers = [];
 let textures = [];
 let textureIndices = [];
 
-// Create framebuffer and texture
-function createFramebufferAndTexture(gl, width, height) {
-  let framebuffer = gl.createFramebuffer();
-  gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
 
-  let texture = gl.createTexture();
-  let textureIndex = getTextureIndexAndIncrease();
-  gl.activeTexture(gl.TEXTURE0 + textureIndex);
-  gl.bindTexture(gl.TEXTURE_2D, texture);
-  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
 
-  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0);
 
-  if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE) {
-    console.error('Framebuffer is not complete');
-  }
+uniforms.push(new Uniform('windowSize', [width, height], gl, UniformType.type2f));
+uniforms.push(new Uniform('aspectRatio', [width / height], gl, UniformType.type1f));
+uniforms.push(new Uniform('cameraSource', [cameraSource.x, cameraSource.y, cameraSource.z], gl, UniformType.type3f));
+uniforms.push(new Uniform('cameraDirection', [cameraDirection.x, cameraDirection.y, cameraDirection.z], gl, UniformType.type3f));
+uniforms.push(new Uniform('cameraUp', [cameraUp.x, cameraUp.y, cameraUp.z], gl, UniformType.type3f));
+uniforms.push(new Uniform('cameraRight', [cameraRight.x, cameraRight.y, cameraRight.z], gl, UniformType.type3f));
+uniforms.push(new Uniform('cameraLeftBottom', [cameraLeftBottom.x, cameraLeftBottom.y, cameraLeftBottom.z], gl, UniformType.type3f));
+uniforms.push(new Uniform('vertexCount', [parseInt(coordinates.length / 3)], gl, UniformType.type1i));
+uniforms.push(new Uniform('triangleCount', [triangleCount], gl, UniformType.type1i));
+uniforms.push(new Uniform('lightIndicesCount', [triangleCount], gl, UniformType.type1i));
+uniforms.push(new Uniform('lightIndicesCount', [triangleCount], gl, UniformType.type1i));
 
-  framebuffers.push(framebuffer);
-  textures.push(texture);
-  textureIndices.push(textureIndex);
-}
+
 
 createFramebufferAndTexture(gl, width, height);
 createFramebufferAndTexture(gl, width, height);
@@ -221,6 +226,9 @@ const vertexShaderOutputSource = createShader(gl, gl.VERTEX_SHADER, vertexShader
 
 const fragmentShaderPathTracingSource = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderPathTracing);
 const fragmentShaderOutputSource = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderOutput);
+
+
+
 
 const programPathTracing = createProgram(gl, vertexShaderPathTracingSource, fragmentShaderPathTracingSource);
 const programOutput = createProgram(gl, vertexShaderOutputSource, fragmentShaderOutputSource);
@@ -354,7 +362,7 @@ async function render(now, frameNumber) {
 
   gl.useProgram(programOutput);
   gl.bindVertexArray(vaoOutput);
-  
+
   const simpleTexture = textures[frameNumber % 2];
   const simpleTextureLocation = gl.getUniformLocation(programOutput, 'u_texture');
 
@@ -507,11 +515,30 @@ function uploadTexture(gl, program, data, name, width, height, index) {
 
 }
 
-function createBuffer() {
 
+// Create framebuffer and texture
+function createFramebufferAndTexture(gl, width, height) {
+  let framebuffer = gl.createFramebuffer();
+  gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
+
+  let texture = gl.createTexture();
+  let textureIndex = getTextureIndexAndIncrease();
+  gl.activeTexture(gl.TEXTURE0 + textureIndex);
+  gl.bindTexture(gl.TEXTURE_2D, texture);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+
+  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0);
+
+  if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE) {
+    console.error('Framebuffer is not complete');
+  }
+
+  framebuffers.push(framebuffer);
+  textures.push(texture);
+  textureIndices.push(textureIndex);
 }
-
-
 
 
 async function loadModel(url) {
