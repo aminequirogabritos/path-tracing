@@ -1,7 +1,7 @@
 #version 300 es
 #define M_PI 3.141592653589793238462643
 #define M_1_PI 0.3183098861837907
-#define SCALING_FACTOR 0.1f
+#define SCALING_FACTOR 1.0f
 
 #ifdef GL_ES
 precision highp float;
@@ -294,7 +294,8 @@ void main() {
   // Blend the current color with the previous color
   // float blendFactor = 0.5;
   // float blendFactor = 1.0f / float(frameNumber + 1);
-  float blendFactor = 1.0 - (float(frameNumber)) / ((float(totalFrames) + 1.0) * 2.0);
+  // float blendFactor = 1.0 - (float(frameNumber)) / ((float(totalFrames) + 1.0) * 2.0);
+  float blendFactor = 1.0 - (float(frameNumber)) / ((float(totalFrames)));
   vec4 blendedColor = mix(previousColor, currentColor, blendFactor);
   // vec4 blendedColor = mix(previousColor, currentColor, 0.2);
 
