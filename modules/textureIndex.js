@@ -2,7 +2,6 @@ const TextureIndex = (() => {
     let textureIndex = 0;
 
     const getNextTextureIndex = () => {
-        console.log("🚀 ~ getNextTextureIndex ~ textureIndex:", textureIndex)
         return textureIndex++;
     }
 

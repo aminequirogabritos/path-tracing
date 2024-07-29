@@ -1,7 +1,7 @@
 #version 300 es
 #define M_PI 3.141592653589793238462643
 #define M_1_PI 0.3183098861837907
-#define SCALING_FACTOR 1.0f
+#define SCALING_FACTOR 0.1f
 
 #ifdef GL_ES
 precision highp float;
