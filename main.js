@@ -1,15 +1,15 @@
 const PI_NUMBER = 3.14159265359;
 const SLEEP_TIME = 500;
-const SLEEP_TIME_BETWEEN_QUADS = 200;
+const SLEEP_TIME_BETWEEN_QUADS = 50;
 
 
 let frames = 50;
 let maxPathLength = 5;
 let sampleCount = 5;
-let canvasSize = 256;
-let quadSize = 32;
+let canvasSize = 512;
+let quadSize = 64;
 let urlSave = "image/png/v1";
-let fileNameSuffix = "v1";
+let fileNameSuffix = "v7_gammaCorrection";
 
 // ------------------------------------------------------------------
 
@@ -61,10 +61,10 @@ try {
   console.log("b4 loading");
   let prevTS = performance.
     model = await loadModel(
-      // '/resources/my_cornell_2/gltf/my_cornell_2.gltf'
+      '/resources/my_cornell_2/gltf/my_cornell_2.gltf'
       // '/resources/bedroom1/customGLTF/bedroom1.gltf'
       // '/resources/bedroom2/gltf/bedroom2.gltf'
-      '/resources/bedroom2/gltf/v3/bedroom2.gltf'
+      // '/resources/bedroom2/gltf/v3/bedroom2.gltf'
       // '/resources/my_cornell_3/gltf/my_cornell_3.gltf'
       // '/resources/my_cornell_4/gltf/my_cornell_4.gltf'
       // '/resources/cornell2/gltf/scene.gltf'
@@ -88,10 +88,6 @@ const canvas = document.createElement('canvas');
 // canvas.height = canvasSize * 1;
 // canvas.width = canvasSize * 0.8;
 
-canvas.height = canvasSize;
-canvas.width = canvasSize;
-document.getElementById('canvas-container').appendChild(canvas);
-
 /* // Turn off automatic recovery
 canvas.set
 
@@ -113,25 +109,30 @@ if (512 > maxTextureSize) {
 }
 
 
+canvas.height = canvasSize;
+canvas.width = canvasSize;
+document.getElementById('canvas-container').appendChild(canvas);
+
 var width = gl.canvas.clientWidth;
 var height = gl.canvas.clientHeight;
 gl.canvas.width = width;
 gl.canvas.height = height;
 
-
-
 let cameraInstance = new Camera(50, width / height, 0.1, 1000);
 console.log("🚀 ~ camera:", cameraInstance)
 
 // room v3
-cameraInstance.translate('x', 12.4)
-cameraInstance.translate('z', -8)
-cameraInstance.lookAt(0, 0, 0);
+// cameraInstance.translate('x', 14)
+// cameraInstance.translate('z', -14)
+// cameraInstance.translate('y', 3)
+// cameraInstance.lookAt(0, 0, 0);
 
 
 //cornell room
-// cameraInstance.translate('x', 12.4)
-// cameraInstance.rotate('y', PI_NUMBER / 2);
+cameraInstance.translate('x', 12.4)
+cameraInstance.rotate('y', PI_NUMBER / 2);
+cameraInstance.lookAt(0, 0, 0);
+
 
 
 let camera = cameraInstance.getCamera();
@@ -473,7 +474,7 @@ function createProgram(gl, vertexShader, fragmentShader) {
 
 
 function uploadTexture(gl, program, data, name, width, height, index) {
-// console.log("🚀 ~ uploadTexture ~ index:", index)
+  // console.log("🚀 ~ uploadTexture ~ index:", index)
 
   // Create a texture.
   var texture = gl.createTexture();

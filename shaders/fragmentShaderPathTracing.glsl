@@ -1,7 +1,7 @@
 #version 300 es
 #define M_PI 3.141592653589793238462643
 #define M_1_PI 0.3183098861837907
-#define SCALING_FACTOR 0.1f
+#define SCALING_FACTOR 1.0f
 
 #ifdef GL_ES
 precision highp float;
@@ -288,20 +288,29 @@ void main() {
   currentColor.rgb /= float(sampleCount);
   currentColor.rgb = clamp(currentColor.rgb, 0.0f, 1.0f);
 
+  currentColor.rgb = clamp(currentColor.rgb, 0.0f, 1.0f);
+
   // Get the color from the previous frame
   vec4 previousColor = vec4(texture(previousFrameTexture, tex_coord).rgb, 1.0f);
+  previousColor.rgb = clamp(previousColor.rgb, 0.0f, 1.0f);
 
   // Blend the current color with the previous color
   // float blendFactor = 0.5;
   // float blendFactor = 1.0f / float(frameNumber + 1);
   // float blendFactor = 1.0 - (float(frameNumber)) / ((float(totalFrames) + 1.0) * 2.0);
-  float blendFactor = 1.0 - (float(frameNumber)) / ((float(totalFrames)));
+  float blendFactor = 1.0f - (float(frameNumber)) / ((float(totalFrames)));
   vec4 blendedColor = mix(previousColor, currentColor, blendFactor);
   // vec4 blendedColor = mix(previousColor, currentColor, 0.2);
 
     // Apply exposure control
 /*   vec3 finalColor = vec3(1.0) - exp(-blendedColor.rgb * 0.5); */
 
+  // outColor = vec4(blendedColor.rgb, 1.0f);
+  // blendedColor.rgb = clamp(blendedColor.rgb, 0.0f, 1.0f);
+
+
+
+  // vec3 gammaCorrectedColor = pow(blendedColor.rgb, vec3(1.0f / 2.2f));
   outColor = vec4(blendedColor.rgb, 1.0f);
 
 }
