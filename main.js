@@ -1,15 +1,15 @@
 const PI_NUMBER = 3.14159265359;
 const SLEEP_TIME = 500;
-const SLEEP_TIME_BETWEEN_QUADS = 50;
+const SLEEP_TIME_BETWEEN_QUADS = 200;
 
 
-let frames = 50;
+let frames = 5;
 let maxPathLength = 5;
 let sampleCount = 5;
-let canvasSize = 512;
-let quadSize = 64;
+let canvasSize = 128;
+let quadSize = 32;
 let urlSave = "image/png/v1";
-let fileNameSuffix = "v7_gammaCorrection";
+let fileNameSuffix = "v10_bedroom_yesHDRcorrectionAFTERgammaACES";
 
 // ------------------------------------------------------------------
 
@@ -61,10 +61,10 @@ try {
   console.log("b4 loading");
   let prevTS = performance.
     model = await loadModel(
-      '/resources/my_cornell_2/gltf/my_cornell_2.gltf'
+      // '/resources/my_cornell_2/gltf/my_cornell_2.gltf'
+      '/resources/bedroom2/gltf/v3/bedroom2.gltf'
       // '/resources/bedroom1/customGLTF/bedroom1.gltf'
       // '/resources/bedroom2/gltf/bedroom2.gltf'
-      // '/resources/bedroom2/gltf/v3/bedroom2.gltf'
       // '/resources/my_cornell_3/gltf/my_cornell_3.gltf'
       // '/resources/my_cornell_4/gltf/my_cornell_4.gltf'
       // '/resources/cornell2/gltf/scene.gltf'
@@ -119,19 +119,18 @@ gl.canvas.width = width;
 gl.canvas.height = height;
 
 let cameraInstance = new Camera(50, width / height, 0.1, 1000);
-console.log("🚀 ~ camera:", cameraInstance)
 
 // room v3
-// cameraInstance.translate('x', 14)
-// cameraInstance.translate('z', -14)
-// cameraInstance.translate('y', 3)
-// cameraInstance.lookAt(0, 0, 0);
+cameraInstance.translate('x', 14)
+cameraInstance.translate('z', -14)
+cameraInstance.translate('y', 3)
+cameraInstance.lookAt(0, 0, 0);
 
 
 //cornell room
-cameraInstance.translate('x', 12.4)
-cameraInstance.rotate('y', PI_NUMBER / 2);
-cameraInstance.lookAt(0, 0, 0);
+// cameraInstance.translate('x', 12.4)
+// cameraInstance.rotate('y', PI_NUMBER / 2);
+// cameraInstance.lookAt(0, 0, 0);
 
 
 
@@ -139,11 +138,6 @@ let camera = cameraInstance.getCamera();
 
 
 
-// camera.position.x += 16;
-// camera.position.y += 6.0;
-// camera.position.z -= 8;
-// camera.lookAt(0, 0, 0);
-// camera.rotateY(0.08);
 // const fpsElem = document.querySelector("#fps");
 
 // let then = 0;
@@ -319,7 +313,7 @@ async function render(now, frameNumber) {
   gl.bindVertexArray(null);
 
   // Save the rendered image to a file
-  readPixelsAndSave(gl, width, height, `frame_${frameNumber}_${fileNameSuffix}.png`, urlSave);
+  // readPixelsAndSave(gl, width, height, `frame_${frameNumber}_${fileNameSuffix}.png`, urlSave);
 
   TextureIndex.setTextureIndex(2);
 
@@ -611,8 +605,6 @@ async function loadModel(url) {
               let triangleNormal = new THREE.Vector3();
               triangle.getNormal(triangleNormal);
 
-              // const normal = new THREE.Vector3().crossVectors(edge1, edge2);
-              // normals.push(...[normal.x, normal.y, normal.z]);
               normals.push(...[triangleNormal.x, triangleNormal.y, triangleNormal.z]);
 
               // get triangle's color
@@ -621,11 +613,9 @@ async function loadModel(url) {
                 colors.push(...[color.r, color.g, color.b]); //TODO: opacidad?
               }
 
-              // get triangle's emission
-              if (child.name == "Light")
-                emissions.push(...[1.0, 1.0, 1.0]);
-              else
-                emissions.push(...[0.0, 0.0, 0.0]);
+              const emission = child.material.emissive;
+              console.log("🚀 ~ emission:", emission)
+              emissions.push(...[emission.r, emission.g, emission.b]);
             }
 
 
@@ -642,8 +632,8 @@ async function loadModel(url) {
             lightIndices.push(i / 3);
           }
         }
-        console.log("🚀 lightIndices:", lightIndices)
-        console.log("🌸 ~ triangleCount:", triangleCount)
+        // console.log("🚀 lightIndices:", lightIndices)
+        // console.log("🌸 ~ triangleCount:", triangleCount)
         // console.log("🚀 ~ colors:", colors)
 
 

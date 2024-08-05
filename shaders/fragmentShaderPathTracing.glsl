@@ -1,7 +1,8 @@
 #version 300 es
 #define M_PI 3.141592653589793238462643
 #define M_1_PI 0.3183098861837907
-#define SCALING_FACTOR 1.0f
+#define SCALING_FACTOR 0.1f
+// #define SCALING_FACTOR 1.0f
 
 #ifdef GL_ES
 precision highp float;
@@ -182,12 +183,15 @@ vec3 get_ray_radiance(vec3 origin, vec3 direction, inout uvec2 seed) {
     float t;
     Triangle triangle;
     if(ray_mesh_intersection(t, triangle, origin, direction)) {
-      radiance += throughput_weight * (triangle.emission * (SCALING_FACTOR));
 
-      if(triangle.emission.x > 0.0f || triangle.emission.y > 0.0f || triangle.emission.z > 0.0f) {
-        // return triangle.color;
+      // If it's the first step and the triangle is emmissive - it's a light, stop the algorithm
+      if(i == 0 && (triangle.emission.x > 0.0f || triangle.emission.y > 0.0f || triangle.emission.z > 0.0f)) {
+        radiance = triangle.color * triangle.emission;
+        return radiance;
         break;
       }
+
+      radiance += throughput_weight * (triangle.emission * (SCALING_FACTOR));
 
       vec3 rayTriangleIntersectionPoint = origin + t * direction;
 
@@ -232,7 +236,6 @@ vec3 get_ray_radiance(vec3 origin, vec3 direction, inout uvec2 seed) {
       float pdf = cos_theta * M_1_PI;
 
       // Update the throughput weight
-
       vec3 eval = triangle.color * M_1_PI;
 
       // throughput_weight *= eval / pdf;
@@ -296,9 +299,9 @@ void main() {
 
   // Blend the current color with the previous color
   // float blendFactor = 0.5;
-  // float blendFactor = 1.0f / float(frameNumber + 1);
+  float blendFactor = 1.0f / float(frameNumber + 1); // converges faster
   // float blendFactor = 1.0 - (float(frameNumber)) / ((float(totalFrames) + 1.0) * 2.0);
-  float blendFactor = 1.0f - (float(frameNumber)) / ((float(totalFrames)));
+  // float blendFactor = 1.0f - (float(frameNumber)) / ((float(totalFrames)));
   vec4 blendedColor = mix(previousColor, currentColor, blendFactor);
   // vec4 blendedColor = mix(previousColor, currentColor, 0.2);
 
@@ -308,7 +311,7 @@ void main() {
   // outColor = vec4(blendedColor.rgb, 1.0f);
   // blendedColor.rgb = clamp(blendedColor.rgb, 0.0f, 1.0f);
 
-
+    // blendedColor = ((previousColor * float(sampleCount)) + currentColor) / float(frameNumber + 1); // converges faster
 
   // vec3 gammaCorrectedColor = pow(blendedColor.rgb, vec3(1.0f / 2.2f));
   outColor = vec4(blendedColor.rgb, 1.0f);
