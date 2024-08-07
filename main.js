@@ -1,15 +1,15 @@
 const PI_NUMBER = 3.14159265359;
 const SLEEP_TIME = 500;
-const SLEEP_TIME_BETWEEN_QUADS = 200;
+const SLEEP_TIME_BETWEEN_QUADS = 150;
 
 
 let frames = 50;
 let maxPathLength = 5;
 let sampleCount = 5;
-let canvasSize = 256;
+let canvasSize = 512;
 let quadSize = 32;
 let urlSave = "image/png/v1";
-let fileNameSuffix = "v1";
+let fileNameSuffix = "v12_bedroom_afterFixingFireflies";
 
 // ------------------------------------------------------------------
 
@@ -48,6 +48,7 @@ let normals = [];
 let colors = [];
 let emissions = [];
 let lightIndices = [];
+let lightTotalArea;
 
 let startTime, endTime;
 
@@ -62,9 +63,10 @@ try {
   let prevTS = performance.
     model = await loadModel(
       // '/resources/my_cornell_2/gltf/my_cornell_2.gltf'
+      '/resources/bedroom2/gltf/v3/bedroom2.gltf'
+      // '/resources/bedroom2/gltf/v5/bedroom2_v5.gltf'
       // '/resources/bedroom1/customGLTF/bedroom1.gltf'
       // '/resources/bedroom2/gltf/bedroom2.gltf'
-      '/resources/bedroom2/gltf/v3/bedroom2.gltf'
       // '/resources/my_cornell_3/gltf/my_cornell_3.gltf'
       // '/resources/my_cornell_4/gltf/my_cornell_4.gltf'
       // '/resources/cornell2/gltf/scene.gltf'
@@ -88,10 +90,6 @@ const canvas = document.createElement('canvas');
 // canvas.height = canvasSize * 1;
 // canvas.width = canvasSize * 0.8;
 
-canvas.height = canvasSize;
-canvas.width = canvasSize;
-document.getElementById('canvas-container').appendChild(canvas);
-
 /* // Turn off automatic recovery
 canvas.set
 
@@ -113,36 +111,35 @@ if (512 > maxTextureSize) {
 }
 
 
+canvas.height = canvasSize;
+canvas.width = canvasSize;
+document.getElementById('canvas-container').appendChild(canvas);
+
 var width = gl.canvas.clientWidth;
 var height = gl.canvas.clientHeight;
 gl.canvas.width = width;
 gl.canvas.height = height;
 
-
-
 let cameraInstance = new Camera(50, width / height, 0.1, 1000);
-console.log("🚀 ~ camera:", cameraInstance)
 
 // room v3
-cameraInstance.translate('x', 12.4)
-cameraInstance.translate('z', -8)
+cameraInstance.translate('x', 14)
+cameraInstance.translate('z', -14)
+cameraInstance.translate('y', 3)
 cameraInstance.lookAt(0, 0, 0);
 
 
 //cornell room
 // cameraInstance.translate('x', 12.4)
 // cameraInstance.rotate('y', PI_NUMBER / 2);
+// cameraInstance.lookAt(0, 0, 0);
+
 
 
 let camera = cameraInstance.getCamera();
 
 
 
-// camera.position.x += 16;
-// camera.position.y += 6.0;
-// camera.position.z -= 8;
-// camera.lookAt(0, 0, 0);
-// camera.rotateY(0.08);
 // const fpsElem = document.querySelector("#fps");
 
 // let then = 0;
@@ -242,7 +239,7 @@ async function render(now, frameNumber) {
   gl.uniform3f(gl.getUniformLocation(programPathTracing, 'cameraLeftBottom'), camera.cameraLeftBottom.x, camera.cameraLeftBottom.y, camera.cameraLeftBottom.z);
   gl.uniform1i(gl.getUniformLocation(programPathTracing, 'vertexCount'), parseInt(coordinates.length / 3));
   gl.uniform1i(gl.getUniformLocation(programPathTracing, 'triangleCount'), triangleCount);
-  gl.uniform1i(gl.getUniformLocation(programPathTracing, 'lightIndicesCount'), lightIndices.length);
+  gl.uniform1i(gl.getUniformLocation(programPathTracing, 'lightIndicesCount'), lightIndices.length / 3);
   gl.uniform1i(gl.getUniformLocation(programPathTracing, 'timestamp'), now);
   gl.uniform1i(gl.getUniformLocation(programPathTracing, 'maxPathLength'), maxPathLength);
   gl.uniform1i(gl.getUniformLocation(programPathTracing, 'sampleCount'), sampleCount);
@@ -323,6 +320,7 @@ async function render(now, frameNumber) {
   TextureIndex.setTextureIndex(2);
 
 }
+  console.log("🚀 ~ render ~ lightIndices:", lightIndices)
 
 const fpsElem = document.querySelector("#fps");
 const avgFpsElem = document.querySelector("#avg-fps");
@@ -359,7 +357,7 @@ async function renderAsync(times) {
     avgFpsElem.textContent = avgFps.toFixed(1);
 
     console.log(
-      `frame ${i}: ${frameTime.toFixed(4)} seconds
+`frame ${i}: ${frameTime.toFixed(4)} seconds
 fps: ${fps}`);
 
     previousTime = endTime;
@@ -473,7 +471,7 @@ function createProgram(gl, vertexShader, fragmentShader) {
 
 
 function uploadTexture(gl, program, data, name, width, height, index) {
-// console.log("🚀 ~ uploadTexture ~ index:", index)
+  // console.log("🚀 ~ uploadTexture ~ index:", index)
 
   // Create a texture.
   var texture = gl.createTexture();
@@ -610,8 +608,6 @@ async function loadModel(url) {
               let triangleNormal = new THREE.Vector3();
               triangle.getNormal(triangleNormal);
 
-              // const normal = new THREE.Vector3().crossVectors(edge1, edge2);
-              // normals.push(...[normal.x, normal.y, normal.z]);
               normals.push(...[triangleNormal.x, triangleNormal.y, triangleNormal.z]);
 
               // get triangle's color
@@ -620,11 +616,10 @@ async function loadModel(url) {
                 colors.push(...[color.r, color.g, color.b]); //TODO: opacidad?
               }
 
-              // get triangle's emission
-              if (child.name == "Light")
-                emissions.push(...[1.0, 1.0, 1.0]);
-              else
-                emissions.push(...[0.0, 0.0, 0.0]);
+              const emission = child.material.emissive;
+              // console.log("🚀 ~ emission:", emission)
+              emissions.push(...[emission.r * 50, emission.g* 50, emission.b* 50]);
+              // emissions.push(...[emission.r, emission.g, emission.b]);
             }
 
 
@@ -641,8 +636,12 @@ async function loadModel(url) {
             lightIndices.push(i / 3);
           }
         }
-        console.log("🚀 lightIndices:", lightIndices)
-        console.log("🌸 ~ triangleCount:", triangleCount)
+
+        // calcular area total luces
+
+
+        // console.log("🚀 lightIndices:", lightIndices)
+        // console.log("🌸 ~ triangleCount:", triangleCount)
         // console.log("🚀 ~ colors:", colors)
 
 
