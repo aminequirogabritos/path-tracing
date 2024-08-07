@@ -1,12 +1,15 @@
 const PI_NUMBER = 3.14159265359;
-const SLEEP_TIME = 20000;
+const SLEEP_TIME = 500;
+const SLEEP_TIME_BETWEEN_QUADS = 150;
 
 
-let frames = 4;
-let maxPathLength = 3;
-let sampleCount = 2;
-let canvasSize = 700;
-
+let frames = 50;
+let maxPathLength = 5;
+let sampleCount = 5;
+let canvasSize = 512;
+let quadSize = 32;
+let urlSave = "image/png/v1";
+let fileNameSuffix = "v12_bedroom_afterFixingFireflies";
 
 // ------------------------------------------------------------------
 
@@ -18,14 +21,23 @@ import Stats from 'three/examples/jsm/libs/stats.module.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 // Load vertex and fragment shaders
-import vertexShader from './shaders/vertexShader.glsl';
-import fragmentShader from './shaders/fragmentShader2.glsl';
+import vertexShaderPathTracing from './shaders/vertexShader.glsl';
+import vertexShaderOutput from './shaders/vertexShader.glsl';
+import fragmentShaderPathTracing from './shaders/fragmentShaderPathTracing.glsl';
+import fragmentShaderOutput from './shaders/fragmentShaderOutput.glsl';
+// import { texture } from 'three/examples/jsm/nodes/Nodes.js';
 // import { PI, floor } from 'three/examples/jsm/nodes/Nodes.js';
 
 // utils
 // import { createRGBDataTexture } from './utils/dataTextureCreator.js';
 // import { mapCoordinates } from './utils/coordinatesMapper.js';
 
+// classes
+import Camera from './classes/camera.js';
+
+// modules
+import BufferManager from './modules/bufferManager.js';
+import TextureIndex from './modules/textureIndex.js';
 
 //const loader = new OBJLoader();
 
@@ -36,10 +48,9 @@ let normals = [];
 let colors = [];
 let emissions = [];
 let lightIndices = [];
+let lightTotalArea;
 
 let startTime, endTime;
-
-
 
 let objects = 0;
 let triangleCount = 0;
@@ -52,9 +63,10 @@ try {
   let prevTS = performance.
     model = await loadModel(
       // '/resources/my_cornell_2/gltf/my_cornell_2.gltf'
+      '/resources/bedroom2/gltf/v3/bedroom2.gltf'
+      // '/resources/bedroom2/gltf/v5/bedroom2_v5.gltf'
       // '/resources/bedroom1/customGLTF/bedroom1.gltf'
       // '/resources/bedroom2/gltf/bedroom2.gltf'
-      '/resources/bedroom2/gltf/v3/bedroom2.gltf'
       // '/resources/my_cornell_3/gltf/my_cornell_3.gltf'
       // '/resources/my_cornell_4/gltf/my_cornell_4.gltf'
       // '/resources/cornell2/gltf/scene.gltf'
@@ -78,10 +90,6 @@ const canvas = document.createElement('canvas');
 // canvas.height = canvasSize * 1;
 // canvas.width = canvasSize * 0.8;
 
-canvas.height = canvasSize;
-canvas.width = canvasSize;
-document.getElementById('canvas-container').appendChild(canvas);
-
 /* // Turn off automatic recovery
 canvas.set
 
@@ -96,92 +104,52 @@ if (!gl) {
   console.error('WebGL 2 not supported');
 }
 
+const maxTextureSize = gl.getParameter(gl.MAX_TEXTURE_SIZE);
+console.log("🚀 ~ maxTextureSize:", maxTextureSize)
+if (512 > maxTextureSize) {
+  console.error('El tamaño de la textura excede el tamaño máximo soportado:', maxTextureSize);
+}
 
+
+canvas.height = canvasSize;
+canvas.width = canvasSize;
+document.getElementById('canvas-container').appendChild(canvas);
 
 var width = gl.canvas.clientWidth;
 var height = gl.canvas.clientHeight;
 gl.canvas.width = width;
 gl.canvas.height = height;
 
-// const fb1 = createFramebuffer(gl, width, height);
-// const fb2 = createFramebuffer(gl, width, height);
-// let currentFramebuffer = fb1;
-// let previousFramebuffer = fb2;
+let cameraInstance = new Camera(50, width / height, 0.1, 1000);
 
-// -------------------- camera creation --------------------
-
-const camera = new THREE.PerspectiveCamera(50, width / height, 0.1, 1000);
-
-// camera coordinates for room v3
-camera.position.x += 16;
-// camera.position.y += 6.0;
-camera.position.z -= 8;
-camera.lookAt(0, 0, 0);
-camera.rotateY(0.08);
+// room v3
+cameraInstance.translate('x', 14)
+cameraInstance.translate('z', -14)
+cameraInstance.translate('y', 3)
+cameraInstance.lookAt(0, 0, 0);
 
 
-// camera coordinates for cornell box
-// camera.position.x += 12.4;
-// camera.rotateY(PI_NUMBER / 2);
+//cornell room
+// cameraInstance.translate('x', 12.4)
+// cameraInstance.rotate('y', PI_NUMBER / 2);
+// cameraInstance.lookAt(0, 0, 0);
 
 
-let cameraSource = camera.position.clone(); // no normalizar!!!!!
-let cameraDirection = new THREE.Vector3();
-camera.getWorldDirection(cameraDirection)
 
-// const planeDimensions = getImagePlaneDimensions(camera);
-// console.log("🚀 ~ planeDimensions:", planeDimensions)
-/* console.log("🚀 ~ planeDimensions:", planeDimensions)
-const cameraRight = new THREE.Vector3(-planeDimensions.right, 0, 0);
-const cameraUp = new THREE.Vector3(0, planeDimensions.up, 0); */
+let camera = cameraInstance.getCamera();
 
-const cameraUp = camera.up.clone();
-const cameraRight = new THREE.Vector3().crossVectors(cameraDirection, cameraUp).normalize();
-
-
-const cameraLeft = cameraRight.clone().negate();
-// const cameraMiddle = cameraSource.clone().sub(new THREE.Vector3(0.0, cameraSource.y, 0.0));
-const cameraMiddle = cameraSource.clone().add(cameraDirection.clone()/* .multiplyScalar(1.2) */); // multiplicar por escalar para cambiar posicion near plano frustum
-console.log("🚀 ~ cameraSource:", cameraSource)
-
-
-// const cameraLeftBottom = getLeftBottomCorner(camera, planeDimensions.width, planeDimensions.height);
-const cameraLeftBottom = cameraMiddle.clone()
-  .sub(cameraRight.clone().multiplyScalar(0.5))
-  .sub(cameraUp.clone().multiplyScalar(0.5));
-console.log("🚀 ~ cameraLeftBottom:", cameraLeftBottom)
-// (?) cameraLeftBottom.x += -0.5; // esta escala se hace para que el plano "near" no esté tan pegado a la cámara
-console.log("🚀 ~ cameraLeftBottom:", cameraLeftBottom)
-
-// window.addEventListener('resize', resizeCanvas);
-// resizeCanvas();
 
 
 // const fpsElem = document.querySelector("#fps");
 
 // let then = 0;
 
-const framebuffers = [];
-const textures = [];
-for (let i = 0; i < 2; i++) {
-  const framebuffer = gl.createFramebuffer();
-  gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
+BufferManager.createFramebufferAndTexture(gl, width, height);
+BufferManager.createFramebufferAndTexture(gl, width, height);
+// set textureOutput
 
-  const texture = gl.createTexture();
-  gl.bindTexture(gl.TEXTURE_2D, texture);
-  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.canvas.width, gl.canvas.height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
 
-  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0);
-
-  if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE) {
-    console.error('Framebuffer is not complete');
-  }
-
-  framebuffers.push(framebuffer);
-  textures.push(texture);
-}
+////////
 
 gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 
@@ -189,127 +157,175 @@ function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+
+
+const vertexShaderPathTracingSource = createShader(gl, gl.VERTEX_SHADER, vertexShaderPathTracing);
+const vertexShaderOutputSource = createShader(gl, gl.VERTEX_SHADER, vertexShaderOutput);
+
+const fragmentShaderPathTracingSource = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderPathTracing);
+const fragmentShaderOutputSource = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderOutput);
+
+const programPathTracing = createProgram(gl, vertexShaderPathTracingSource, fragmentShaderPathTracingSource);
+const programOutput = createProgram(gl, vertexShaderOutputSource, fragmentShaderOutputSource);
+
+
+// gl.useProgram(programPathTracing);
+
+// Full screen quad vertices (triangle strip)
+const vertices = new Float32Array([
+  -1.0, -1.0, // Bottom-left
+  1.0, -1.0, // Bottom-right
+  -1.0, 1.0, // Top-left
+  1.0, 1.0  // Top-right
+]);
+
+// Create and bind vertex array object (VAO)
+const vaoPathTracing = gl.createVertexArray();
+gl.bindVertexArray(vaoPathTracing);
+
+// Create vertex buffer
+const vertexBuffer = gl.createBuffer();
+gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+
+// Bind vertex attributes
+const positionLocationPathTracing = gl.getAttribLocation(programPathTracing, 'position');
+gl.enableVertexAttribArray(positionLocationPathTracing);
+gl.vertexAttribPointer(positionLocationPathTracing, 2, gl.FLOAT, false, 0, 0);
+
+
+// Create and bind VAO for simple program
+const vaoOutput = gl.createVertexArray();
+gl.bindVertexArray(vaoOutput);
+
+const simpleVertexBuffer = gl.createBuffer();
+gl.bindBuffer(gl.ARRAY_BUFFER, simpleVertexBuffer);
+gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+
+const positionLocationOutput = gl.getAttribLocation(programOutput, 'position');
+gl.enableVertexAttribArray(positionLocationOutput);
+gl.vertexAttribPointer(positionLocationOutput, 2, gl.FLOAT, false, 0, 0);
+
+gl.bindVertexArray(null);
+
 // Render
 async function render(now, frameNumber) {
 
-  const vertexShaderSource = createShader(gl, gl.VERTEX_SHADER, vertexShader);
-  const fragmentShaderSource = createShader(gl, gl.FRAGMENT_SHADER, fragmentShader);
+  gl.useProgram(programPathTracing);
 
-  const program = createProgram(gl, vertexShaderSource, fragmentShaderSource);
-  gl.useProgram(program);
+  // Divide the screen into smaller quads
+  const numQuadsX = Math.ceil(width / quadSize);
+  const numQuadsY = Math.ceil(height / quadSize);
+
 
   //function uploadTexture(gl, program, data, name, width, height, index)
-  uploadTexture(gl, program, coordinates, 'coordinatesTexture', (coordinates.length / 3), 1, 0);
-  uploadTexture(gl, program, normals, 'normalsTexture', (normals.length / 3), 1, 1);
-  uploadTexture(gl, program, colors, 'colorsTexture', (colors.length / 3), 1, 2);
-  uploadTexture(gl, program, emissions, 'emissionsTexture', (emissions.length / 3), 1, 3);
-  uploadTexture(gl, program, lightIndices, 'lightIndicesTexture', (lightIndices.length / 3), 1, 4);
+  uploadTexture(gl, programPathTracing, coordinates, 'coordinatesTexture', (coordinates.length / 3), 1, TextureIndex.getNextTextureIndex());
+  uploadTexture(gl, programPathTracing, normals, 'normalsTexture', (normals.length / 3), 1, TextureIndex.getNextTextureIndex());
+  uploadTexture(gl, programPathTracing, colors, 'colorsTexture', (colors.length / 3), 1, TextureIndex.getNextTextureIndex());
+  uploadTexture(gl, programPathTracing, emissions, 'emissionsTexture', (emissions.length / 3), 1, TextureIndex.getNextTextureIndex());
+  uploadTexture(gl, programPathTracing, lightIndices, 'lightIndicesTexture', (lightIndices.length / 3), 1, TextureIndex.getNextTextureIndex());
 
   // Set uniforms
-  const windowSizeLocation = gl.getUniformLocation(program, 'windowSize');
-  const aspectRatioLocation = gl.getUniformLocation(program, 'aspectRatio');
-  const cameraSourceLocation = gl.getUniformLocation(program, 'cameraSource');
-  const cameraDirectionLocation = gl.getUniformLocation(program, 'cameraDirection');
-  const cameraUpLocation = gl.getUniformLocation(program, 'cameraUp');
-  const cameraRightLocation = gl.getUniformLocation(program, 'cameraRight');
-  const cameraLeftBottomLocation = gl.getUniformLocation(program, 'cameraLeftBottom');
-  const vertexCountLocation = gl.getUniformLocation(program, 'vertexCount');
-  const triangleCountLocation = gl.getUniformLocation(program, 'triangleCount');
-  const lightIndicesCountLocation = gl.getUniformLocation(program, 'lightIndicesCount');
-  const timestampLocation = gl.getUniformLocation(program, 'timestamp');
-  const maxPathLengthLocation = gl.getUniformLocation(program, 'maxPathLength');
-  const sampleCountLocation = gl.getUniformLocation(program, 'sampleCount');
-  const frameNumberLocation = gl.getUniformLocation(program, 'frameNumber');
-  const totalFramesLocation = gl.getUniformLocation(program, 'totalFrames');
+  const quadXLocation = gl.getUniformLocation(programPathTracing, 'quadX');
+  const quadYLocation = gl.getUniformLocation(programPathTracing, 'quadY');
 
 
-  gl.uniform2f(windowSizeLocation, width, height);
-  gl.uniform1f(aspectRatioLocation, width / height);
-  gl.uniform3f(cameraSourceLocation, cameraSource.x, cameraSource.y, cameraSource.z);
-  gl.uniform3f(cameraDirectionLocation, cameraDirection.x, cameraDirection.y, cameraDirection.z);
-  gl.uniform3f(cameraUpLocation, cameraUp.x, cameraUp.y, cameraUp.z);
-  gl.uniform3f(cameraRightLocation, cameraRight.x, cameraRight.y, cameraRight.z);
-  gl.uniform3f(cameraLeftBottomLocation, cameraLeftBottom.x, cameraLeftBottom.y, cameraLeftBottom.z);
-  gl.uniform1i(vertexCountLocation, parseInt(coordinates.length / 3));
-  gl.uniform1i(triangleCountLocation, triangleCount);
-  gl.uniform1i(lightIndicesCountLocation, lightIndices.length);
-  gl.uniform1i(timestampLocation, now);
-  gl.uniform1i(maxPathLengthLocation, maxPathLength);
-  gl.uniform1i(sampleCountLocation, sampleCount);
-  gl.uniform1i(frameNumberLocation, frameNumber);
-  gl.uniform1i(totalFramesLocation, frames);
+  gl.uniform2f(gl.getUniformLocation(programPathTracing, 'windowSize'), width, height);
+  gl.uniform1f(gl.getUniformLocation(programPathTracing, 'aspectRatio'), width / height);
+  gl.uniform3f(gl.getUniformLocation(programPathTracing, 'cameraSource'), camera.cameraSource.x, camera.cameraSource.y, camera.cameraSource.z);
+  gl.uniform3f(gl.getUniformLocation(programPathTracing, 'cameraDirection'), camera.cameraDirection.x, camera.cameraDirection.y, camera.cameraDirection.z);
+  gl.uniform3f(gl.getUniformLocation(programPathTracing, 'cameraUp'), camera.cameraUp.x, camera.cameraUp.y, camera.cameraUp.z);
+  gl.uniform3f(gl.getUniformLocation(programPathTracing, 'cameraRight'), camera.cameraRight.x, camera.cameraRight.y, camera.cameraRight.z);
+  gl.uniform3f(gl.getUniformLocation(programPathTracing, 'cameraLeftBottom'), camera.cameraLeftBottom.x, camera.cameraLeftBottom.y, camera.cameraLeftBottom.z);
+  gl.uniform1i(gl.getUniformLocation(programPathTracing, 'vertexCount'), parseInt(coordinates.length / 3));
+  gl.uniform1i(gl.getUniformLocation(programPathTracing, 'triangleCount'), triangleCount);
+  gl.uniform1i(gl.getUniformLocation(programPathTracing, 'lightIndicesCount'), lightIndices.length / 3);
+  gl.uniform1i(gl.getUniformLocation(programPathTracing, 'timestamp'), now);
+  gl.uniform1i(gl.getUniformLocation(programPathTracing, 'maxPathLength'), maxPathLength);
+  gl.uniform1i(gl.getUniformLocation(programPathTracing, 'sampleCount'), sampleCount);
+  gl.uniform1i(gl.getUniformLocation(programPathTracing, 'frameNumber'), frameNumber);
+  gl.uniform1i(gl.getUniformLocation(programPathTracing, 'totalFrames'), frames);
 
-  // Full screen quad vertices (triangle strip)
-  const vertices = new Float32Array([
-    -1.0, -1.0, // Bottom-left
-    1.0, -1.0, // Bottom-right
-    -1.0, 1.0, // Top-left
-    1.0, 1.0  // Top-right
-  ]);
-
-  // Create and bind vertex array object (VAO)
-  const vao = gl.createVertexArray();
-  gl.bindVertexArray(vao);
-
-  // Create vertex buffer
-  const vertexBuffer = gl.createBuffer();
-  gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
-  gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
-
-  // Bind vertex attributes
-  const positionLocation = gl.getAttribLocation(program, 'position');
-  gl.enableVertexAttribArray(positionLocation);
-  gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
-
-  // Unbind VAO
-  gl.bindVertexArray(null);
+  gl.uniform1i(gl.getUniformLocation(programPathTracing, 'quadSize'), quadSize);
 
   // Determine the current and previous framebuffers
-  const currentFramebuffer = framebuffers[frameNumber % 2];
-  const previousTexture = textures[(frameNumber + 1) % 2];
+  console.log('currentFramebuffer')
+  const currentFramebuffer = BufferManager.getFrameBuffer(frameNumber)
+  console.log('previousTexture')
+  const previousTexture = BufferManager.getTexture(frameNumber + 1);
+
+  // Set the previous frame's texture as an input
+  const previousFrameTextureLocation = gl.getUniformLocation(programPathTracing, 'previousFrameTexture');
+  gl.activeTexture(gl.TEXTURE0 + BufferManager.getTextureIndex(frameNumber));
+  gl.bindTexture(gl.TEXTURE_2D, previousTexture);
+  gl.uniform1i(previousFrameTextureLocation, BufferManager.getTextureIndex(frameNumber));
+
 
   // Bind the current framebuffer for rendering
   gl.bindFramebuffer(gl.FRAMEBUFFER, currentFramebuffer);
-
-  gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+  gl.viewport(0, 0, width, height);
   gl.clearColor(0.0, 0.0, 0.0, 1.0);
   gl.clear(gl.COLOR_BUFFER_BIT);
 
-  // Set the previous frame's texture as an input
-  const previousFrameTextureLocation = gl.getUniformLocation(program, 'previousFrameTexture');
-  gl.activeTexture(gl.TEXTURE5);
-  gl.bindTexture(gl.TEXTURE_2D, previousTexture);
-  gl.uniform1i(previousFrameTextureLocation, 5);
+  // Render each small quad sequentially
+  for (let y = 0; y < numQuadsY; y++) {
+    for (let x = 0; x < numQuadsX; x++) {
+      // console.log("quadX ", x, " quadY ", y);
+      console.log("new quad");
 
-  // Render to the current framebuffer
-  gl.useProgram(program);
-  gl.bindVertexArray(vao);
-  gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-  gl.finish();
+      const offsetX = x * quadSize;
+      const offsetY = y * quadSize;
+      const viewportWidth = Math.min(quadSize, width - offsetX);
+      const viewportHeight = Math.min(quadSize, height - offsetY);
 
-  // Unbind the framebuffer
+      gl.uniform1i(quadXLocation, x);
+      gl.uniform1i(quadYLocation, y);
+
+      // Set the viewport to the current quad
+      gl.viewport(offsetX, offsetY, viewportWidth, viewportHeight);
+      // gl.viewport(offsetX, offsetY, quadSize, quadSize);
+
+      // Render the quad
+      gl.useProgram(programPathTracing);
+      gl.bindVertexArray(vaoPathTracing);
+      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+      // gl.finish();
+      gl.flush();
+      await sleep(SLEEP_TIME_BETWEEN_QUADS);
+    }
+  }
+
   gl.bindFramebuffer(gl.FRAMEBUFFER, null);
   gl.bindVertexArray(null);
 
-  // Bind the default framebuffer (screen) and draw the final image
-  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-  gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+  gl.useProgram(programOutput);
+  gl.bindVertexArray(vaoOutput);
+
+  const simpleTexture = BufferManager.getTexture(frameNumber);
+  const simpleTextureLocation = gl.getUniformLocation(programOutput, 'u_texture');
+
+  gl.activeTexture(gl.TEXTURE0 + BufferManager.getTextureIndex(frameNumber));
+  gl.bindTexture(gl.TEXTURE_2D, simpleTexture);
+  gl.uniform1i(simpleTextureLocation, BufferManager.getTextureIndex(frameNumber));
+
+  gl.viewport(0, 0, width, height);
   gl.clear(gl.COLOR_BUFFER_BIT);
-  gl.useProgram(program);
-
-  // Set the current framebuffer's texture as an input
-  gl.activeTexture(gl.TEXTURE0);
-  gl.bindTexture(gl.TEXTURE_2D, textures[frameNumber % 2]);
-
-  // Draw the final image to the screen
-  gl.bindVertexArray(vao);
   gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+
   gl.bindVertexArray(null);
+
+  // Save the rendered image to a file
+  readPixelsAndSave(gl, width, height, `frame_${frameNumber}_${fileNameSuffix}.png`, urlSave);
+
+  TextureIndex.setTextureIndex(2);
 
 }
+  console.log("🚀 ~ render ~ lightIndices:", lightIndices)
 
 const fpsElem = document.querySelector("#fps");
 const avgFpsElem = document.querySelector("#avg-fps");
+
+// ---------------------------------------------------------------------------------
 
 async function renderAsync(times) {
 
@@ -317,16 +333,15 @@ async function renderAsync(times) {
   let beforeRenderTime = performance.now();
 
   var stats = new Stats();
-  stats.showPanel(0); // 0: fps, 1: ms, 2: mb, 3+: custom
+  // stats.showPanel(0); // 0: fps, 1: ms, 2: mb, 3+: custom
   // document.body.appendChild(stats.dom);
 
-  // Render each frame with a different color
   for (let i = 0; i < times; i++) {
 
-    stats.begin();
+    // stats.begin();
 
     const startTime = performance.now();
-    render(performance.now(), i + 1);
+    await render(performance.now(), i);
 
     await new Promise(requestAnimationFrame); // Wait for the next animation frame
     const endTime = performance.now();
@@ -342,20 +357,20 @@ async function renderAsync(times) {
     avgFpsElem.textContent = avgFps.toFixed(1);
 
     console.log(
-      `frame ${i}: ${frameTime.toFixed(4)} seconds
+`frame ${i}: ${frameTime.toFixed(4)} seconds
 fps: ${fps}`);
 
     previousTime = endTime;
 
     await sleep(SLEEP_TIME);
-    stats.end();
+    // stats.end();
 
   }
 
 
   let finishTimestamp = performance.now();
 
-  console.log("time spent: " + ((finishTimestamp/1000)-(beforeRenderTime/1000)));
+  console.log("time spent: " + ((finishTimestamp / 1000) - (beforeRenderTime / 1000)));
 
 }
 
@@ -373,6 +388,57 @@ await renderAsync(frames);
 // -------------------------------------------------------------------------------------
 // -------------------------------------------------------------------------------------
 // -------------------------------------------------------------------------------------
+
+
+function readPixelsAndSave(gl, width, height, filename, urlSave) {
+  // Create a buffer to store the pixel data
+  const pixels = new Uint8Array(width * height * 4);
+
+  // Read the pixels from the framebuffer
+  gl.readPixels(0, 0, width, height, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+
+  // Create a new buffer to store the flipped pixel data
+  const flippedPixels = new Uint8Array(width * height * 4);
+
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const srcIndex = (y * width + x) * 4;
+      const destIndex = ((height - y - 1) * width + x) * 4;
+      flippedPixels[destIndex] = pixels[srcIndex];        // Red
+      flippedPixels[destIndex + 1] = pixels[srcIndex + 1];  // Green
+      flippedPixels[destIndex + 2] = pixels[srcIndex + 2];  // Blue
+      flippedPixels[destIndex + 3] = pixels[srcIndex + 3];  // Alpha
+    }
+  }
+
+  // Convert the pixel data to an image
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const context = canvas.getContext('2d');
+  const imageData = context.createImageData(width, height);
+
+  // Copy the flipped pixels into the imageData object
+  for (let i = 0; i < flippedPixels.length; i++) {
+    imageData.data[i] = flippedPixels[i];
+  }
+
+  // Put the imageData into the canvas
+  context.putImageData(imageData, 0, 0);
+
+  // Create an image from the canvas
+  const img = new Image();
+  img.src = canvas.toDataURL(urlSave);
+
+  // Download the image
+  const link = document.createElement('a');
+  link.href = img.src;
+  link.download = filename;
+  link.click();
+}
+
+
+
 
 function createShader(gl, type, source) {
   const shader = gl.createShader(type);
@@ -405,6 +471,7 @@ function createProgram(gl, vertexShader, fragmentShader) {
 
 
 function uploadTexture(gl, program, data, name, width, height, index) {
+  // console.log("🚀 ~ uploadTexture ~ index:", index)
 
   // Create a texture.
   var texture = gl.createTexture();
@@ -541,8 +608,6 @@ async function loadModel(url) {
               let triangleNormal = new THREE.Vector3();
               triangle.getNormal(triangleNormal);
 
-              // const normal = new THREE.Vector3().crossVectors(edge1, edge2);
-              // normals.push(...[normal.x, normal.y, normal.z]);
               normals.push(...[triangleNormal.x, triangleNormal.y, triangleNormal.z]);
 
               // get triangle's color
@@ -551,11 +616,10 @@ async function loadModel(url) {
                 colors.push(...[color.r, color.g, color.b]); //TODO: opacidad?
               }
 
-              // get triangle's emission
-              if (child.name == "Light")
-                emissions.push(...[1.0, 1.0, 1.0]);
-              else
-                emissions.push(...[0.0, 0.0, 0.0]);
+              const emission = child.material.emissive;
+              // console.log("🚀 ~ emission:", emission)
+              emissions.push(...[emission.r * 50, emission.g* 50, emission.b* 50]);
+              // emissions.push(...[emission.r, emission.g, emission.b]);
             }
 
 
@@ -572,8 +636,12 @@ async function loadModel(url) {
             lightIndices.push(i / 3);
           }
         }
-        console.log("🚀 lightIndices:", lightIndices)
-        console.log("🌸 ~ triangleCount:", triangleCount)
+
+        // calcular area total luces
+
+
+        // console.log("🚀 lightIndices:", lightIndices)
+        // console.log("🌸 ~ triangleCount:", triangleCount)
         // console.log("🚀 ~ colors:", colors)
 
 
