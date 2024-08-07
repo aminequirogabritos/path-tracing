@@ -1,15 +1,15 @@
 const PI_NUMBER = 3.14159265359;
 const SLEEP_TIME = 500;
-const SLEEP_TIME_BETWEEN_QUADS = 200;
+const SLEEP_TIME_BETWEEN_QUADS = 150;
 
 
-let frames = 5;
+let frames = 50;
 let maxPathLength = 5;
 let sampleCount = 5;
-let canvasSize = 128;
+let canvasSize = 512;
 let quadSize = 32;
 let urlSave = "image/png/v1";
-let fileNameSuffix = "v10_bedroom_yesHDRcorrectionAFTERgammaACES";
+let fileNameSuffix = "v12_bedroom_afterFixingFireflies";
 
 // ------------------------------------------------------------------
 
@@ -48,6 +48,7 @@ let normals = [];
 let colors = [];
 let emissions = [];
 let lightIndices = [];
+let lightTotalArea;
 
 let startTime, endTime;
 
@@ -63,6 +64,7 @@ try {
     model = await loadModel(
       // '/resources/my_cornell_2/gltf/my_cornell_2.gltf'
       '/resources/bedroom2/gltf/v3/bedroom2.gltf'
+      // '/resources/bedroom2/gltf/v5/bedroom2_v5.gltf'
       // '/resources/bedroom1/customGLTF/bedroom1.gltf'
       // '/resources/bedroom2/gltf/bedroom2.gltf'
       // '/resources/my_cornell_3/gltf/my_cornell_3.gltf'
@@ -237,7 +239,7 @@ async function render(now, frameNumber) {
   gl.uniform3f(gl.getUniformLocation(programPathTracing, 'cameraLeftBottom'), camera.cameraLeftBottom.x, camera.cameraLeftBottom.y, camera.cameraLeftBottom.z);
   gl.uniform1i(gl.getUniformLocation(programPathTracing, 'vertexCount'), parseInt(coordinates.length / 3));
   gl.uniform1i(gl.getUniformLocation(programPathTracing, 'triangleCount'), triangleCount);
-  gl.uniform1i(gl.getUniformLocation(programPathTracing, 'lightIndicesCount'), lightIndices.length);
+  gl.uniform1i(gl.getUniformLocation(programPathTracing, 'lightIndicesCount'), lightIndices.length / 3);
   gl.uniform1i(gl.getUniformLocation(programPathTracing, 'timestamp'), now);
   gl.uniform1i(gl.getUniformLocation(programPathTracing, 'maxPathLength'), maxPathLength);
   gl.uniform1i(gl.getUniformLocation(programPathTracing, 'sampleCount'), sampleCount);
@@ -313,11 +315,12 @@ async function render(now, frameNumber) {
   gl.bindVertexArray(null);
 
   // Save the rendered image to a file
-  // readPixelsAndSave(gl, width, height, `frame_${frameNumber}_${fileNameSuffix}.png`, urlSave);
+  readPixelsAndSave(gl, width, height, `frame_${frameNumber}_${fileNameSuffix}.png`, urlSave);
 
   TextureIndex.setTextureIndex(2);
 
 }
+  console.log("🚀 ~ render ~ lightIndices:", lightIndices)
 
 const fpsElem = document.querySelector("#fps");
 const avgFpsElem = document.querySelector("#avg-fps");
@@ -354,7 +357,7 @@ async function renderAsync(times) {
     avgFpsElem.textContent = avgFps.toFixed(1);
 
     console.log(
-      `frame ${i}: ${frameTime.toFixed(4)} seconds
+`frame ${i}: ${frameTime.toFixed(4)} seconds
 fps: ${fps}`);
 
     previousTime = endTime;
@@ -614,8 +617,9 @@ async function loadModel(url) {
               }
 
               const emission = child.material.emissive;
-              console.log("🚀 ~ emission:", emission)
-              emissions.push(...[emission.r, emission.g, emission.b]);
+              // console.log("🚀 ~ emission:", emission)
+              emissions.push(...[emission.r * 50, emission.g* 50, emission.b* 50]);
+              // emissions.push(...[emission.r, emission.g, emission.b]);
             }
 
 
@@ -632,6 +636,10 @@ async function loadModel(url) {
             lightIndices.push(i / 3);
           }
         }
+
+        // calcular area total luces
+
+
         // console.log("🚀 lightIndices:", lightIndices)
         // console.log("🌸 ~ triangleCount:", triangleCount)
         // console.log("🚀 ~ colors:", colors)
