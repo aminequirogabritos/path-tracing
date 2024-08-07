@@ -616,10 +616,12 @@ async function loadModel(url) {
                 colors.push(...[color.r, color.g, color.b]); //TODO: opacidad?
               }
 
+
               const emission = child.material.emissive;
               // console.log("🚀 ~ emission:", emission)
               emissions.push(...[emission.r * 50, emission.g* 50, emission.b* 50]);
               // emissions.push(...[emission.r, emission.g, emission.b]);
+
             }
 
 
