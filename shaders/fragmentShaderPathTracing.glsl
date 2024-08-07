@@ -1,7 +1,8 @@
 #version 300 es
 #define M_PI 3.141592653589793238462643
 #define M_1_PI 0.3183098861837907
-#define SCALING_FACTOR 0.1f
+// #define SCALING_FACTOR 0.1f
+#define SCALING_FACTOR 1.0f
 
 #ifdef GL_ES
 precision highp float;
@@ -106,16 +107,19 @@ vec2 get_random_numbers(inout uvec2 seed) {
 }
 
 vec3 sample_hemisphere(vec2 random_numbers, vec3 normal) {
-  // vec3 direction = sample_sphere(random_numbers);
-  float theta = 2.0f * M_PI * random_numbers[0];
-  float r = sqrt(random_numbers[1]);
+  // Random polar coordinates
+  float theta = 2.0f * M_PI * random_numbers[0]; // Azimuthal angle
+  float r = sqrt(random_numbers[1]); // Radius
 
+  // Cartesian coordinates in the local frame
   float x = r * cos(theta);
   float y = r * sin(theta);
-  float z = sqrt(1.0f - x * x - y * y);
+  float z = sqrt(1.0f - r * r);
 
+  // Choose the major axis to avoid degeneracies
   vec3 majorAxis = abs(normal.x) < 0.57735026919f ? vec3(1.0f, 0.0f, 0.0f) : abs(normal.y) < 0.57735026919f ? vec3(0.0f, 1.0f, 0.0f) : vec3(0.0f, 0.0f, 1.0f);
 
+  // Create orthonormal basis
   vec3 u = normalize(cross(normal, majorAxis));
   vec3 v = cross(normal, u);
   vec3 w = normal;
@@ -156,36 +160,53 @@ void sample_random_light(inout uvec2 seed, inout Triangle lightTriangle, inout v
   const int max_attempts = 10;
   int attempts = 0;
   bool visible = false;
+  int randomIndex;
+  int lightIndex;
 
   while(attempts < max_attempts && !visible) {
     attempts++;
-    int randomIndex = int(float(lightIndicesCount) * get_random_numbers(seed).x);
-    int lightIndex = int(texture(lightIndicesTexture, vec2(float(3 * randomIndex) / float(lightIndicesCount - 1), 0.0f)).x);
+
+    randomIndex = int(int(float(lightIndicesCount) * get_random_numbers(seed).x)) % lightIndicesCount;
+    lightIndex = int(texture(lightIndicesTexture, vec2(float(randomIndex * 3) / float(lightIndicesCount - 1), 0.0f)).x);
+
     lightTriangle = getTriangleFromTextures(lightIndex);
 
     vec2 r = get_random_barycentric(seed);
 
     lightPoint = (1.0f - r.x - r.y) * lightTriangle.vertex0 + r.x * lightTriangle.vertex1 + r.y * lightTriangle.vertex2;
 
-    float area = 0.5f * length(cross(lightTriangle.vertex1 - lightTriangle.vertex0, lightTriangle.vertex2 - lightTriangle.vertex0));
-    lightPdf = 1.0f / (float(lightIndex) * area);
-
     vec3 direction = normalize(lightPoint - origin);
     visible = is_light_visible(origin, lightPoint, lightTriangle, direction);
   }
+
+  if(visible) {
+    float lightArea = 0.5f * length(cross(lightTriangle.vertex1 - lightTriangle.vertex0, lightTriangle.vertex2 - lightTriangle.vertex0));
+    // lightPdf =/*  1.0f / */ (/* float(lightIndicesCount) * */ ((area) / (area * 2.0f)));
+    lightPdf = (1.0f / (float(lightIndicesCount) * lightArea));
+  } else {
+    lightPdf = 1.0f; // Default value if no light is visible
+  }
+}
+
+float power_heuristic(float pdf1, float pdf2) {
+  float f1 = pdf1 * pdf1;
+  float f2 = pdf2 * pdf2;
+  return f1 / (f1 + f2);
 }
 
 vec3 get_ray_radiance(vec3 origin, vec3 direction, inout uvec2 seed) {
   vec3 radiance = vec3(0.0f);
   vec3 throughput_weight = vec3(1.0f);
+  float directLighting, indirectLighting;
   for(int i = 0; i < maxPathLength; i++) {
     float t;
     Triangle triangle;
     if(ray_mesh_intersection(t, triangle, origin, direction)) {
-      radiance += throughput_weight * (triangle.emission * (SCALING_FACTOR));
 
-      if(triangle.emission.x > 0.0f || triangle.emission.y > 0.0f || triangle.emission.z > 0.0f) {
-        // return triangle.color;
+      // If it's the first step and the triangle is emmissive - it's a light, stop the algorithm
+      if(i == 0 && (triangle.emission.x > 0.0f || triangle.emission.y > 0.0f || triangle.emission.z > 0.0f)) {
+        radiance = triangle.color * triangle.emission;
+        return radiance;
         break;
       }
 
@@ -195,7 +216,7 @@ vec3 get_ray_radiance(vec3 origin, vec3 direction, inout uvec2 seed) {
 
       Triangle lightTriangle;
       vec3 lightPoint = vec3(0.0f, 0.0f, 0.0f);
-      float lightPdf = 0.0f;
+      float lightPdf = 1.0f;
       sample_random_light(seed, lightTriangle, lightPoint, lightPdf, rayTriangleIntersectionPoint);
 
       vec3 intersectionToLightDirection = normalize(lightPoint - rayTriangleIntersectionPoint);
@@ -213,11 +234,18 @@ vec3 get_ray_radiance(vec3 origin, vec3 direction, inout uvec2 seed) {
           // Calculate direct light contribution
           float solid_angle = max(dot(lightTriangle.normal, -intersectionToLightDirection), 0.0f) / (intersectionToLightDistance * intersectionToLightDistance);
           vec3 brdf = triangle.color * M_1_PI * dot(triangle.normal, intersectionToLightDirection);
-          vec3 direct_light = lightTriangle.color * solid_angle * brdf;
-          radiance += throughput_weight * (SCALING_FACTOR) * direct_light / lightPdf;
+          vec3 direct_light = lightTriangle.emission * solid_angle * brdf;
+
+                    // Apply MIS weight
+          float brdfPdf = lightPdf * solid_angle; // Approximation, adjust based on your implementation
+          float weight = power_heuristic(lightPdf, brdfPdf);
+
+          radiance += throughput_weight * vec3(weight) /* * (50.0f) */ * direct_light / lightPdf;
         }
 
       }
+
+      // radiance += throughput_weight * triangle.emission;
 
       vec3 new_direction = sample_hemisphere(get_random_numbers(seed), triangle.normal);
 
@@ -232,11 +260,11 @@ vec3 get_ray_radiance(vec3 origin, vec3 direction, inout uvec2 seed) {
       float pdf = cos_theta * M_1_PI;
 
       // Update the throughput weight
-
-      vec3 eval = triangle.color * M_1_PI;
+      vec3 brdf = triangle.color * M_1_PI;
 
       // throughput_weight *= eval / pdf;
-      throughput_weight *= eval * cos_theta / pdf;
+      if(pdf > 0.0f)
+        throughput_weight *= (brdf * cos_theta) / pdf;
 
       // Update the direction for the next bounce
       origin = rayTriangleIntersectionPoint;
@@ -288,19 +316,29 @@ void main() {
   currentColor.rgb /= float(sampleCount);
   currentColor.rgb = clamp(currentColor.rgb, 0.0f, 1.0f);
 
+  currentColor.rgb = clamp(currentColor.rgb, 0.0f, 1.0f);
+
   // Get the color from the previous frame
   vec4 previousColor = vec4(texture(previousFrameTexture, tex_coord).rgb, 1.0f);
+  previousColor.rgb = clamp(previousColor.rgb, 0.0f, 1.0f);
 
   // Blend the current color with the previous color
   // float blendFactor = 0.5;
-  // float blendFactor = 1.0f / float(frameNumber + 1);
-  float blendFactor = 1.0 - (float(frameNumber)) / ((float(totalFrames) + 1.0) * 2.0);
+  float blendFactor = 1.0f / float(frameNumber + 1); // converges faster
+  // float blendFactor = 1.0 - (float(frameNumber)) / ((float(totalFrames) + 1.0) * 2.0);
+  // float blendFactor = 1.0f - (float(frameNumber)) / ((float(totalFrames)));
   vec4 blendedColor = mix(previousColor, currentColor, blendFactor);
   // vec4 blendedColor = mix(previousColor, currentColor, 0.2);
 
     // Apply exposure control
 /*   vec3 finalColor = vec3(1.0) - exp(-blendedColor.rgb * 0.5); */
 
+  // outColor = vec4(blendedColor.rgb, 1.0f);
+  // blendedColor.rgb = clamp(blendedColor.rgb, 0.0f, 1.0f);
+
+    // blendedColor = ((previousColor * float(sampleCount)) + currentColor) / float(frameNumber + 1); // converges faster
+
+  // vec3 gammaCorrectedColor = pow(blendedColor.rgb, vec3(1.0f / 2.2f));
   outColor = vec4(blendedColor.rgb, 1.0f);
 
 }
