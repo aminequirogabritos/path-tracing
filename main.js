@@ -3,10 +3,10 @@ const SLEEP_TIME = 500;
 const SLEEP_TIME_BETWEEN_QUADS = 150;
 
 
-let frames = 50;
+let frames = 1;
 let maxPathLength = 5;
 let sampleCount = 5;
-let canvasSize = 512;
+let canvasSize = 128;
 let quadSize = 32;
 let urlSave = "image/png/v1";
 let fileNameSuffix = "v12_bedroom_afterFixingFireflies";
@@ -19,6 +19,9 @@ import Stats from 'three/examples/jsm/libs/stats.module.js';
 // import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
 // import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { MeshBVH } from 'three-mesh-bvh';
+import * as  THREEMeshBVH from 'three-mesh-bvh';
+import * as BufferGeometryUtils from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 
 // Load vertex and fragment shaders
 import vertexShaderPathTracing from './shaders/vertexShader.glsl';
@@ -34,6 +37,7 @@ import fragmentShaderOutput from './shaders/fragmentShaderOutput.glsl';
 
 // classes
 import Camera from './classes/camera.js';
+import BVH from './classes/bvh.js';
 
 // modules
 import BufferManager from './modules/bufferManager.js';
@@ -44,6 +48,7 @@ import TextureIndex from './modules/textureIndex.js';
 
 
 let coordinates = [];
+let trianglesIndices = [];
 let normals = [];
 let colors = [];
 let emissions = [];
@@ -60,22 +65,28 @@ let model, scene;
 
 try {
   console.log("b4 loading");
-  let prevTS = performance.
-    model = await loadModel(
-      // '/resources/my_cornell_2/gltf/my_cornell_2.gltf'
-      '/resources/bedroom2/gltf/v3/bedroom2.gltf'
-      // '/resources/bedroom2/gltf/v5/bedroom2_v5.gltf'
-      // '/resources/bedroom1/customGLTF/bedroom1.gltf'
-      // '/resources/bedroom2/gltf/bedroom2.gltf'
-      // '/resources/my_cornell_3/gltf/my_cornell_3.gltf'
-      // '/resources/my_cornell_4/gltf/my_cornell_4.gltf'
-      // '/resources/cornell2/gltf/scene.gltf'
-    );
+  model = await loadModel(
+    // '/resources/my_cornell_2/gltf/my_cornell_2.gltf'
+    '/resources/bedroom2/gltf/v3/bedroom2.gltf'
+    // '/resources/bedroom2/gltf/v5/bedroom2_v5.gltf'
+    // '/resources/bedroom1/customGLTF/bedroom1.gltf'
+    // '/resources/bedroom2/gltf/bedroom2.gltf'
+    // '/resources/my_cornell_3/gltf/my_cornell_3.gltf'
+    // '/resources/my_cornell_4/gltf/my_cornell_4.gltf'
+    // '/resources/cornell2/gltf/scene.gltf'
+  );
+
+  console.log("😀 ~ model:", model)
+
   scene = model.scene;
   console.log("🌸 ~ scene:", scene)
 } catch (e) {
   console.log(e);
 }
+
+let bvh = new BVH(coordinates, trianglesIndices);
+
+console.log(bvh);
 
 // scene.updateMatrixWorld(true);
 
@@ -315,12 +326,12 @@ async function render(now, frameNumber) {
   gl.bindVertexArray(null);
 
   // Save the rendered image to a file
-  readPixelsAndSave(gl, width, height, `frame_${frameNumber}_${fileNameSuffix}.png`, urlSave);
+  // readPixelsAndSave(gl, width, height, `frame_${frameNumber}_${fileNameSuffix}.png`, urlSave);
 
   TextureIndex.setTextureIndex(2);
 
 }
-  console.log("🚀 ~ render ~ lightIndices:", lightIndices)
+// console.log("🚀 ~ render ~ lightIndices:", lightIndices)
 
 const fpsElem = document.querySelector("#fps");
 const avgFpsElem = document.querySelector("#avg-fps");
@@ -357,7 +368,7 @@ async function renderAsync(times) {
     avgFpsElem.textContent = avgFps.toFixed(1);
 
     console.log(
-`frame ${i}: ${frameTime.toFixed(4)} seconds
+      `frame ${i}: ${frameTime.toFixed(4)} seconds
 fps: ${fps}`);
 
     previousTime = endTime;
@@ -512,6 +523,7 @@ async function loadModel(url) {
 
   return new Promise((resolve, reject) => {
     const loader = new GLTFLoader();
+    let triangleIndex = 0;
 
     loader.load(
       url,
@@ -521,6 +533,7 @@ async function loadModel(url) {
         //var obj = model;//.scene;
         console.log("🚀 ~ returnnewPromise ~ model:", model)
         var obj = model.scene;
+        console.log("🚀 ~ returnnewPromise ~ obj:", obj)
         obj.updateMatrixWorld(true);
 
         const boundingBox = new THREE.Box3().setFromObject(obj);
@@ -548,6 +561,76 @@ async function loadModel(url) {
           }
         });
 
+        // Generate BVH
+        /* 
+
+
+
+        const geometries = [];
+
+        // Traverse all child meshes and collect valid geometries
+        obj.traverse((child) => {
+          if (child.isMesh && child.geometry && child.geometry.attributes.position) {
+            if (!child.geometry.index) {
+              child.geometry = BufferGeometryUtils.mergeVertices(child.geometry); // Index the geometry if not indexed
+            }
+            geometries.push(child.geometry);
+          }
+        });
+                console.log("🚀 ~ returnnewPromise ~ geometries:", geometries)
+        
+                let mergedMesh;
+        
+                // Check if there are valid geometries to merge
+                if (geometries.length > 0) {
+                  // Merge all valid geometries into one
+                  const mergedGeometry = BufferGeometryUtils.mergeGeometries(geometries, true);
+                  console.log("🚀 ~ returnnewPromise ~ mergedGeometry:", mergedGeometry)
+        
+                  // Generate the BVH for the merged geometry
+                  const bvh = new MeshBVH(mergedGeometry);
+        
+        
+                  console.log("🚀 ~ returnnewPromise ~ mergedGeometry.boundsTree:", bvh)
+        
+                  // getBVHExtremes(mergedGeometry.boundsTree);
+                  console.log("🚀 ~ returnnewPromise ~ getBVHExtremes(mergedGeometry.boundsTree):", THREEMeshBVH.getBVHExtremes(bvh))
+        
+                  bvh.traverse((depth, isLeafNode, boundingData, offsetOrSplit, count) => {
+                    if (isLeafNode) {
+                      console.log('Leaf Node:');
+                      console.log(" depth:", depth)
+                      console.log('  Bounding Box:', boundingData); // The bounding box of the node
+                      console.log('  offsetOrSplit:', offsetOrSplit); // Number of triangles in this node
+                      console.log('  count:', count); // Index offset in the geometry's index buffer
+                    } else {
+                      console.log('Internal Node:');
+                      console.log(" depth:", depth)
+                      console.log('  Bounding Box:', boundingData); // The bounding box of the node
+                      console.log('  offsetOrSplit:', offsetOrSplit); // Number of triangles in this node
+                      console.log('  count:', count); // Index offset in the geometry's index buffer
+                    }
+                  });
+        
+        
+        
+                  // Create a mesh with the merged geometry and BVH
+                  mergedMesh = new THREE.Mesh(mergedGeometry, new THREE.MeshStandardMaterial());
+                  console.log("🚀 ~ returnnewPromise ~ mergedMesh:", mergedMesh)
+        
+                  // Use the mergedMesh in your rendering pipeline
+                } else {
+                  console.error('No valid geometries found to merge.');
+                }
+        
+                if (obj.isMesh) {
+                  console.log("OBJ IS GEOMETRY")
+                  console.log("🚀 ~ returnnewPromise ~ obj.geometry:", obj.geometry)
+                  obj.geometry.boundsTree = new MeshBVH(child.geometry);
+                  console.log("🚀 ~ returnnewPromise ~ obj.geometry.boundsTree:", obj.geometry.boundsTree)
+        
+                }
+         */
         // Now we find each Mesh...
         obj.traverseVisible(function (child) {
 
@@ -560,7 +643,7 @@ async function loadModel(url) {
             // console.log("-------------------------------------------------------------------------------")
             // console.log("🌸 ~ child:", child)
 
-            console.log(child.name);
+            // console.log(child.name);
             const geometry = child.geometry;
 
             // Ensure the geometry is not indexed, for simplicity
@@ -572,37 +655,36 @@ async function loadModel(url) {
             const positionAttribute = child.geometry.attributes.position;
             const worldMatrix = child.matrixWorld;
             let vertex;
-            // console.log("🌸 ~ mappedCoordinatesArray:", child.geometry.attributes.position.array.toString())
+            // console.log("🌸 ~ mappedMeshVertexCoordinatesArray:", child.geometry.attributes.position.array.toString())
 
-            let mappedCoordinatesArray = [];
+            let mappedMeshVertexCoordinatesArray = [];
+            let inde = [];
             // console.log("🌸 ~ positionAttribute.count:", positionAttribute.count)
             for (let i = 0; i < positionAttribute.count; i++) {
               vertex = new THREE.Vector3().fromBufferAttribute(positionAttribute, i);
               vertex.applyMatrix4(worldMatrix);
               // positionAttribute.setXYZ(i, vertex.x, vertex.y, vertex.z);
-              mappedCoordinatesArray.push(...[vertex.x, vertex.y, vertex.z])
+              mappedMeshVertexCoordinatesArray.push(...[vertex.x, vertex.y, vertex.z])
+              trianglesIndices.push(triangleIndex);
+              triangleIndex++;
             }
 
-            // positionAttribute.needsUpdate = true;
 
-            // Optionally, reset the mesh's transformation matrix
-            // child.matrix.identity();
-            // child.matrixWorld.identity();
+            //  push the array of mapped coordinates of the mesh into coordinates
+            coordinates.push(...mappedMeshVertexCoordinatesArray);
 
-            // mappedCoordinatesArray = child.geometry.attributes.position.array;
-            // console.log("🌸 ~ mappedCoordinatesArray:", mappedCoordinatesArray.toString())
+            vertexCount += mappedMeshVertexCoordinatesArray.length / 3;
+            console.log("😡 ~ vertexCount adding mesh "+ child.name+": "+ vertexCount)
+            triangleCount += mappedMeshVertexCoordinatesArray.length / 9;
+            console.log("😡 ~ triangleCount adding mesh "+ child.name+": "+ triangleCount)
 
-            coordinates.push(...mappedCoordinatesArray);
-
-            vertexCount += mappedCoordinatesArray.length / 3;
-            triangleCount += mappedCoordinatesArray.length / 9;
 
             // for each triangle
-            for (let i = 0; i < mappedCoordinatesArray.length / 9; i++) {
+            for (let i = 0; i < mappedMeshVertexCoordinatesArray.length / 9; i++) {
               // get triangle's normal
-              let vertex0 = new THREE.Vector3(mappedCoordinatesArray[9 * i], mappedCoordinatesArray[9 * i + 1], mappedCoordinatesArray[9 * i + 2]);
-              let vertex1 = new THREE.Vector3(mappedCoordinatesArray[9 * i + 3], mappedCoordinatesArray[9 * i + 4], mappedCoordinatesArray[9 * i + 5]);
-              let vertex2 = new THREE.Vector3(mappedCoordinatesArray[9 * i + 6], mappedCoordinatesArray[9 * i + 7], mappedCoordinatesArray[9 * i + 8]);
+              let vertex0 = new THREE.Vector3(mappedMeshVertexCoordinatesArray[9 * i], mappedMeshVertexCoordinatesArray[9 * i + 1], mappedMeshVertexCoordinatesArray[9 * i + 2]);
+              let vertex1 = new THREE.Vector3(mappedMeshVertexCoordinatesArray[9 * i + 3], mappedMeshVertexCoordinatesArray[9 * i + 4], mappedMeshVertexCoordinatesArray[9 * i + 5]);
+              let vertex2 = new THREE.Vector3(mappedMeshVertexCoordinatesArray[9 * i + 6], mappedMeshVertexCoordinatesArray[9 * i + 7], mappedMeshVertexCoordinatesArray[9 * i + 8]);
 
               var triangle = new THREE.Triangle(vertex0, vertex1, vertex2);
               let triangleNormal = new THREE.Vector3();
@@ -619,7 +701,7 @@ async function loadModel(url) {
 
               const emission = child.material.emissive;
               // console.log("🚀 ~ emission:", emission)
-              emissions.push(...[emission.r * 50, emission.g* 50, emission.b* 50]);
+              emissions.push(...[emission.r * 50, emission.g * 50, emission.b * 50]);
               // emissions.push(...[emission.r, emission.g, emission.b]);
 
             }
@@ -742,3 +824,20 @@ function createFramebuffer(gl, width, height) {
 
   return { framebuffer, texture };
 }
+
+
+function flattenBVH_Eytzinger(node, bvhArray, index = 0) {
+  if (node == null) return;
+
+  // Ensure the array has enough space
+  if (index >= bvhArray.length) bvhArray.length = index + 1;
+
+  // Store the node data
+  bvhArray[index] = node;
+
+  // Flatten the left and right children
+  flattenBVH_Eytzinger(node.left, bvhArray, 2 * index + 1);
+  flattenBVH_Eytzinger(node.right, bvhArray, 2 * index + 2);
+}
+
+// Assuming `bvhRoot` is your BVH root node
