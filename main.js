@@ -1,12 +1,12 @@
 const PI_NUMBER = 3.14159265359;
-const SLEEP_TIME = 500;
-const SLEEP_TIME_BETWEEN_QUADS = 150;
+const SLEEP_TIME = 50;
+const SLEEP_TIME_BETWEEN_QUADS = 50;
 
 
-let frames = 1;
+let frames = 40;
 let maxPathLength = 5;
 let sampleCount = 5;
-let canvasSize = 128;
+let canvasSize = 512;
 let quadSize = 32;
 let urlSave = "image/png/v1";
 let fileNameSuffix = "v12_bedroom_afterFixingFireflies";
@@ -34,10 +34,13 @@ import fragmentShaderOutput from './shaders/fragmentShaderOutput.glsl';
 // utils
 // import { createRGBDataTexture } from './utils/dataTextureCreator.js';
 // import { mapCoordinates } from './utils/coordinatesMapper.js';
+import { mapTrianglesArrayToTexturizedArray } from './utils/triangleMapper.js';
+import { shuffleArray, sortTrianglesByBVHInorderIndices, sortTrianglesByDistanceToCamera } from './utils/triangleSorter.js';
 
 // classes
 import Camera from './classes/camera.js';
 import BVH from './classes/bvh.js';
+import Triangle from './classes/triangle.js';
 
 // modules
 import BufferManager from './modules/bufferManager.js';
@@ -55,6 +58,11 @@ let emissions = [];
 let lightIndices = [];
 let lightTotalArea;
 
+let newPropertiesArray;
+
+let trianglesArray = [];
+
+
 let startTime, endTime;
 
 let objects = 0;
@@ -67,8 +75,9 @@ try {
   console.log("b4 loading");
   model = await loadModel(
     // '/resources/my_cornell_2/gltf/my_cornell_2.gltf'
-    '/resources/bedroom2/gltf/v3/bedroom2.gltf'
-    // '/resources/bedroom2/gltf/v5/bedroom2_v5.gltf'
+    // '/resources/bedroom2/gltf/v3/bedroom2.gltf'
+    '/resources/bedroom2/gltf/v5/bedroom2_v5.gltf'
+    // '/resources/my_cornell_6/gltf/my_cornell_6.gltf'
     // '/resources/bedroom1/customGLTF/bedroom1.gltf'
     // '/resources/bedroom2/gltf/bedroom2.gltf'
     // '/resources/my_cornell_3/gltf/my_cornell_3.gltf'
@@ -84,9 +93,6 @@ try {
   console.log(e);
 }
 
-let bvh = new BVH(coordinates, trianglesIndices);
-
-console.log(bvh);
 
 // scene.updateMatrixWorld(true);
 
@@ -137,20 +143,40 @@ let cameraInstance = new Camera(50, width / height, 0.1, 1000);
 cameraInstance.translate('x', 14)
 cameraInstance.translate('z', -14)
 cameraInstance.translate('y', 3)
-cameraInstance.lookAt(0, 0, 0);
 
 
 //cornell room
 // cameraInstance.translate('x', 12.4)
 // cameraInstance.rotate('y', PI_NUMBER / 2);
-// cameraInstance.lookAt(0, 0, 0);
+// cameraInstance.translate('y', 3)
+cameraInstance.lookAt(0, 0, 0);
+
 
 
 
 let camera = cameraInstance.getCamera();
+console.log("🚀 ~ camera:", camera)
+
+console.log("🚀 ~ trianglesArray:", trianglesArray)
+console.log("🚀 ~ trianglesArray[28]:", JSON.stringify(trianglesArray[28]))
 
 
+let bvh = new BVH(trianglesArray);
+newPropertiesArray = mapTrianglesArrayToTexturizedArray(trianglesArray);
+console.log("🚀 ~ newPropertiesArray:", newPropertiesArray)
 
+let texturizableTreeProperties = bvh.convertToTexturizableArrays();
+console.log("🚀 ~ texturizableTreeProperties:", texturizableTreeProperties)
+
+let texturizableInorderTrianglesIndices = [];
+bvh.inorderTrianglesIndicesArray.forEach(element => {
+  texturizableInorderTrianglesIndices.push(...[element, element, element])
+});
+console.log("🚀 ~ texturizableInorderTrianglesIndices:", texturizableInorderTrianglesIndices)
+
+console.log("🚀 ~ nodesTrianglesIndices:", JSON.stringify(texturizableTreeProperties.nodesTrianglesIndices))
+
+console.log(bvh);
 // const fpsElem = document.querySelector("#fps");
 
 // let then = 0;
@@ -230,11 +256,18 @@ async function render(now, frameNumber) {
 
 
   //function uploadTexture(gl, program, data, name, width, height, index)
-  uploadTexture(gl, programPathTracing, coordinates, 'coordinatesTexture', (coordinates.length / 3), 1, TextureIndex.getNextTextureIndex());
-  uploadTexture(gl, programPathTracing, normals, 'normalsTexture', (normals.length / 3), 1, TextureIndex.getNextTextureIndex());
-  uploadTexture(gl, programPathTracing, colors, 'colorsTexture', (colors.length / 3), 1, TextureIndex.getNextTextureIndex());
-  uploadTexture(gl, programPathTracing, emissions, 'emissionsTexture', (emissions.length / 3), 1, TextureIndex.getNextTextureIndex());
-  uploadTexture(gl, programPathTracing, lightIndices, 'lightIndicesTexture', (lightIndices.length / 3), 1, TextureIndex.getNextTextureIndex());
+  uploadTexture(gl, programPathTracing, newPropertiesArray.coordinates, 'coordinatesTexture', (newPropertiesArray.coordinates.length / 3), 1, TextureIndex.getNextTextureIndex());
+  uploadTexture(gl, programPathTracing, newPropertiesArray.normals, 'normalsTexture', (newPropertiesArray.normals.length / 3), 1, TextureIndex.getNextTextureIndex());
+  uploadTexture(gl, programPathTracing, newPropertiesArray.colors, 'colorsTexture', (newPropertiesArray.colors.length / 3), 1, TextureIndex.getNextTextureIndex());
+  uploadTexture(gl, programPathTracing, newPropertiesArray.emissions, 'emissionsTexture', (newPropertiesArray.emissions.length / 3), 1, TextureIndex.getNextTextureIndex());
+  uploadTexture(gl, programPathTracing, newPropertiesArray.lightIndices, 'lightIndicesTexture', (newPropertiesArray.lightIndices.length / 3), 1, TextureIndex.getNextTextureIndex());
+  uploadTexture(gl, programPathTracing, texturizableTreeProperties.nodesBoundingBoxesMins, 'nodesBoundingBoxesMins', (texturizableTreeProperties.nodesBoundingBoxesMins.length / 3), 1, TextureIndex.getNextTextureIndex());
+  uploadTexture(gl, programPathTracing,texturizableTreeProperties. nodesBoundingBoxesMaxs, 'nodesBoundingBoxesMaxs', (texturizableTreeProperties.nodesBoundingBoxesMaxs.length / 3), 1, TextureIndex.getNextTextureIndex());
+  // uploadTexture(gl, programPathTracing, texturizableTreeProperties.nodesTrianglesIndices, 'nodesTrianglesIndices', (texturizableTreeProperties.nodesTrianglesIndices.length / 3), 1, TextureIndex.getNextTextureIndex());
+  uploadTexture(gl, programPathTracing, texturizableTreeProperties.nodesTrianglesCount, 'nodesTrianglesCount', (texturizableTreeProperties.nodesTrianglesCount.length / 3), 1, TextureIndex.getNextTextureIndex());
+  uploadTexture(gl, programPathTracing, texturizableTreeProperties.nodesInorderTrianglesIndices, 'nodesInorderTrianglesIndices', (texturizableTreeProperties.nodesInorderTrianglesIndices.length / 3), 1, TextureIndex.getNextTextureIndex());
+  uploadTexture(gl, programPathTracing, texturizableInorderTrianglesIndices, 'inorderTrianglesIndicesArray', (texturizableInorderTrianglesIndices.length / 3), 1, TextureIndex.getNextTextureIndex());
+
 
   // Set uniforms
   const quadXLocation = gl.getUniformLocation(programPathTracing, 'quadX');
@@ -248,14 +281,15 @@ async function render(now, frameNumber) {
   gl.uniform3f(gl.getUniformLocation(programPathTracing, 'cameraUp'), camera.cameraUp.x, camera.cameraUp.y, camera.cameraUp.z);
   gl.uniform3f(gl.getUniformLocation(programPathTracing, 'cameraRight'), camera.cameraRight.x, camera.cameraRight.y, camera.cameraRight.z);
   gl.uniform3f(gl.getUniformLocation(programPathTracing, 'cameraLeftBottom'), camera.cameraLeftBottom.x, camera.cameraLeftBottom.y, camera.cameraLeftBottom.z);
-  gl.uniform1i(gl.getUniformLocation(programPathTracing, 'vertexCount'), parseInt(coordinates.length / 3));
+  gl.uniform1i(gl.getUniformLocation(programPathTracing, 'vertexCount'), parseInt(newPropertiesArray.coordinates.length / 3));
   gl.uniform1i(gl.getUniformLocation(programPathTracing, 'triangleCount'), triangleCount);
-  gl.uniform1i(gl.getUniformLocation(programPathTracing, 'lightIndicesCount'), lightIndices.length / 3);
+  gl.uniform1i(gl.getUniformLocation(programPathTracing, 'lightIndicesCount'), parseInt(newPropertiesArray.lightIndices.length / 3));
   gl.uniform1i(gl.getUniformLocation(programPathTracing, 'timestamp'), now);
   gl.uniform1i(gl.getUniformLocation(programPathTracing, 'maxPathLength'), maxPathLength);
   gl.uniform1i(gl.getUniformLocation(programPathTracing, 'sampleCount'), sampleCount);
   gl.uniform1i(gl.getUniformLocation(programPathTracing, 'frameNumber'), frameNumber);
   gl.uniform1i(gl.getUniformLocation(programPathTracing, 'totalFrames'), frames);
+  gl.uniform1i(gl.getUniformLocation(programPathTracing, 'bvhNodeCount'), bvh.nodeCount);
 
   gl.uniform1i(gl.getUniformLocation(programPathTracing, 'quadSize'), quadSize);
 
@@ -331,6 +365,7 @@ async function render(now, frameNumber) {
   TextureIndex.setTextureIndex(2);
 
 }
+
 // console.log("🚀 ~ render ~ lightIndices:", lightIndices)
 
 const fpsElem = document.querySelector("#fps");
@@ -561,76 +596,6 @@ async function loadModel(url) {
           }
         });
 
-        // Generate BVH
-        /* 
-
-
-
-        const geometries = [];
-
-        // Traverse all child meshes and collect valid geometries
-        obj.traverse((child) => {
-          if (child.isMesh && child.geometry && child.geometry.attributes.position) {
-            if (!child.geometry.index) {
-              child.geometry = BufferGeometryUtils.mergeVertices(child.geometry); // Index the geometry if not indexed
-            }
-            geometries.push(child.geometry);
-          }
-        });
-                console.log("🚀 ~ returnnewPromise ~ geometries:", geometries)
-        
-                let mergedMesh;
-        
-                // Check if there are valid geometries to merge
-                if (geometries.length > 0) {
-                  // Merge all valid geometries into one
-                  const mergedGeometry = BufferGeometryUtils.mergeGeometries(geometries, true);
-                  console.log("🚀 ~ returnnewPromise ~ mergedGeometry:", mergedGeometry)
-        
-                  // Generate the BVH for the merged geometry
-                  const bvh = new MeshBVH(mergedGeometry);
-        
-        
-                  console.log("🚀 ~ returnnewPromise ~ mergedGeometry.boundsTree:", bvh)
-        
-                  // getBVHExtremes(mergedGeometry.boundsTree);
-                  console.log("🚀 ~ returnnewPromise ~ getBVHExtremes(mergedGeometry.boundsTree):", THREEMeshBVH.getBVHExtremes(bvh))
-        
-                  bvh.traverse((depth, isLeafNode, boundingData, offsetOrSplit, count) => {
-                    if (isLeafNode) {
-                      console.log('Leaf Node:');
-                      console.log(" depth:", depth)
-                      console.log('  Bounding Box:', boundingData); // The bounding box of the node
-                      console.log('  offsetOrSplit:', offsetOrSplit); // Number of triangles in this node
-                      console.log('  count:', count); // Index offset in the geometry's index buffer
-                    } else {
-                      console.log('Internal Node:');
-                      console.log(" depth:", depth)
-                      console.log('  Bounding Box:', boundingData); // The bounding box of the node
-                      console.log('  offsetOrSplit:', offsetOrSplit); // Number of triangles in this node
-                      console.log('  count:', count); // Index offset in the geometry's index buffer
-                    }
-                  });
-        
-        
-        
-                  // Create a mesh with the merged geometry and BVH
-                  mergedMesh = new THREE.Mesh(mergedGeometry, new THREE.MeshStandardMaterial());
-                  console.log("🚀 ~ returnnewPromise ~ mergedMesh:", mergedMesh)
-        
-                  // Use the mergedMesh in your rendering pipeline
-                } else {
-                  console.error('No valid geometries found to merge.');
-                }
-        
-                if (obj.isMesh) {
-                  console.log("OBJ IS GEOMETRY")
-                  console.log("🚀 ~ returnnewPromise ~ obj.geometry:", obj.geometry)
-                  obj.geometry.boundsTree = new MeshBVH(child.geometry);
-                  console.log("🚀 ~ returnnewPromise ~ obj.geometry.boundsTree:", obj.geometry.boundsTree)
-        
-                }
-         */
         // Now we find each Mesh...
         obj.traverseVisible(function (child) {
 
@@ -647,65 +612,89 @@ async function loadModel(url) {
             const geometry = child.geometry;
 
             // Ensure the geometry is not indexed, for simplicity
-            // console.log("🌸 ~ child.geometry:", child.geometry.attributes.position.array.toString())
             child.geometry = child.geometry.toNonIndexed();
-            // console.log("🌸 ~ child.geometry:", child.geometry.attributes.position.array.toString())
 
             // Apply matrixWorld to geometry vertices
             const positionAttribute = child.geometry.attributes.position;
             const worldMatrix = child.matrixWorld;
             let vertex;
-            // console.log("🌸 ~ mappedMeshVertexCoordinatesArray:", child.geometry.attributes.position.array.toString())
 
             let mappedMeshVertexCoordinatesArray = [];
-            let inde = [];
-            // console.log("🌸 ~ positionAttribute.count:", positionAttribute.count)
+
+            let mappedTrianglesArray = [];
+
+
             for (let i = 0; i < positionAttribute.count; i++) {
               vertex = new THREE.Vector3().fromBufferAttribute(positionAttribute, i);
               vertex.applyMatrix4(worldMatrix);
+              // console.log("🚀 ~ vertex:", vertex)
               // positionAttribute.setXYZ(i, vertex.x, vertex.y, vertex.z);
               mappedMeshVertexCoordinatesArray.push(...[vertex.x, vertex.y, vertex.z])
               trianglesIndices.push(triangleIndex);
               triangleIndex++;
             }
+            // console.log("🚀 ~ mappedMeshVertexCoordinatesArray:", (mappedMeshVertexCoordinatesArray.length))
 
 
-            //  push the array of mapped coordinates of the mesh into coordinates
-            coordinates.push(...mappedMeshVertexCoordinatesArray);
-
-            vertexCount += mappedMeshVertexCoordinatesArray.length / 3;
-            console.log("😡 ~ vertexCount adding mesh "+ child.name+": "+ vertexCount)
-            triangleCount += mappedMeshVertexCoordinatesArray.length / 9;
-            console.log("😡 ~ triangleCount adding mesh "+ child.name+": "+ triangleCount)
-
-
-            // for each triangle
             for (let i = 0; i < mappedMeshVertexCoordinatesArray.length / 9; i++) {
-              // get triangle's normal
-              let vertex0 = new THREE.Vector3(mappedMeshVertexCoordinatesArray[9 * i], mappedMeshVertexCoordinatesArray[9 * i + 1], mappedMeshVertexCoordinatesArray[9 * i + 2]);
-              let vertex1 = new THREE.Vector3(mappedMeshVertexCoordinatesArray[9 * i + 3], mappedMeshVertexCoordinatesArray[9 * i + 4], mappedMeshVertexCoordinatesArray[9 * i + 5]);
-              let vertex2 = new THREE.Vector3(mappedMeshVertexCoordinatesArray[9 * i + 6], mappedMeshVertexCoordinatesArray[9 * i + 7], mappedMeshVertexCoordinatesArray[9 * i + 8]);
 
-              var triangle = new THREE.Triangle(vertex0, vertex1, vertex2);
-              let triangleNormal = new THREE.Vector3();
-              triangle.getNormal(triangleNormal);
+              let newTriangle = new Triangle(
+                new THREE.Triangle(
+                  new THREE.Vector3(mappedMeshVertexCoordinatesArray[9 * i], mappedMeshVertexCoordinatesArray[9 * i + 1], mappedMeshVertexCoordinatesArray[9 * i + 2]),
+                  new THREE.Vector3(mappedMeshVertexCoordinatesArray[9 * i + 3], mappedMeshVertexCoordinatesArray[9 * i + 4], mappedMeshVertexCoordinatesArray[9 * i + 5]),
+                  new THREE.Vector3(mappedMeshVertexCoordinatesArray[9 * i + 6], mappedMeshVertexCoordinatesArray[9 * i + 7], mappedMeshVertexCoordinatesArray[9 * i + 8])))
 
-              normals.push(...[triangleNormal.x, triangleNormal.y, triangleNormal.z]);
+              mappedTrianglesArray.push(newTriangle);
+              triangleCount++;
+              vertexCount += 3;
 
-              // get triangle's color
-              const color = child.material.color;
-              if (color) {
-                colors.push(...[color.r, color.g, color.b]); //TODO: opacidad?
-              }
-
-
-              const emission = child.material.emissive;
-              // console.log("🚀 ~ emission:", emission)
-              emissions.push(...[emission.r * 50, emission.g * 50, emission.b * 50]);
-              // emissions.push(...[emission.r, emission.g, emission.b]);
 
             }
 
+            // console.log("🚀 ~ mappedTrianglesArray:", mappedTrianglesArray)
+
+            //  push the array of mapped coordinates of the mesh into coordinates
+            // coordinates.push(...mappedMeshVertexCoordinatesArray);
+
+            // vertexCount += mappedMeshVertexCoordinatesArray.length / 3;
+            console.log("😡 ~ vertexCount adding mesh " + child.name + ": " + vertexCount)
+            // triangleCount += mappedMeshVertexCoordinatesArray.length / 9;
+            console.log("😡 ~ triangleCount adding mesh " + child.name + ": " + triangleCount)
+
+
+            // for each triangle
+            for (let i = 0; i < mappedTrianglesArray.length; i++) {
+              // get triangle's normal
+              /*               let vertex0 = new THREE.Vector3(mappedMeshVertexCoordinatesArray[9 * i], mappedMeshVertexCoordinatesArray[9 * i + 1], mappedMeshVertexCoordinatesArray[9 * i + 2]);
+                            let vertex1 = new THREE.Vector3(mappedMeshVertexCoordinatesArray[9 * i + 3], mappedMeshVertexCoordinatesArray[9 * i + 4], mappedMeshVertexCoordinatesArray[9 * i + 5]);
+                            let vertex2 = new THREE.Vector3(mappedMeshVertexCoordinatesArray[9 * i + 6], mappedMeshVertexCoordinatesArray[9 * i + 7], mappedMeshVertexCoordinatesArray[9 * i + 8]); */
+
+              // var triangle = new THREE.Triangle(vertex0, vertex1, vertex2);
+              mappedTrianglesArray[i].normal = new THREE.Vector3();
+              mappedTrianglesArray[i].triangle.getNormal(mappedTrianglesArray[i].normal);
+              // let triangleNormal = new THREE.Vector3();
+              // triangle.getNormal(triangleNormal);
+
+              // normals.push(...[mappedTrianglesArray[i].normal.x, mappedTrianglesArray[i].normal.y, mappedTrianglesArray[i].normal.z]);
+
+              // get triangle's color
+              const color = child.material.color;
+              mappedTrianglesArray[i].color = color;
+              /* if (color) {
+                colors.push(...[color.r, color.g, color.b]); //TODO: opacidad?
+              } */
+
+
+              const emission = child.material.emissive;
+              mappedTrianglesArray[i].emission = emission;
+              // console.log("🚀 ~ emission:", emission)
+              // emissions.push(...[emission.r * 50, emission.g * 50, emission.b * 50]);
+              // emissions.push(...[emission.r, emission.g, emission.b]);
+
+
+            }
+
+            trianglesArray.push(...mappedTrianglesArray)
 
           }
         });
@@ -714,7 +703,7 @@ async function loadModel(url) {
 
         // armar arreglo de indices de triangulos de luces
         for (let i = 0; i < emissions.length; i = i + 3) {
-          if (emissions[i] > 0.0 || emissions[i + 1] > 0.0 || emissions[i + 2] > 0.0) {
+          if (trianglesArray[i].emission.r > 0.0 || trianglesArray[i].emission.r > 0.0 || trianglesArray[i].emission.r > 0.0) {
             lightIndices.push(i / 3);
             lightIndices.push(i / 3);
             lightIndices.push(i / 3);

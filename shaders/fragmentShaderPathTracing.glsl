@@ -17,11 +17,24 @@ struct Triangle {
   vec3 emission;
 };
 
+struct BVHNode {
+  vec3 minBounds;
+  vec3 maxBounds;
+  int triangleInorderIndex;
+  int triangleCount;
+};
+
 uniform sampler2D coordinatesTexture;
 uniform sampler2D normalsTexture;
 uniform sampler2D colorsTexture;
 uniform sampler2D emissionsTexture;
 uniform sampler2D lightIndicesTexture;
+uniform sampler2D nodesBoundingBoxesMins;
+uniform sampler2D nodesBoundingBoxesMaxs;
+uniform sampler2D nodesInorderTrianglesIndices;
+uniform sampler2D nodesTrianglesCount;
+uniform sampler2D inorderTrianglesIndicesArray;
+// uniform sampler2D nodesTrianglesIndices;
 uniform sampler2D previousFrameTexture;
 
 uniform vec2 windowSize;
@@ -42,6 +55,7 @@ uniform int totalFrames;
 uniform int quadX;
 uniform int quadY;
 uniform int quadSize;
+uniform int bvhNodeCount;
 
 out vec4 outColor;
 
@@ -49,18 +63,35 @@ Triangle getTriangleFromTextures(int index) {
 
   Triangle triangle;
 
-  triangle.vertex0 = texture(coordinatesTexture, vec2(float(3 * index) / float(vertexCount - 1), 0.0f)).xyz;
-  triangle.vertex1 = texture(coordinatesTexture, vec2(float(3 * index + 1) / float(vertexCount - 1), 0.0f)).xyz;
-  triangle.vertex2 = texture(coordinatesTexture, vec2(float(3 * index + 2) / float(vertexCount - 1), 0.0f)).xyz;
+    // Calculate texture coordinates for each vertex of the triangle
+  float texCoordV0 = float(3 * index) / float(vertexCount - 1);
+  float texCoordV1 = float(3 * index + 1) / float(vertexCount - 1);
+  float texCoordV2 = float(3 * index + 2) / float(vertexCount - 1);
 
-  triangle.normal = texture(normalsTexture, vec2(float(index) / float(triangleCount - 1), 0.0f)).xyz;
+  triangle.vertex0 = texture(coordinatesTexture, vec2(texCoordV0, 0.0f)).xyz;
+  triangle.vertex1 = texture(coordinatesTexture, vec2(texCoordV1, 0.0f)).xyz;
+  triangle.vertex2 = texture(coordinatesTexture, vec2(texCoordV2, 0.0f)).xyz;
 
-  triangle.color = texture(colorsTexture, vec2(float(index) / float(triangleCount - 1), 0.0f)).xyz;
+  float triangleCoord = float(index) / float(triangleCount - 1);
 
-  triangle.emission = texture(emissionsTexture, vec2(float(index) / float(triangleCount - 1), 0.0f)).xyz;
+  triangle.normal = texture(normalsTexture, vec2(triangleCoord, 0.0f)).xyz;
+
+  triangle.color = texture(colorsTexture, vec2(triangleCoord, 0.0f)).xyz;
+
+  triangle.emission = texture(emissionsTexture, vec2(triangleCoord, 0.0f)).xyz;
 
   return triangle;
 
+}
+
+BVHNode getBVHNode(int index) {
+  BVHNode node;
+  node.minBounds = texture(nodesBoundingBoxesMins, vec2(float(index) / float(bvhNodeCount - 1), 0.0f)).xyz;
+  node.maxBounds = texture(nodesBoundingBoxesMaxs, vec2(float(index) / float(bvhNodeCount - 1), 0.0f)).xyz;
+  // node.triangleIndex = int(texture(nodesTrianglesIndices, vec2(float(index) / float(bvhNodeCount - 1), 0.0f)).x);
+  node.triangleInorderIndex = int(texture(nodesInorderTrianglesIndices, vec2(float(index) / float(bvhNodeCount - 1), 0.0f)).x);
+  node.triangleCount = int(texture(nodesTrianglesCount, vec2(float(index) / float(bvhNodeCount - 1), 0.0f)).x);
+  return node;
 }
 
 vec3 get_primary_ray_direction(float x, float y, vec3 camera_position, vec3 left_bottom, vec3 right, vec3 up) {
@@ -68,28 +99,121 @@ vec3 get_primary_ray_direction(float x, float y, vec3 camera_position, vec3 left
   return normalize(image_plane_pos - camera_position);
 }
 
-bool ray_triangle_intersection(out float out_t, vec3 origin, vec3 direction, Triangle triangle) {
+/* bool ray_triangle_intersection(out float out_t, vec3 origin, vec3 direction, Triangle triangle) {
   vec3 v0 = triangle.vertex0;
   mat3 matrix = mat3(-direction, triangle.vertex1 - v0, triangle.vertex2 - v0);
   vec3 solution = inverse(matrix) * (origin - v0);
   out_t = solution.x;
   vec2 barys = solution.yz;
   return out_t >= 0.001f && barys.x >= 0.0f && barys.y >= 0.0f && barys.x + barys.y <= 1.0f;
+} */
+
+bool ray_triangle_intersection(out float out_t, vec3 origin, vec3 direction, Triangle triangle) {
+  vec3 edge1 = triangle.vertex1 - triangle.vertex0;
+  vec3 edge2 = triangle.vertex2 - triangle.vertex0;
+  vec3 h = cross(direction, edge2);
+  float a = dot(edge1, h);
+  if(a > -0.0001f && a < 0.0001f)
+    return false;    // This ray is parallel to this triangle.
+  float f = 1.0f / a;
+  vec3 s = origin - triangle.vertex0;
+  float u = f * dot(s, h);
+  if(u < 0.0f || u > 1.0f)
+    return false;
+  vec3 q = cross(s, edge1);
+  float v = f * dot(direction, q);
+  if(v < 0.0f || u + v > 1.0f)
+    return false;
+    // At this stage we can compute t to find out where the intersection point is on the line.
+  float t = f * dot(edge2, q);
+  if(t > 0.0001f) { // ray intersection
+    out_t = t;
+    return true;
+  } else // This means that there is a line intersection but not a ray intersection.
+    return false;
+}
+
+bool ray_box_intersection(vec3 origin, vec3 direction, vec3 minBound, vec3 maxBound) {
+  vec3 invDir = 1.0f / direction; // Inverse of the direction to avoid division by zero
+  // invDir.x = direction.x != 0.0f ? 1.0f / direction.x : float(0xffffffff);
+  // invDir.y = direction.y != 0.0f ? 1.0f / direction.y : float(0xffffffff);
+  // invDir.z = direction.z != 0.0f ? 1.0f / direction.z : float(0xffffffff);
+  vec3 t1 = (minBound - origin) * invDir;
+  vec3 t2 = (maxBound - origin) * invDir;
+
+  vec3 tmin = min(t1, t2);
+  vec3 tmax = max(t1, t2);
+
+  float tNear = max(max(tmin.x, tmin.y), tmin.z);
+  float tFar = min(min(tmax.x, tmax.y), tmax.z);
+
+  // Return true if intersection exists and tFar is positive
+  return (tNear <= tFar) && (tFar > 0.0f);
 }
 
 bool ray_mesh_intersection(out float out_t, out Triangle out_triangle, vec3 origin, vec3 direction) {
-
   out_t = 1.0e38f;
   for(int i = 0; i < triangleCount; i++) {
-
     Triangle triangle = getTriangleFromTextures(i);
-
     float t;
     if(ray_triangle_intersection(t, origin, direction, triangle) && t < out_t) {
       out_t = t;
       out_triangle = triangle;
+      // return out_t < 1.0e38f; // NO PUEDO HACER ESTO!!!!
     }
   }
+  return out_t < 1.0e38f;
+}
+
+bool ray_bvh_intersection(out float out_t, out Triangle out_triangle, vec3 origin, vec3 direction) {
+  out_t = 1.0e38f; // Initialize with a large value
+  int stack[256];  // Stack to keep track of node indices to visit
+  int stackPointer = 0;
+  stack[stackPointer++] = 0;  // Start with the root node
+
+  while(stackPointer > 0) {
+    int currentIndex = stack[--stackPointer]; // Pop from stack
+
+    // Sample min and max bounds for the current node
+    BVHNode currentNode = getBVHNode(currentIndex);
+
+    if(currentNode.triangleInorderIndex == -1) {
+      // it's an empty leaf node - skip
+      continue;
+    }
+
+    // Check if ray intersects bounding box
+    if(ray_box_intersection(origin, direction, currentNode.minBounds, currentNode.maxBounds)) {
+      // Check if the current node is a leaf
+      if(currentNode.triangleInorderIndex != -2) {
+        // It's a leaf node with triangles, check intersection with the stored triangle
+        for(int i = currentNode.triangleInorderIndex; i < currentNode.triangleInorderIndex + currentNode.triangleCount; i++) {
+
+          int triangleIndex = int(texture(inorderTrianglesIndicesArray, vec2(float(i) / float(triangleCount - 1), 0.0f)).x);
+          
+          Triangle triangle = getTriangleFromTextures(triangleIndex);
+          float t;
+          if(ray_triangle_intersection(t, origin, direction, triangle) && t < out_t) {
+            out_t = t;
+            out_triangle = triangle;
+          }
+        }
+      } else if(currentNode.triangleInorderIndex == -2) {
+        // Push right child to stack first (since we'll process left child next)
+        int rightChildIndex = 2 * currentIndex + 2;
+        if(rightChildIndex < bvhNodeCount) {
+          stack[stackPointer++] = rightChildIndex;
+        }
+
+        // Push left child to stack
+        int leftChildIndex = 2 * currentIndex + 1;
+        if(leftChildIndex < bvhNodeCount) {
+          stack[stackPointer++] = leftChildIndex;
+        }
+      }
+    }
+  }
+
   return out_t < 1.0e38f;
 }
 
@@ -147,7 +271,7 @@ vec2 get_random_barycentric(inout uvec2 seed) {
 bool is_light_visible(vec3 origin, vec3 light_point, Triangle light_triangle, vec3 direction) {
   float t;
   Triangle blocking_triangle;
-  bool hits = ray_mesh_intersection(t, blocking_triangle, origin, direction);
+  bool hits = ray_bvh_intersection(t, blocking_triangle, origin, direction);
 
     // If the ray hits something and it's not the light itself, the light is blocked
   if(hits && blocking_triangle.emission != light_triangle.emission) {
@@ -166,8 +290,8 @@ void sample_random_light(inout uvec2 seed, inout Triangle lightTriangle, inout v
   while(attempts < max_attempts && !visible) {
     attempts++;
 
-    randomIndex = int(int(float(lightIndicesCount) * get_random_numbers(seed).x)) % lightIndicesCount;
-    lightIndex = int(texture(lightIndicesTexture, vec2(float(randomIndex * 3) / float(lightIndicesCount - 1), 0.0f)).x);
+    randomIndex = int(float(lightIndicesCount) * get_random_numbers(seed).x) % (lightIndicesCount);
+    lightIndex = int(texture(lightIndicesTexture, vec2(float(randomIndex) / float(lightIndicesCount - 1), 0.0f)).x);
 
     lightTriangle = getTriangleFromTextures(lightIndex);
 
@@ -201,7 +325,8 @@ vec3 get_ray_radiance(vec3 origin, vec3 direction, inout uvec2 seed) {
   for(int i = 0; i < maxPathLength; i++) {
     float t;
     Triangle triangle;
-    if(ray_mesh_intersection(t, triangle, origin, direction)) {
+    // if(ray_bvh_intersection(t, triangle, origin, direction)) {
+    if(ray_bvh_intersection(t, triangle, origin, direction)) {
 
       // If it's the first step and the triangle is emmissive - it's a light, stop the algorithm
       if(i == 0 && (triangle.emission.x > 0.0f || triangle.emission.y > 0.0f || triangle.emission.z > 0.0f)) {
@@ -227,7 +352,7 @@ vec3 get_ray_radiance(vec3 origin, vec3 direction, inout uvec2 seed) {
 
         Triangle blockingTriangle;
         float tBlockingTriangle;
-        bool hits = ray_mesh_intersection(tBlockingTriangle, blockingTriangle, rayTriangleIntersectionPoint, intersectionToLightDirection);
+        bool hits = ray_bvh_intersection(tBlockingTriangle, blockingTriangle, rayTriangleIntersectionPoint, intersectionToLightDirection);
 
         // if doesn't hit anything or hits and it's a light source
         if(!hits || (hits && blockingTriangle.emission != vec3(0.0f))) {

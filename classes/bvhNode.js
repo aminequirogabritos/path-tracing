@@ -2,18 +2,20 @@ import * as THREE from 'three';
 
 
 class BVHNode {
-    constructor(index, boundingBox, leftChild = null, rightChild = null, triangleIndex = null) {
-
-        
+    static nodeId = 0;
+    constructor(boundingBox, leftChild = null, rightChild = null, trianglesArray = [], triangleIndicesArray = [-1]) {
         const centroid = new THREE.Vector3();
         boundingBox.getCenter(centroid);
 
-        this.index = index;
+        // values passed through parameter
+        this.nodeId = BVHNode.nodeId++;
         this.boundingBox = boundingBox;
         this.leftChild = leftChild;
         this.rightChild = rightChild;
-        this.triangleIndex = triangleIndex;
-        // this.triangle = triangle;
+        this.trianglesArray = trianglesArray;
+        this.triangleIndicesArray = triangleIndicesArray;
+        
+        // computed values
         this.centroid = centroid;
     }
 
