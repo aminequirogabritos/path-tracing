@@ -1,6 +1,6 @@
 const PI_NUMBER = 3.14159265359;
-const SLEEP_TIME = 50;
-const SLEEP_TIME_BETWEEN_QUADS = 50;
+const SLEEP_TIME = 20;
+const SLEEP_TIME_BETWEEN_QUADS = 20;
 
 
 let frames = 40;
@@ -9,7 +9,7 @@ let sampleCount = 5;
 let canvasSize = 512;
 let quadSize = 32;
 let urlSave = "image/png/v1";
-let fileNameSuffix = "v12_bedroom_afterFixingFireflies";
+let fileNameSuffix = `v13_cornell6_BVH_${frames}frames_${maxPathLength}bounces_${sampleCount}samples_${512}px`
 
 // ------------------------------------------------------------------
 
@@ -76,8 +76,8 @@ try {
   model = await loadModel(
     // '/resources/my_cornell_2/gltf/my_cornell_2.gltf'
     // '/resources/bedroom2/gltf/v3/bedroom2.gltf'
-    '/resources/bedroom2/gltf/v5/bedroom2_v5.gltf'
-    // '/resources/my_cornell_6/gltf/my_cornell_6.gltf'
+    // '/resources/bedroom2/gltf/v5/bedroom2_v5.gltf'
+    '/resources/my_cornell_6/gltf/my_cornell_6.gltf'
     // '/resources/bedroom1/customGLTF/bedroom1.gltf'
     // '/resources/bedroom2/gltf/bedroom2.gltf'
     // '/resources/my_cornell_3/gltf/my_cornell_3.gltf'
@@ -140,41 +140,36 @@ gl.canvas.height = height;
 let cameraInstance = new Camera(50, width / height, 0.1, 1000);
 
 // room v3
-cameraInstance.translate('x', 14)
-cameraInstance.translate('z', -14)
-cameraInstance.translate('y', 3)
+// cameraInstance.translate('x', 14)
+// cameraInstance.translate('z', -14)
+// cameraInstance.translate('y', 3)
 
 
 //cornell room
-// cameraInstance.translate('x', 12.4)
-// cameraInstance.rotate('y', PI_NUMBER / 2);
-// cameraInstance.translate('y', 3)
+cameraInstance.translate('x', 12.4)
+cameraInstance.rotate('y', PI_NUMBER / 2);
+
+
+
 cameraInstance.lookAt(0, 0, 0);
 
 
 
 
 let camera = cameraInstance.getCamera();
-console.log("🚀 ~ camera:", camera)
 
-console.log("🚀 ~ trianglesArray:", trianglesArray)
-console.log("🚀 ~ trianglesArray[28]:", JSON.stringify(trianglesArray[28]))
 
 
 let bvh = new BVH(trianglesArray);
 newPropertiesArray = mapTrianglesArrayToTexturizedArray(trianglesArray);
-console.log("🚀 ~ newPropertiesArray:", newPropertiesArray)
 
 let texturizableTreeProperties = bvh.convertToTexturizableArrays();
-console.log("🚀 ~ texturizableTreeProperties:", texturizableTreeProperties)
 
 let texturizableInorderTrianglesIndices = [];
 bvh.inorderTrianglesIndicesArray.forEach(element => {
   texturizableInorderTrianglesIndices.push(...[element, element, element])
 });
-console.log("🚀 ~ texturizableInorderTrianglesIndices:", texturizableInorderTrianglesIndices)
 
-console.log("🚀 ~ nodesTrianglesIndices:", JSON.stringify(texturizableTreeProperties.nodesTrianglesIndices))
 
 console.log(bvh);
 // const fpsElem = document.querySelector("#fps");
@@ -193,7 +188,6 @@ gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
-
 
 
 const vertexShaderPathTracingSource = createShader(gl, gl.VERTEX_SHADER, vertexShaderPathTracing);
