@@ -3,7 +3,7 @@ const SLEEP_TIME = 30;
 const SLEEP_TIME_BETWEEN_QUADS = 30;
 
 
-const frames = 40;
+const frames = 5;
 const maxPathLength = 5;
 const sampleCount = 5;
 const canvasSize = 512;
