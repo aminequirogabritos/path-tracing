@@ -1,15 +1,17 @@
 const PI_NUMBER = 3.14159265359;
-const SLEEP_TIME = 20;
-const SLEEP_TIME_BETWEEN_QUADS = 20;
+const SLEEP_TIME = 30;
+const SLEEP_TIME_BETWEEN_QUADS = 30;
 
 
-let frames = 40;
-let maxPathLength = 5;
-let sampleCount = 5;
-let canvasSize = 512;
-let quadSize = 32;
-let urlSave = "image/png/v1";
-let fileNameSuffix = `v13_cornell6_BVH_${frames}frames_${maxPathLength}bounces_${sampleCount}samples_${512}px`
+const frames = 40;
+const maxPathLength = 5;
+const sampleCount = 5;
+const canvasSize = 512;
+const quadSize = 32;
+const urlSave = "image/png/v1";
+const fileNameSuffix = `v13_cornell6_BVH_${frames}frames_${maxPathLength}bounces_${sampleCount}samples_${512}px`
+
+const saveFrame = false;
 
 // ------------------------------------------------------------------
 
@@ -75,9 +77,9 @@ try {
   console.log("b4 loading");
   model = await loadModel(
     // '/resources/my_cornell_2/gltf/my_cornell_2.gltf'
-    // '/resources/bedroom2/gltf/v3/bedroom2.gltf'
+    '/resources/bedroom2/gltf/v3/bedroom2.gltf'
     // '/resources/bedroom2/gltf/v5/bedroom2_v5.gltf'
-    '/resources/my_cornell_6/gltf/my_cornell_6.gltf'
+    // '/resources/my_cornell_6/gltf/my_cornell_6.gltf'
     // '/resources/bedroom1/customGLTF/bedroom1.gltf'
     // '/resources/bedroom2/gltf/bedroom2.gltf'
     // '/resources/my_cornell_3/gltf/my_cornell_3.gltf'
@@ -140,14 +142,14 @@ gl.canvas.height = height;
 let cameraInstance = new Camera(50, width / height, 0.1, 1000);
 
 // room v3
-// cameraInstance.translate('x', 14)
-// cameraInstance.translate('z', -14)
-// cameraInstance.translate('y', 3)
+cameraInstance.translate('x', 14)
+cameraInstance.translate('z', -14)
+cameraInstance.translate('y', 3)
 
 
 //cornell room
-cameraInstance.translate('x', 12.4)
-cameraInstance.rotate('y', PI_NUMBER / 2);
+// cameraInstance.translate('x', 12.4)
+// cameraInstance.rotate('y', PI_NUMBER / 2);
 
 
 
@@ -354,7 +356,8 @@ async function render(now, frameNumber) {
   gl.bindVertexArray(null);
 
   // Save the rendered image to a file
-  // readPixelsAndSave(gl, width, height, `frame_${frameNumber}_${fileNameSuffix}.png`, urlSave);
+  if (saveFrame)
+  readPixelsAndSave(gl, width, height, `frame_${frameNumber}_${fileNameSuffix}.png`, urlSave);
 
   TextureIndex.setTextureIndex(2);
 
