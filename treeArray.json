@@ -1,0 +1,1994 @@
+[
+    {
+      "index": 2,
+      "boundingBox": {
+        "isBox3": true,
+        "min": {
+          "x": 0.21663839330937273,
+          "y": -4,
+          "z": -0.4835623362423527
+        },
+        "max": {
+          "x": 2.052550091469134,
+          "y": -2,
+          "z": 0.3098028231594383
+        }
+      },
+      "leftChildIndex": null,
+      "rightChildIndex": null,
+      "triangleIndex": 2,
+      "centroid": {
+        "x": 1.1345942423892534,
+        "y": -3,
+        "z": -0.08687975654145719
+      }
+    },
+    {
+      "index": 3,
+      "boundingBox": {
+        "isBox3": true,
+        "min": {
+          "x": 0.21663839330937273,
+          "y": -4,
+          "z": -0.4835623362423527
+        },
+        "max": {
+          "x": 2.052550091469134,
+          "y": -2,
+          "z": 0.3098028231594383
+        }
+      },
+      "leftChildIndex": null,
+      "rightChildIndex": null,
+      "triangleIndex": 3,
+      "centroid": {
+        "x": 1.1345942423892534,
+        "y": -3,
+        "z": -0.08687975654145719
+      }
+    },
+    {
+      "index": 4,
+      "boundingBox": {
+        "isBox3": true,
+        "min": {
+          "x": 0.21663839330937273,
+          "y": -4,
+          "z": -2.319474034402114
+        },
+        "max": {
+          "x": 1.0100035527111637,
+          "y": -2,
+          "z": -0.4835623362423527
+        }
+      },
+      "leftChildIndex": null,
+      "rightChildIndex": null,
+      "triangleIndex": 4,
+      "centroid": {
+        "x": 0.6133209730102682,
+        "y": -3,
+        "z": -1.4015181853222334
+      }
+    },
+    {
+      "index": 5,
+      "boundingBox": {
+        "isBox3": true,
+        "min": {
+          "x": 0.21663839330937273,
+          "y": -4,
+          "z": -2.319474034402114
+        },
+        "max": {
+          "x": 1.0100035527111637,
+          "y": -2,
+          "z": -0.4835623362423527
+        }
+      },
+      "leftChildIndex": null,
+      "rightChildIndex": null,
+      "triangleIndex": 5,
+      "centroid": {
+        "x": 0.6133209730102682,
+        "y": -3,
+        "z": -1.4015181853222334
+      }
+    },
+    {
+      "index": 8,
+      "boundingBox": {
+        "isBox3": true,
+        "min": {
+          "x": 2.052550091469134,
+          "y": -4,
+          "z": -1.526108875000323
+        },
+        "max": {
+          "x": 2.845915250870925,
+          "y": -2,
+          "z": 0.3098028231594383
+        }
+      },
+      "leftChildIndex": null,
+      "rightChildIndex": null,
+      "triangleIndex": 8,
+      "centroid": {
+        "x": 2.4492326711700296,
+        "y": -3,
+        "z": -0.6081530259204424
+      }
+    },
+    {
+      "index": 9,
+      "boundingBox": {
+        "isBox3": true,
+        "min": {
+          "x": 2.052550091469134,
+          "y": -4,
+          "z": -1.526108875000323
+        },
+        "max": {
+          "x": 2.845915250870925,
+          "y": -2,
+          "z": 0.3098028231594383
+        }
+      },
+      "leftChildIndex": null,
+      "rightChildIndex": null,
+      "triangleIndex": 9,
+      "centroid": {
+        "x": 2.4492326711700296,
+        "y": -3,
+        "z": -0.6081530259204424
+      }
+    },
+    {
+      "index": 10,
+      "boundingBox": {
+        "isBox3": true,
+        "min": {
+          "x": 1.0100035527111637,
+          "y": -4,
+          "z": -2.319474034402114
+        },
+        "max": {
+          "x": 2.845915250870925,
+          "y": -2,
+          "z": -1.526108875000323
+        }
+      },
+      "leftChildIndex": null,
+      "rightChildIndex": null,
+      "triangleIndex": 10,
+      "centroid": {
+        "x": 1.9279594017910444,
+        "y": -3,
+        "z": -1.9227914547012186
+      }
+    },
+    {
+      "index": 11,
+      "boundingBox": {
+        "isBox3": true,
+        "min": {
+          "x": 1.0100035527111637,
+          "y": -4,
+          "z": -2.319474034402114
+        },
+        "max": {
+          "x": 2.845915250870925,
+          "y": -2,
+          "z": -1.526108875000323
+        }
+      },
+      "leftChildIndex": null,
+      "rightChildIndex": null,
+      "triangleIndex": 11,
+      "centroid": {
+        "x": 1.9279594017910444,
+        "y": -3,
+        "z": -1.9227914547012186
+      }
+    },
+    {
+      "index": 14,
+      "boundingBox": {
+        "isBox3": true,
+        "min": {
+          "x": -2.0694294320471514,
+          "y": -4,
+          "z": 0.589638347340049
+        },
+        "max": {
+          "x": -1.5040595582004173,
+          "y": 1,
+          "z": 2.508063946855806
+        }
+      },
+      "leftChildIndex": null,
+      "rightChildIndex": null,
+      "triangleIndex": 14,
+      "centroid": {
+        "x": -1.7867444951237843,
+        "y": -1.5,
+        "z": 1.5488511470979276
+      }
+    },
+    {
+      "index": 15,
+      "boundingBox": {
+        "isBox3": true,
+        "min": {
+          "x": -2.0694294320471514,
+          "y": -4,
+          "z": 0.589638347340049
+        },
+        "max": {
+          "x": -1.5040595582004173,
+          "y": 1,
+          "z": 2.508063946855806
+        }
+      },
+      "leftChildIndex": null,
+      "rightChildIndex": null,
+      "triangleIndex": 15,
+      "centroid": {
+        "x": -1.7867444951237843,
+        "y": -1.5,
+        "z": 1.5488511470979276
+      }
+    },
+    {
+      "index": 16,
+      "boundingBox": {
+        "isBox3": true,
+        "min": {
+          "x": -2.0694294320471514,
+          "y": -4,
+          "z": 0.024268473493314957
+        },
+        "max": {
+          "x": -0.15100383253139427,
+          "y": 1,
+          "z": 0.589638347340049
+        }
+      },
+      "leftChildIndex": null,
+      "rightChildIndex": null,
+      "triangleIndex": 16,
+      "centroid": {
+        "x": -1.1102166322892728,
+        "y": -1.5,
+        "z": 0.306953410416682
+      }
+    },
+    {
+      "index": 17,
+      "boundingBox": {
+        "isBox3": true,
+        "min": {
+          "x": -2.0694294320471514,
+          "y": -4,
+          "z": 0.024268473493314957
+        },
+        "max": {
+          "x": -0.15100383253139427,
+          "y": 1,
+          "z": 0.589638347340049
+        }
+      },
+      "leftChildIndex": null,
+      "rightChildIndex": null,
+      "triangleIndex": 17,
+      "centroid": {
+        "x": -1.1102166322892728,
+        "y": -1.5,
+        "z": 0.306953410416682
+      }
+    },
+    {
+      "index": 20,
+      "boundingBox": {
+        "isBox3": true,
+        "min": {
+          "x": -1.5040595582004173,
+          "y": -4,
+          "z": 1.942694073009072
+        },
+        "max": {
+          "x": 0.41436604131533983,
+          "y": 1,
+          "z": 2.508063946855806
+        }
+      },
+      "leftChildIndex": null,
+      "rightChildIndex": null,
+      "triangleIndex": 20,
+      "centroid": {
+        "x": -0.5448467584425387,
+        "y": -1.5,
+        "z": 2.225379009932439
+      }
+    },
+    {
+      "index": 21,
+      "boundingBox": {
+        "isBox3": true,
+        "min": {
+          "x": -1.5040595582004173,
+          "y": -4,
+          "z": 1.942694073009072
+        },
+        "max": {
+          "x": 0.41436604131533983,
+          "y": 1,
+          "z": 2.508063946855806
+        }
+      },
+      "leftChildIndex": null,
+      "rightChildIndex": null,
+      "triangleIndex": 21,
+      "centroid": {
+        "x": -0.5448467584425387,
+        "y": -1.5,
+        "z": 2.225379009932439
+      }
+    },
+    {
+      "index": 22,
+      "boundingBox": {
+        "isBox3": true,
+        "min": {
+          "x": -0.15100383253139427,
+          "y": -4,
+          "z": 0.024268473493314957
+        },
+        "max": {
+          "x": 0.41436604131533983,
+          "y": 1,
+          "z": 1.942694073009072
+        }
+      },
+      "leftChildIndex": null,
+      "rightChildIndex": null,
+      "triangleIndex": 22,
+      "centroid": {
+        "x": 0.13168110439197278,
+        "y": -1.5,
+        "z": 0.9834812732511935
+      }
+    },
+    {
+      "index": 23,
+      "boundingBox": {
+        "isBox3": true,
+        "min": {
+          "x": -0.15100383253139427,
+          "y": -4,
+          "z": 0.024268473493314957
+        },
+        "max": {
+          "x": 0.41436604131533983,
+          "y": 1,
+          "z": 1.942694073009072
+        }
+      },
+      "leftChildIndex": null,
+      "rightChildIndex": null,
+      "triangleIndex": 23,
+      "centroid": {
+        "x": 0.13168110439197278,
+        "y": -1.5,
+        "z": 0.9834812732511935
+      }
+    },
+    {
+      "index": 24,
+      "boundingBox": {
+        "isBox3": true,
+        "min": {
+          "x": -4,
+          "y": -4.000000537435426,
+          "z": 3.999999462564574
+        },
+        "max": {
+          "x": 4,
+          "y": 4.000000537435426,
+          "z": 4.000000537435426
+        }
+      },
+      "leftChildIndex": null,
+      "rightChildIndex": null,
+      "triangleIndex": 24,
+      "centroid": {
+        "x": 0,
+        "y": 0,
+        "z": 4
+      }
+    },
+    {
+      "index": 25,
+      "boundingBox": {
+        "isBox3": true,
+        "min": {
+          "x": -4,
+          "y": -4.000000537435426,
+          "z": 3.999999462564574
+        },
+        "max": {
+          "x": 4,
+          "y": 4.000000537435426,
+          "z": 4.000000537435426
+        }
+      },
+      "leftChildIndex": null,
+      "rightChildIndex": null,
+      "triangleIndex": 25,
+      "centroid": {
+        "x": 0,
+        "y": 0,
+        "z": 4
+      }
+    },
+    {
+      "index": 26,
+      "boundingBox": {
+        "isBox3": true,
+        "min": {
+          "x": -4,
+          "y": -4.000000537435426,
+          "z": -4.000000537435426
+        },
+        "max": {
+          "x": 4,
+          "y": 4.000000537435426,
+          "z": -3.999999462564574
+        }
+      },
+      "leftChildIndex": null,
+      "rightChildIndex": null,
+      "triangleIndex": 26,
+      "centroid": {
+        "x": 0,
+        "y": 0,
+        "z": -4
+      }
+    },
+    {
+      "index": 27,
+      "boundingBox": {
+        "isBox3": true,
+        "min": {
+          "x": -4,
+          "y": -4.000000537435426,
+          "z": -4.000000537435426
+        },
+        "max": {
+          "x": 4,
+          "y": 4.000000537435426,
+          "z": -3.999999462564574
+        }
+      },
+      "leftChildIndex": null,
+      "rightChildIndex": null,
+      "triangleIndex": 27,
+      "centroid": {
+        "x": 0,
+        "y": 0,
+        "z": -4
+      }
+    },
+    {
+      "index": 30,
+      "boundingBox": {
+        "isBox3": true,
+        "min": {
+          "x": -4,
+          "y": -4,
+          "z": -4
+        },
+        "max": {
+          "x": -4,
+          "y": 4,
+          "z": 4
+        }
+      },
+      "leftChildIndex": null,
+      "rightChildIndex": null,
+      "triangleIndex": 30,
+      "centroid": {
+        "x": -4,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "index": 31,
+      "boundingBox": {
+        "isBox3": true,
+        "min": {
+          "x": -4,
+          "y": -4,
+          "z": -4
+        },
+        "max": {
+          "x": -4,
+          "y": 4,
+          "z": 4
+        }
+      },
+      "leftChildIndex": null,
+      "rightChildIndex": null,
+      "triangleIndex": 31,
+      "centroid": {
+        "x": -4,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "index": 40,
+      "boundingBox": {
+        "isBox3": true,
+        "min": {
+          "x": -0.9329545620721984,
+          "y": 3.9999999184385273,
+          "z": -0.9329545620721984
+        },
+        "max": {
+          "x": 0.9329545620721984,
+          "y": 4.000000081561473,
+          "z": 0.9329545620721984
+        }
+      },
+      "leftChildIndex": null,
+      "rightChildIndex": null,
+      "triangleIndex": 40,
+      "centroid": {
+        "x": 0,
+        "y": 4,
+        "z": 0
+      }
+    },
+    {
+      "index": 41,
+      "boundingBox": {
+        "isBox3": true,
+        "min": {
+          "x": -0.9329545620721984,
+          "y": 3.9999999184385273,
+          "z": -0.9329545620721984
+        },
+        "max": {
+          "x": 0.9329545620721984,
+          "y": 4.000000081561473,
+          "z": 0.9329545620721984
+        }
+      },
+      "leftChildIndex": null,
+      "rightChildIndex": null,
+      "triangleIndex": 41,
+      "centroid": {
+        "x": 0,
+        "y": 4,
+        "z": 0
+      }
+    },
+    {
+      "index": 28,
+      "boundingBox": {
+        "isBox3": true,
+        "min": {
+          "x": -4.000001074870852,
+          "y": -4,
+          "z": -4.000001074870852
+        },
+        "max": {
+          "x": 4.000001074870852,
+          "y": -4,
+          "z": 4
+        }
+      },
+      "leftChildIndex": null,
+      "rightChildIndex": null,
+      "triangleIndex": 28,
+      "centroid": {
+        "x": 0,
+        "y": -4,
+        "z": -5.374354259402025e-7
+      }
+    },
+    {
+      "index": 29,
+      "boundingBox": {
+        "isBox3": true,
+        "min": {
+          "x": -4.000001074870852,
+          "y": -4,
+          "z": -4
+        },
+        "max": {
+          "x": 4.000001074870852,
+          "y": -4,
+          "z": 4.000001074870852
+        }
+      },
+      "leftChildIndex": null,
+      "rightChildIndex": null,
+      "triangleIndex": 29,
+      "centroid": {
+        "x": 0,
+        "y": -4,
+        "z": 5.374354259402025e-7
+      }
+    },
+    {
+      "index": 12,
+      "boundingBox": {
+        "isBox3": true,
+        "min": {
+          "x": -2.0694294320471514,
+          "y": 1,
+          "z": 0.024268473493314957
+        },
+        "max": {
+          "x": 0.41436604131533983,
+          "y": 1,
+          "z": 1.942694073009072
+        }
+      },
+      "leftChildIndex": null,
+      "rightChildIndex": null,
+      "triangleIndex": 12,
+      "centroid": {
+        "x": -0.8275316953659058,
+        "y": 1,
+        "z": 0.9834812732511935
+      }
+    },
+    {
+      "index": 13,
+      "boundingBox": {
+        "isBox3": true,
+        "min": {
+          "x": -2.0694294320471514,
+          "y": 1,
+          "z": 0.589638347340049
+        },
+        "max": {
+          "x": 0.41436604131533983,
+          "y": 1,
+          "z": 2.508063946855806
+        }
+      },
+      "leftChildIndex": null,
+      "rightChildIndex": null,
+      "triangleIndex": 13,
+      "centroid": {
+        "x": -0.8275316953659058,
+        "y": 1,
+        "z": 1.5488511470979276
+      }
+    },
+    {
+      "index": 18,
+      "boundingBox": {
+        "isBox3": true,
+        "min": {
+          "x": -1.5040595582004173,
+          "y": -4,
+          "z": 0.024268473493314957
+        },
+        "max": {
+          "x": 0.41436604131533983,
+          "y": -4,
+          "z": 2.508063946855806
+        }
+      },
+      "leftChildIndex": null,
+      "rightChildIndex": null,
+      "triangleIndex": 18,
+      "centroid": {
+        "x": -0.5448467584425387,
+        "y": -4,
+        "z": 1.2661662101745605
+      }
+    },
+    {
+      "index": 19,
+      "boundingBox": {
+        "isBox3": true,
+        "min": {
+          "x": -2.0694294320471514,
+          "y": -4,
+          "z": 0.024268473493314957
+        },
+        "max": {
+          "x": -0.15100383253139427,
+          "y": -4,
+          "z": 2.508063946855806
+        }
+      },
+      "leftChildIndex": null,
+      "rightChildIndex": null,
+      "triangleIndex": 19,
+      "centroid": {
+        "x": -1.1102166322892728,
+        "y": -4,
+        "z": 1.2661662101745605
+      }
+    },
+    {
+      "index": 0,
+      "boundingBox": {
+        "isBox3": true,
+        "min": {
+          "x": 0.21663839330937273,
+          "y": -2,
+          "z": -2.319474034402114
+        },
+        "max": {
+          "x": 2.845915250870925,
+          "y": -2,
+          "z": -0.4835623362423527
+        }
+      },
+      "leftChildIndex": null,
+      "rightChildIndex": null,
+      "triangleIndex": 0,
+      "centroid": {
+        "x": 1.531276822090149,
+        "y": -2,
+        "z": -1.4015181853222334
+      }
+    },
+    {
+      "index": 1,
+      "boundingBox": {
+        "isBox3": true,
+        "min": {
+          "x": 0.21663839330937273,
+          "y": -2,
+          "z": -1.526108875000323
+        },
+        "max": {
+          "x": 2.845915250870925,
+          "y": -2,
+          "z": 0.3098028231594383
+        }
+      },
+      "leftChildIndex": null,
+      "rightChildIndex": null,
+      "triangleIndex": 1,
+      "centroid": {
+        "x": 1.531276822090149,
+        "y": -2,
+        "z": -0.6081530259204424
+      }
+    },
+    {
+      "index": 6,
+      "boundingBox": {
+        "isBox3": true,
+        "min": {
+          "x": 1.0100035527111637,
+          "y": -4,
+          "z": -2.319474034402114
+        },
+        "max": {
+          "x": 2.845915250870925,
+          "y": -4,
+          "z": 0.3098028231594383
+        }
+      },
+      "leftChildIndex": null,
+      "rightChildIndex": null,
+      "triangleIndex": 6,
+      "centroid": {
+        "x": 1.9279594017910444,
+        "y": -4,
+        "z": -1.004835605621338
+      }
+    },
+    {
+      "index": 7,
+      "boundingBox": {
+        "isBox3": true,
+        "min": {
+          "x": 0.21663839330937273,
+          "y": -4,
+          "z": -2.319474034402114
+        },
+        "max": {
+          "x": 2.052550091469134,
+          "y": -4,
+          "z": 0.3098028231594383
+        }
+      },
+      "leftChildIndex": null,
+      "rightChildIndex": null,
+      "triangleIndex": 7,
+      "centroid": {
+        "x": 1.1345942423892534,
+        "y": -4,
+        "z": -1.004835605621338
+      }
+    },
+    {
+      "index": 46,
+      "boundingBox": {
+        "isBox3": true,
+        "min": {
+          "x": -2.0694294320471514,
+          "y": -4,
+          "z": 0.589638347340049
+        },
+        "max": {
+          "x": -1.5040595582004173,
+          "y": 1,
+          "z": 2.508063946855806
+        }
+      },
+      "leftChildIndex": 14,
+      "rightChildIndex": 15,
+      "triangleIndex": null,
+      "centroid": {
+        "x": -1.7867444951237843,
+        "y": -1.5,
+        "z": 1.5488511470979276
+      }
+    },
+    {
+      "index": 47,
+      "boundingBox": {
+        "isBox3": true,
+        "min": {
+          "x": -2.0694294320471514,
+          "y": -4,
+          "z": 0.024268473493314957
+        },
+        "max": {
+          "x": -0.15100383253139427,
+          "y": 1,
+          "z": 0.589638347340049
+        }
+      },
+      "leftChildIndex": 16,
+      "rightChildIndex": 17,
+      "triangleIndex": null,
+      "centroid": {
+        "x": -1.1102166322892728,
+        "y": -1.5,
+        "z": 0.306953410416682
+      }
+    },
+    {
+      "index": 48,
+      "boundingBox": {
+        "isBox3": true,
+        "min": {
+          "x": -1.5040595582004173,
+          "y": -4,
+          "z": 1.942694073009072
+        },
+        "max": {
+          "x": 0.41436604131533983,
+          "y": 1,
+          "z": 2.508063946855806
+        }
+      },
+      "leftChildIndex": 20,
+      "rightChildIndex": 21,
+      "triangleIndex": null,
+      "centroid": {
+        "x": -0.5448467584425387,
+        "y": -1.5,
+        "z": 2.225379009932439
+      }
+    },
+    {
+      "index": 59,
+      "boundingBox": {
+        "isBox3": true,
+        "min": {
+          "x": -2.0694294320471514,
+          "y": -4,
+          "z": 0.024268473493314957
+        },
+        "max": {
+          "x": -0.15100383253139427,
+          "y": 1,
+          "z": 2.508063946855806
+        }
+      },
+      "leftChildIndex": 46,
+      "rightChildIndex": 47,
+      "triangleIndex": null,
+      "centroid": {
+        "x": -1.1102166322892728,
+        "y": -1.5,
+        "z": 1.2661662101745605
+      }
+    },
+    {
+      "index": 49,
+      "boundingBox": {
+        "isBox3": true,
+        "min": {
+          "x": -0.15100383253139427,
+          "y": -4,
+          "z": 0.024268473493314957
+        },
+        "max": {
+          "x": 0.41436604131533983,
+          "y": 1,
+          "z": 1.942694073009072
+        }
+      },
+      "leftChildIndex": 22,
+      "rightChildIndex": 23,
+      "triangleIndex": null,
+      "centroid": {
+        "x": 0.13168110439197278,
+        "y": -1.5,
+        "z": 0.9834812732511935
+      }
+    },
+    {
+      "index": 60,
+      "boundingBox": {
+        "isBox3": true,
+        "min": {
+          "x": -2.0694294320471514,
+          "y": -4,
+          "z": 0.024268473493314957
+        },
+        "max": {
+          "x": 0.41436604131533983,
+          "y": 1,
+          "z": 2.508063946855806
+        }
+      },
+      "leftChildIndex": 48,
+      "rightChildIndex": 59,
+      "triangleIndex": null,
+      "centroid": {
+        "x": -0.8275316953659058,
+        "y": -1.5,
+        "z": 1.2661662101745605
+      }
+    },
+    {
+      "index": 43,
+      "boundingBox": {
+        "isBox3": true,
+        "min": {
+          "x": 0.21663839330937273,
+          "y": -4,
+          "z": -2.319474034402114
+        },
+        "max": {
+          "x": 1.0100035527111637,
+          "y": -2,
+          "z": -0.4835623362423527
+        }
+      },
+      "leftChildIndex": 4,
+      "rightChildIndex": 5,
+      "triangleIndex": null,
+      "centroid": {
+        "x": 0.6133209730102682,
+        "y": -3,
+        "z": -1.4015181853222334
+      }
+    },
+    {
+      "index": 57,
+      "boundingBox": {
+        "isBox3": true,
+        "min": {
+          "x": 0.21663839330937273,
+          "y": -2,
+          "z": -2.319474034402114
+        },
+        "max": {
+          "x": 2.845915250870925,
+          "y": -2,
+          "z": 0.3098028231594383
+        }
+      },
+      "leftChildIndex": 0,
+      "rightChildIndex": 1,
+      "triangleIndex": null,
+      "centroid": {
+        "x": 1.531276822090149,
+        "y": -2,
+        "z": -1.004835605621338
+      }
+    },
+    {
+      "index": 58,
+      "boundingBox": {
+        "isBox3": true,
+        "min": {
+          "x": 0.21663839330937273,
+          "y": -4,
+          "z": -2.319474034402114
+        },
+        "max": {
+          "x": 2.845915250870925,
+          "y": -4,
+          "z": 0.3098028231594383
+        }
+      },
+      "leftChildIndex": 6,
+      "rightChildIndex": 7,
+      "triangleIndex": null,
+      "centroid": {
+        "x": 1.531276822090149,
+        "y": -4,
+        "z": -1.004835605621338
+      }
+    },
+    {
+      "index": 62,
+      "boundingBox": {
+        "isBox3": true,
+        "min": {
+          "x": 0.21663839330937273,
+          "y": -4,
+          "z": -2.319474034402114
+        },
+        "max": {
+          "x": 2.845915250870925,
+          "y": -2,
+          "z": 0.3098028231594383
+        }
+      },
+      "leftChildIndex": 43,
+      "rightChildIndex": 57,
+      "triangleIndex": null,
+      "centroid": {
+        "x": 1.531276822090149,
+        "y": -3,
+        "z": -1.004835605621338
+      }
+    },
+    {
+      "index": 42,
+      "boundingBox": {
+        "isBox3": true,
+        "min": {
+          "x": 0.21663839330937273,
+          "y": -4,
+          "z": -0.4835623362423527
+        },
+        "max": {
+          "x": 2.052550091469134,
+          "y": -2,
+          "z": 0.3098028231594383
+        }
+      },
+      "leftChildIndex": 2,
+      "rightChildIndex": 3,
+      "triangleIndex": null,
+      "centroid": {
+        "x": 1.1345942423892534,
+        "y": -3,
+        "z": -0.08687975654145719
+      }
+    },
+    {
+      "index": 63,
+      "boundingBox": {
+        "isBox3": true,
+        "min": {
+          "x": 0.21663839330937273,
+          "y": -4,
+          "z": -2.319474034402114
+        },
+        "max": {
+          "x": 2.845915250870925,
+          "y": -2,
+          "z": 0.3098028231594383
+        }
+      },
+      "leftChildIndex": 58,
+      "rightChildIndex": 62,
+      "triangleIndex": null,
+      "centroid": {
+        "x": 1.531276822090149,
+        "y": -3,
+        "z": -1.004835605621338
+      }
+    },
+    {
+      "index": 44,
+      "boundingBox": {
+        "isBox3": true,
+        "min": {
+          "x": 2.052550091469134,
+          "y": -4,
+          "z": -1.526108875000323
+        },
+        "max": {
+          "x": 2.845915250870925,
+          "y": -2,
+          "z": 0.3098028231594383
+        }
+      },
+      "leftChildIndex": 8,
+      "rightChildIndex": 9,
+      "triangleIndex": null,
+      "centroid": {
+        "x": 2.4492326711700296,
+        "y": -3,
+        "z": -0.6081530259204424
+      }
+    },
+    {
+      "index": 64,
+      "boundingBox": {
+        "isBox3": true,
+        "min": {
+          "x": 0.21663839330937273,
+          "y": -4,
+          "z": -2.319474034402114
+        },
+        "max": {
+          "x": 2.845915250870925,
+          "y": -2,
+          "z": 0.3098028231594383
+        }
+      },
+      "leftChildIndex": 42,
+      "rightChildIndex": 63,
+      "triangleIndex": null,
+      "centroid": {
+        "x": 1.531276822090149,
+        "y": -3,
+        "z": -1.004835605621338
+      }
+    },
+    {
+      "index": 45,
+      "boundingBox": {
+        "isBox3": true,
+        "min": {
+          "x": 1.0100035527111637,
+          "y": -4,
+          "z": -2.319474034402114
+        },
+        "max": {
+          "x": 2.845915250870925,
+          "y": -2,
+          "z": -1.526108875000323
+        }
+      },
+      "leftChildIndex": 10,
+      "rightChildIndex": 11,
+      "triangleIndex": null,
+      "centroid": {
+        "x": 1.9279594017910444,
+        "y": -3,
+        "z": -1.9227914547012186
+      }
+    },
+    {
+      "index": 65,
+      "boundingBox": {
+        "isBox3": true,
+        "min": {
+          "x": 0.21663839330937273,
+          "y": -4,
+          "z": -2.319474034402114
+        },
+        "max": {
+          "x": 2.845915250870925,
+          "y": -2,
+          "z": 0.3098028231594383
+        }
+      },
+      "leftChildIndex": 44,
+      "rightChildIndex": 64,
+      "triangleIndex": null,
+      "centroid": {
+        "x": 1.531276822090149,
+        "y": -3,
+        "z": -1.004835605621338
+      }
+    },
+    {
+      "index": 54,
+      "boundingBox": {
+        "isBox3": true,
+        "min": {
+          "x": -4.000001074870852,
+          "y": -4,
+          "z": -4.000001074870852
+        },
+        "max": {
+          "x": 4.000001074870852,
+          "y": -4,
+          "z": 4.000001074870852
+        }
+      },
+      "leftChildIndex": 28,
+      "rightChildIndex": 29,
+      "triangleIndex": null,
+      "centroid": {
+        "x": 0,
+        "y": -4,
+        "z": 0
+      }
+    },
+    {
+      "index": 56,
+      "boundingBox": {
+        "isBox3": true,
+        "min": {
+          "x": -2.0694294320471514,
+          "y": -4,
+          "z": 0.024268473493314957
+        },
+        "max": {
+          "x": 0.41436604131533983,
+          "y": -4,
+          "z": 2.508063946855806
+        }
+      },
+      "leftChildIndex": 18,
+      "rightChildIndex": 19,
+      "triangleIndex": null,
+      "centroid": {
+        "x": -0.8275316953659058,
+        "y": -4,
+        "z": 1.2661662101745605
+      }
+    },
+    {
+      "index": 34,
+      "boundingBox": {
+        "isBox3": true,
+        "min": {
+          "x": 0.9329543113708496,
+          "y": 3.9999996503088235,
+          "z": -4.000001074870852
+        },
+        "max": {
+          "x": 4.000001074870852,
+          "y": 4,
+          "z": 0.9329543113708496
+        }
+      },
+      "leftChildIndex": null,
+      "rightChildIndex": null,
+      "triangleIndex": 34,
+      "centroid": {
+        "x": 2.4664776931208507,
+        "y": 3.9999998251544118,
+        "z": -1.5335233817500011
+      }
+    },
+    {
+      "index": 35,
+      "boundingBox": {
+        "isBox3": true,
+        "min": {
+          "x": 0.9329543113708496,
+          "y": 3.9999996503088235,
+          "z": -4.000001074870852
+        },
+        "max": {
+          "x": 4.000001074870852,
+          "y": 4,
+          "z": 4
+        }
+      },
+      "leftChildIndex": null,
+      "rightChildIndex": null,
+      "triangleIndex": 35,
+      "centroid": {
+        "x": 2.4664776931208507,
+        "y": 3.9999998251544118,
+        "z": -5.374354259402025e-7
+      }
+    },
+    {
+      "index": 38,
+      "boundingBox": {
+        "isBox3": true,
+        "min": {
+          "x": -4.000001074870852,
+          "y": 4,
+          "z": -0.9329543113708496
+        },
+        "max": {
+          "x": -0.9329543113708496,
+          "y": 4.0000003496911765,
+          "z": 4.000001074870852
+        }
+      },
+      "leftChildIndex": null,
+      "rightChildIndex": null,
+      "triangleIndex": 38,
+      "centroid": {
+        "x": -2.4664776931208507,
+        "y": 4.000000174845589,
+        "z": 1.5335233817500011
+      }
+    },
+    {
+      "index": 39,
+      "boundingBox": {
+        "isBox3": true,
+        "min": {
+          "x": -4.000001074870852,
+          "y": 4,
+          "z": -4
+        },
+        "max": {
+          "x": -0.9329543113708496,
+          "y": 4.0000003496911765,
+          "z": 4.000001074870852
+        }
+      },
+      "leftChildIndex": null,
+      "rightChildIndex": null,
+      "triangleIndex": 39,
+      "centroid": {
+        "x": -2.4664776931208507,
+        "y": 4.000000174845589,
+        "z": 5.374354259402025e-7
+      }
+    },
+    {
+      "index": 32,
+      "boundingBox": {
+        "isBox3": true,
+        "min": {
+          "x": -4,
+          "y": 3.9999999184385273,
+          "z": -4
+        },
+        "max": {
+          "x": 0.9329545620721984,
+          "y": 4,
+          "z": -0.9329543113708496
+        }
+      },
+      "leftChildIndex": null,
+      "rightChildIndex": null,
+      "triangleIndex": 32,
+      "centroid": {
+        "x": -1.533522718963901,
+        "y": 3.999999959219264,
+        "z": -2.466477155685425
+      }
+    },
+    {
+      "index": 33,
+      "boundingBox": {
+        "isBox3": true,
+        "min": {
+          "x": -4,
+          "y": 3.9999996503088235,
+          "z": -4.000001074870852
+        },
+        "max": {
+          "x": 4.000001074870852,
+          "y": 4,
+          "z": -0.9329545620721984
+        }
+      },
+      "leftChildIndex": null,
+      "rightChildIndex": null,
+      "triangleIndex": 33,
+      "centroid": {
+        "x": 5.374354259402025e-7,
+        "y": 3.9999998251544118,
+        "z": -2.466477818471525
+      }
+    },
+    {
+      "index": 36,
+      "boundingBox": {
+        "isBox3": true,
+        "min": {
+          "x": -0.9329545620721984,
+          "y": 4,
+          "z": 0.9329543113708496
+        },
+        "max": {
+          "x": 4,
+          "y": 4.000000081561473,
+          "z": 4
+        }
+      },
+      "leftChildIndex": null,
+      "rightChildIndex": null,
+      "triangleIndex": 36,
+      "centroid": {
+        "x": 1.533522718963901,
+        "y": 4.000000040780737,
+        "z": 2.466477155685425
+      }
+    },
+    {
+      "index": 37,
+      "boundingBox": {
+        "isBox3": true,
+        "min": {
+          "x": -4.000001074870852,
+          "y": 4,
+          "z": 0.9329545620721984
+        },
+        "max": {
+          "x": 4,
+          "y": 4.0000003496911765,
+          "z": 4.000001074870852
+        }
+      },
+      "leftChildIndex": null,
+      "rightChildIndex": null,
+      "triangleIndex": 37,
+      "centroid": {
+        "x": -5.374354259402025e-7,
+        "y": 4.000000174845589,
+        "z": 2.466477818471525
+      }
+    },
+    {
+      "index": 66,
+      "boundingBox": {
+        "isBox3": true,
+        "min": {
+          "x": 0.21663839330937273,
+          "y": -4,
+          "z": -2.319474034402114
+        },
+        "max": {
+          "x": 2.845915250870925,
+          "y": -2,
+          "z": 0.3098028231594383
+        }
+      },
+      "leftChildIndex": 45,
+      "rightChildIndex": 65,
+      "triangleIndex": null,
+      "centroid": {
+        "x": 1.531276822090149,
+        "y": -3,
+        "z": -1.004835605621338
+      }
+    },
+    {
+      "index": 67,
+      "boundingBox": {
+        "isBox3": true,
+        "min": {
+          "x": -4.000001074870852,
+          "y": -4,
+          "z": -4.000001074870852
+        },
+        "max": {
+          "x": 4.000001074870852,
+          "y": -4,
+          "z": 4.000001074870852
+        }
+      },
+      "leftChildIndex": 54,
+      "rightChildIndex": 56,
+      "triangleIndex": null,
+      "centroid": {
+        "x": 0,
+        "y": -4,
+        "z": 0
+      }
+    },
+    {
+      "index": 61,
+      "boundingBox": {
+        "isBox3": true,
+        "min": {
+          "x": -2.0694294320471514,
+          "y": -4,
+          "z": 0.024268473493314957
+        },
+        "max": {
+          "x": 0.41436604131533983,
+          "y": 1,
+          "z": 2.508063946855806
+        }
+      },
+      "leftChildIndex": 49,
+      "rightChildIndex": 60,
+      "triangleIndex": null,
+      "centroid": {
+        "x": -0.8275316953659058,
+        "y": -1.5,
+        "z": 1.2661662101745605
+      }
+    },
+    {
+      "index": 72,
+      "boundingBox": {
+        "isBox3": true,
+        "min": {
+          "x": -4.000001074870852,
+          "y": -4,
+          "z": -4.000001074870852
+        },
+        "max": {
+          "x": 4.000001074870852,
+          "y": -2,
+          "z": 4.000001074870852
+        }
+      },
+      "leftChildIndex": 66,
+      "rightChildIndex": 67,
+      "triangleIndex": null,
+      "centroid": {
+        "x": 0,
+        "y": -3,
+        "z": 0
+      }
+    },
+    {
+      "index": 53,
+      "boundingBox": {
+        "isBox3": true,
+        "min": {
+          "x": -0.9329545620721984,
+          "y": 3.9999999184385273,
+          "z": -0.9329545620721984
+        },
+        "max": {
+          "x": 0.9329545620721984,
+          "y": 4.000000081561473,
+          "z": 0.9329545620721984
+        }
+      },
+      "leftChildIndex": 40,
+      "rightChildIndex": 41,
+      "triangleIndex": null,
+      "centroid": {
+        "x": 0,
+        "y": 4,
+        "z": 0
+      }
+    },
+    {
+      "index": 68,
+      "boundingBox": {
+        "isBox3": true,
+        "min": {
+          "x": 0.9329543113708496,
+          "y": 3.9999996503088235,
+          "z": -4.000001074870852
+        },
+        "max": {
+          "x": 4.000001074870852,
+          "y": 4,
+          "z": 4
+        }
+      },
+      "leftChildIndex": 34,
+      "rightChildIndex": 35,
+      "triangleIndex": null,
+      "centroid": {
+        "x": 2.4664776931208507,
+        "y": 3.9999998251544118,
+        "z": -5.374354259402025e-7
+      }
+    },
+    {
+      "index": 70,
+      "boundingBox": {
+        "isBox3": true,
+        "min": {
+          "x": -4,
+          "y": 3.9999996503088235,
+          "z": -4.000001074870852
+        },
+        "max": {
+          "x": 4.000001074870852,
+          "y": 4,
+          "z": -0.9329543113708496
+        }
+      },
+      "leftChildIndex": 32,
+      "rightChildIndex": 33,
+      "triangleIndex": null,
+      "centroid": {
+        "x": 5.374354259402025e-7,
+        "y": 3.9999998251544118,
+        "z": -2.4664776931208507
+      }
+    },
+    {
+      "index": 74,
+      "boundingBox": {
+        "isBox3": true,
+        "min": {
+          "x": -0.9329545620721984,
+          "y": 3.9999996503088235,
+          "z": -4.000001074870852
+        },
+        "max": {
+          "x": 4.000001074870852,
+          "y": 4.000000081561473,
+          "z": 4
+        }
+      },
+      "leftChildIndex": 53,
+      "rightChildIndex": 68,
+      "triangleIndex": null,
+      "centroid": {
+        "x": 1.5335232563993269,
+        "y": 3.9999998659351483,
+        "z": -5.374354259402025e-7
+      }
+    },
+    {
+      "index": 69,
+      "boundingBox": {
+        "isBox3": true,
+        "min": {
+          "x": -4.000001074870852,
+          "y": 4,
+          "z": -4
+        },
+        "max": {
+          "x": -0.9329543113708496,
+          "y": 4.0000003496911765,
+          "z": 4.000001074870852
+        }
+      },
+      "leftChildIndex": 38,
+      "rightChildIndex": 39,
+      "triangleIndex": null,
+      "centroid": {
+        "x": -2.4664776931208507,
+        "y": 4.000000174845589,
+        "z": 5.374354259402025e-7
+      }
+    },
+    {
+      "index": 75,
+      "boundingBox": {
+        "isBox3": true,
+        "min": {
+          "x": -4,
+          "y": 3.9999996503088235,
+          "z": -4.000001074870852
+        },
+        "max": {
+          "x": 4.000001074870852,
+          "y": 4.000000081561473,
+          "z": 4
+        }
+      },
+      "leftChildIndex": 70,
+      "rightChildIndex": 74,
+      "triangleIndex": null,
+      "centroid": {
+        "x": 5.374354259402025e-7,
+        "y": 3.9999998659351483,
+        "z": -5.374354259402025e-7
+      }
+    },
+    {
+      "index": 71,
+      "boundingBox": {
+        "isBox3": true,
+        "min": {
+          "x": -4.000001074870852,
+          "y": 4,
+          "z": 0.9329543113708496
+        },
+        "max": {
+          "x": 4,
+          "y": 4.0000003496911765,
+          "z": 4.000001074870852
+        }
+      },
+      "leftChildIndex": 36,
+      "rightChildIndex": 37,
+      "triangleIndex": null,
+      "centroid": {
+        "x": -5.374354259402025e-7,
+        "y": 4.000000174845589,
+        "z": 2.4664776931208507
+      }
+    },
+    {
+      "index": 76,
+      "boundingBox": {
+        "isBox3": true,
+        "min": {
+          "x": -4.000001074870852,
+          "y": 3.9999996503088235,
+          "z": -4.000001074870852
+        },
+        "max": {
+          "x": 4.000001074870852,
+          "y": 4.0000003496911765,
+          "z": 4.000001074870852
+        }
+      },
+      "leftChildIndex": 69,
+      "rightChildIndex": 75,
+      "triangleIndex": null,
+      "centroid": {
+        "x": 0,
+        "y": 4,
+        "z": 0
+      }
+    },
+    {
+      "index": 55,
+      "boundingBox": {
+        "isBox3": true,
+        "min": {
+          "x": -2.0694294320471514,
+          "y": 1,
+          "z": 0.024268473493314957
+        },
+        "max": {
+          "x": 0.41436604131533983,
+          "y": 1,
+          "z": 2.508063946855806
+        }
+      },
+      "leftChildIndex": 12,
+      "rightChildIndex": 13,
+      "triangleIndex": null,
+      "centroid": {
+        "x": -0.8275316953659058,
+        "y": 1,
+        "z": 1.2661662101745605
+      }
+    },
+    {
+      "index": 73,
+      "boundingBox": {
+        "isBox3": true,
+        "min": {
+          "x": -4.000001074870852,
+          "y": -4,
+          "z": -4.000001074870852
+        },
+        "max": {
+          "x": 4.000001074870852,
+          "y": 1,
+          "z": 4.000001074870852
+        }
+      },
+      "leftChildIndex": 61,
+      "rightChildIndex": 72,
+      "triangleIndex": null,
+      "centroid": {
+        "x": 0,
+        "y": -1.5,
+        "z": 0
+      }
+    },
+    {
+      "index": 50,
+      "boundingBox": {
+        "isBox3": true,
+        "min": {
+          "x": -4,
+          "y": -4.000000537435426,
+          "z": 3.999999462564574
+        },
+        "max": {
+          "x": 4,
+          "y": 4.000000537435426,
+          "z": 4.000000537435426
+        }
+      },
+      "leftChildIndex": 24,
+      "rightChildIndex": 25,
+      "triangleIndex": null,
+      "centroid": {
+        "x": 0,
+        "y": 0,
+        "z": 4
+      }
+    },
+    {
+      "index": 78,
+      "boundingBox": {
+        "isBox3": true,
+        "min": {
+          "x": -4.000001074870852,
+          "y": -4,
+          "z": -4.000001074870852
+        },
+        "max": {
+          "x": 4.000001074870852,
+          "y": 1,
+          "z": 4.000001074870852
+        }
+      },
+      "leftChildIndex": 55,
+      "rightChildIndex": 73,
+      "triangleIndex": null,
+      "centroid": {
+        "x": 0,
+        "y": -1.5,
+        "z": 0
+      }
+    },
+    {
+      "index": 51,
+      "boundingBox": {
+        "isBox3": true,
+        "min": {
+          "x": -4,
+          "y": -4.000000537435426,
+          "z": -4.000000537435426
+        },
+        "max": {
+          "x": 4,
+          "y": 4.000000537435426,
+          "z": -3.999999462564574
+        }
+      },
+      "leftChildIndex": 26,
+      "rightChildIndex": 27,
+      "triangleIndex": null,
+      "centroid": {
+        "x": 0,
+        "y": 0,
+        "z": -4
+      }
+    },
+    {
+      "index": 79,
+      "boundingBox": {
+        "isBox3": true,
+        "min": {
+          "x": -4.000001074870852,
+          "y": -4.000000537435426,
+          "z": -4.000001074870852
+        },
+        "max": {
+          "x": 4.000001074870852,
+          "y": 4.000000537435426,
+          "z": 4.000001074870852
+        }
+      },
+      "leftChildIndex": 50,
+      "rightChildIndex": 78,
+      "triangleIndex": null,
+      "centroid": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "index": 52,
+      "boundingBox": {
+        "isBox3": true,
+        "min": {
+          "x": -4,
+          "y": -4,
+          "z": -4
+        },
+        "max": {
+          "x": -4,
+          "y": 4,
+          "z": 4
+        }
+      },
+      "leftChildIndex": 30,
+      "rightChildIndex": 31,
+      "triangleIndex": null,
+      "centroid": {
+        "x": -4,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "index": 80,
+      "boundingBox": {
+        "isBox3": true,
+        "min": {
+          "x": -4.000001074870852,
+          "y": -4.000000537435426,
+          "z": -4.000001074870852
+        },
+        "max": {
+          "x": 4.000001074870852,
+          "y": 4.000000537435426,
+          "z": 4.000001074870852
+        }
+      },
+      "leftChildIndex": 51,
+      "rightChildIndex": 79,
+      "triangleIndex": null,
+      "centroid": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "index": 77,
+      "boundingBox": {
+        "isBox3": true,
+        "min": {
+          "x": -4.000001074870852,
+          "y": 3.9999996503088235,
+          "z": -4.000001074870852
+        },
+        "max": {
+          "x": 4.000001074870852,
+          "y": 4.0000003496911765,
+          "z": 4.000001074870852
+        }
+      },
+      "leftChildIndex": 71,
+      "rightChildIndex": 76,
+      "triangleIndex": null,
+      "centroid": {
+        "x": 0,
+        "y": 4,
+        "z": 0
+      }
+    },
+    {
+      "index": 81,
+      "boundingBox": {
+        "isBox3": true,
+        "min": {
+          "x": -4.000001074870852,
+          "y": -4.000000537435426,
+          "z": -4.000001074870852
+        },
+        "max": {
+          "x": 4.000001074870852,
+          "y": 4.000000537435426,
+          "z": 4.000001074870852
+        }
+      },
+      "leftChildIndex": 52,
+      "rightChildIndex": 80,
+      "triangleIndex": null,
+      "centroid": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "index": 82,
+      "boundingBox": {
+        "isBox3": true,
+        "min": {
+          "x": -4.000001074870852,
+          "y": -4.000000537435426,
+          "z": -4.000001074870852
+        },
+        "max": {
+          "x": 4.000001074870852,
+          "y": 4.000000537435426,
+          "z": 4.000001074870852
+        }
+      },
+      "leftChildIndex": 77,
+      "rightChildIndex": 81,
+      "triangleIndex": null,
+      "centroid": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      }
+    }
+  ]
