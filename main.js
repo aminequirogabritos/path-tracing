@@ -3,7 +3,7 @@ const SLEEP_TIME = 30;
 const SLEEP_TIME_BETWEEN_QUADS = 30;
 
 
-const frames = 10;
+const frames = 50;
 const maxPathLength = 5;
 const sampleCount = 5;
 const canvasSize = 512;
@@ -21,8 +21,6 @@ import Stats from 'three/examples/jsm/libs/stats.module.js';
 // import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
 // import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { MeshBVH } from 'three-mesh-bvh';
-import * as  THREEMeshBVH from 'three-mesh-bvh';
 import * as BufferGeometryUtils from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 
 // Load vertex and fragment shaders
