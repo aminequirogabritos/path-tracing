@@ -5,8 +5,7 @@
 	},
 	"extensionsUsed":[
 		"KHR_materials_specular",
-		"KHR_materials_ior",
-		"KHR_materials_emissive_strength"
+		"KHR_materials_ior"
 	],
 	"scene":0,
 	"scenes":[
@@ -394,7 +393,7 @@
 		},
 		{
 			"mesh":34,
-			"name":"Object_0Light",
+			"name":"Light",
 			"rotation":[
 				-1,
 				0,
@@ -1045,9 +1044,6 @@
 				1
 			],
 			"extensions":{
-				"KHR_materials_emissive_strength":{
-					"emissiveStrength":50
-				},
 				"KHR_materials_specular":{
 					"specularFactor":0
 				},

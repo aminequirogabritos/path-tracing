@@ -56,9 +56,9 @@ class Camera {
 
     update = () => {
 
-        console.log('Camera.update - start');
+        console.log('Camera.init - start');
 
-        // console.log('camera', this.camera)
+        console.log('camera', this.camera)
 
         this.camera = {};
 
@@ -72,17 +72,17 @@ class Camera {
         this.camera.cameraLeft = this.camera.cameraRight.clone().negate();
         // const cameraMiddle = cameraSource.clone().sub(new THREE.Vector3(0.0, cameraSource.y, 0.0));
         this.camera.cameraMiddle = this.camera.cameraSource.clone().add(this.camera.cameraDirection.clone()/* .multiplyScalar(1.2) */); // multiplicar por escalar para cambiar posicion near plano frustum
-        // console.log("🚀 ~ cameraSource:", this.camera.cameraSource)
+        console.log("🚀 ~ cameraSource:", this.camera.cameraSource)
 
 
         // const cameraLeftBottom = getLeftBottomCorner(camera, planeDimensions.width, planeDimensions.height);
         this.camera.cameraLeftBottom = this.camera.cameraMiddle.clone()
             .sub(this.camera.cameraRight.clone().multiplyScalar(0.5))
             .sub(this.camera.cameraUp.clone().multiplyScalar(0.5));
-        // console.log("🚀 ~ cameraLeftBottom:", this.camera.cameraLeftBottom)
+        console.log("🚀 ~ cameraLeftBottom:", this.camera.cameraLeftBottom)
         // (?) cameraLeftBottom.x += -0.5; // esta escala se hace para que el plano "near" no esté tan pegado a la cámara
 
-        console.log('Camera.update - end');
+        console.log('Camera.init - end');
     };
     
     getCamera() {
