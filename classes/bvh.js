@@ -35,9 +35,9 @@ class BVH {
 
 
 
-        this.root = this.buildBVH(leafNodesArray, 0, 5);
+        let root = this.buildBVH(leafNodesArray, 0, 5);
 
-        this.planarizeEytzinger(this.root, 0, 0);
+        this.planarizeEytzinger(root, 0, 0);
 
         this.nodeCount = this.eytzingerArray.length;
 

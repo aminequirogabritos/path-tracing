@@ -41,7 +41,7 @@ export function mapTexturizedArraysToTriangles(coordinates) {
 };
 
 export function mapTrianglesArrayToTexturizedArray(trianglesArray) {
-    const emissionConstant = 30;
+    const emissionConstant = 50;
     let coordinates = [];
     let normals = [];
     let colors = [];

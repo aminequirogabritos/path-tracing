@@ -3,7 +3,7 @@ const SLEEP_TIME = 30;
 const SLEEP_TIME_BETWEEN_QUADS = 30;
 
 
-const frames = 5;
+const frames = 10;
 const maxPathLength = 5;
 const sampleCount = 5;
 const canvasSize = 512;
@@ -94,6 +94,7 @@ try {
 } catch (e) {
   console.log(e);
 }
+// console.log("🚀 ~ triangleCount:", triangleCount)
 
 
 // scene.updateMatrixWorld(true);
@@ -258,7 +259,7 @@ async function render(now, frameNumber) {
   uploadTexture(gl, programPathTracing, newPropertiesArray.emissions, 'emissionsTexture', (newPropertiesArray.emissions.length / 3), 1, TextureIndex.getNextTextureIndex());
   uploadTexture(gl, programPathTracing, newPropertiesArray.lightIndices, 'lightIndicesTexture', (newPropertiesArray.lightIndices.length / 3), 1, TextureIndex.getNextTextureIndex());
   uploadTexture(gl, programPathTracing, texturizableTreeProperties.nodesBoundingBoxesMins, 'nodesBoundingBoxesMins', (texturizableTreeProperties.nodesBoundingBoxesMins.length / 3), 1, TextureIndex.getNextTextureIndex());
-  uploadTexture(gl, programPathTracing,texturizableTreeProperties. nodesBoundingBoxesMaxs, 'nodesBoundingBoxesMaxs', (texturizableTreeProperties.nodesBoundingBoxesMaxs.length / 3), 1, TextureIndex.getNextTextureIndex());
+  uploadTexture(gl, programPathTracing, texturizableTreeProperties.nodesBoundingBoxesMaxs, 'nodesBoundingBoxesMaxs', (texturizableTreeProperties.nodesBoundingBoxesMaxs.length / 3), 1, TextureIndex.getNextTextureIndex());
   // uploadTexture(gl, programPathTracing, texturizableTreeProperties.nodesTrianglesIndices, 'nodesTrianglesIndices', (texturizableTreeProperties.nodesTrianglesIndices.length / 3), 1, TextureIndex.getNextTextureIndex());
   uploadTexture(gl, programPathTracing, texturizableTreeProperties.nodesTrianglesCount, 'nodesTrianglesCount', (texturizableTreeProperties.nodesTrianglesCount.length / 3), 1, TextureIndex.getNextTextureIndex());
   uploadTexture(gl, programPathTracing, texturizableTreeProperties.nodesInorderTrianglesIndices, 'nodesInorderTrianglesIndices', (texturizableTreeProperties.nodesInorderTrianglesIndices.length / 3), 1, TextureIndex.getNextTextureIndex());
@@ -357,7 +358,7 @@ async function render(now, frameNumber) {
 
   // Save the rendered image to a file
   if (saveFrame)
-  readPixelsAndSave(gl, width, height, `frame_${frameNumber}_${fileNameSuffix}.png`, urlSave);
+    readPixelsAndSave(gl, width, height, `frame_${frameNumber}_${fileNameSuffix}.png`, urlSave);
 
   TextureIndex.setTextureIndex(2);
 
@@ -654,9 +655,9 @@ async function loadModel(url) {
             // coordinates.push(...mappedMeshVertexCoordinatesArray);
 
             // vertexCount += mappedMeshVertexCoordinatesArray.length / 3;
-            console.log("😡 ~ vertexCount adding mesh " + child.name + ": " + vertexCount)
+            // console.log("😡 ~ vertexCount adding mesh " + child.name + ": " + vertexCount)
             // triangleCount += mappedMeshVertexCoordinatesArray.length / 9;
-            console.log("😡 ~ triangleCount adding mesh " + child.name + ": " + triangleCount)
+            // console.log("😡 ~ triangleCount adding mesh " + child.name + ": " + triangleCount)
 
 
             // for each triangle
@@ -697,6 +698,8 @@ async function loadModel(url) {
         });
 
         // console.log("🌸 ~ coordinates.length:", coordinates.length)
+
+        console.log("🚀 ~ triangle Count:", trianglesArray.length)
 
         // armar arreglo de indices de triangulos de luces
         for (let i = 0; i < emissions.length; i = i + 3) {
