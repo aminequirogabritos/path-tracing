@@ -3,7 +3,7 @@ const SLEEP_TIME = 50;
 const SLEEP_TIME_BETWEEN_QUADS = 50;
 
 
-const frames = 5;
+const frames = 50;
 const maxPathLength = 5;
 const sampleCount = 5;
 const canvasSize = 128;
@@ -36,6 +36,7 @@ import fragmentShaderOutput from './shaders/fragmentShaderOutput.glsl';
 // import { mapCoordinates } from './utils/coordinatesMapper.js';
 import { mapTrianglesArrayToTexturizedArray } from './utils/triangleMapper.js';
 import { shuffleArray, sortTrianglesByBVHInorderIndices, sortTrianglesByDistanceToCamera } from './utils/triangleSorter.js';
+import uploadTexture from './utils/textureUploader.js';
 
 // classes
 import Camera from './classes/camera.js';
@@ -76,7 +77,9 @@ try {
   model = await loadModel(
     // '/resources/my_cornell_2/gltf/my_cornell_2.gltf'
     // '/resources/bedroom2/gltf/v3/bedroom2.gltf'
-    '/resources/bedroom2/gltf/v5/bedroom2_v5.gltf'
+    // '/resources/bedroom2/gltf/v5/bedroom2_v5.gltf'
+    // '/resources/pixar_room/v1/pixar-room.gltf'
+    '/resources/pixar_room/v3/pixar-room-3.gltf'
     // '/resources/my_cornell_6/gltf/my_cornell_6.gltf'
     // '/resources/bedroom1/customGLTF/bedroom1.gltf'
     // '/resources/bedroom2/gltf/bedroom2.gltf'
@@ -124,10 +127,9 @@ if (!gl) {
 
 const maxTextureSize = gl.getParameter(gl.MAX_TEXTURE_SIZE);
 console.log("🚀 ~ maxTextureSize:", maxTextureSize)
-if (512 > maxTextureSize) {
-  console.error('El tamaño de la textura excede el tamaño máximo soportado:', maxTextureSize);
-}
-
+console.log('Max Fragment Shader Texture Units:', gl.getParameter(gl.MAX_TEXTURE_IMAGE_UNITS));
+console.log('Max Vertex Shader Texture Units:', gl.getParameter(gl.MAX_VERTEX_TEXTURE_IMAGE_UNITS));
+console.log('Max Combined Texture Units:', gl.getParameter(gl.MAX_COMBINED_TEXTURE_IMAGE_UNITS));
 
 canvas.height = canvasSize;
 canvas.width = canvasSize;
@@ -141,9 +143,9 @@ gl.canvas.height = height;
 let cameraInstance = new Camera(50, width / height, 0.1, 1000);
 
 // room v3
-cameraInstance.translate('x', 14)
-cameraInstance.translate('z', -14)
-cameraInstance.translate('y', 3)
+// cameraInstance.translate('x', 14)
+// cameraInstance.translate('z', -14)
+// cameraInstance.translate('y', 3)
 
 
 //cornell room
@@ -151,8 +153,16 @@ cameraInstance.translate('y', 3)
 // cameraInstance.rotate('y', PI_NUMBER / 2);
 
 
+//cornell room
+cameraInstance.translate('x', 2)
+cameraInstance.translate('z', 4)
+cameraInstance.translate('y', 2)
+// cameraInstance.rotate('y', PI_NUMBER / 2);
+cameraInstance.lookAt(0, -2, -4);
 
-cameraInstance.lookAt(0, 0, 0);
+
+
+// cameraInstance.lookAt(0, 0, 0);
 
 
 
@@ -515,42 +525,6 @@ function createProgram(gl, vertexShader, fragmentShader) {
 
 
 
-function uploadTexture(gl, program, data, name, width, height, index) {
-  // console.log("🚀 ~ uploadTexture ~ index:", index)
-
-  // Create a texture.
-  var texture = gl.createTexture();
-
-  // Bind the texture to the correct texture unit
-  gl.activeTexture(gl.TEXTURE0 + index);
-  gl.bindTexture(gl.TEXTURE_2D, texture);
-  gl.texImage2D(gl.TEXTURE_2D,
-    0,
-    gl.RGB32F,
-    width,
-    height,
-    0,
-    gl.RGB,
-    gl.FLOAT,
-    new Float32Array(data));
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-
-  //gl.bindTexture(gl.TEXTURE_2D, null);
-
-  var textureLocation = gl.getUniformLocation(program, name);
-
-  gl.uniform1i(textureLocation, index);
-
-}
-
-function createBuffer() {
-
-}
-
-
 
 
 async function loadModel(url) {
@@ -732,62 +706,6 @@ async function loadModel(url) {
 }
 
 
-function calculateImagePlaneVectors(camera) {
-  const fov = camera.fov * (Math.PI / 180); // Convert FOV to radians
-  const aspect = camera.aspect;
-
-  // Calculate the height and width of the near plane
-  const height = 2 * Math.tan(fov / 2) * camera.near;
-  const width = height * aspect;
-
-  // Get the camera's right and up direction vectors
-  const right = new THREE.Vector3();
-  const up = new THREE.Vector3();
-
-  camera.getWorldDirection(right);
-  right.cross(camera.up).normalize().multiplyScalar(width);
-
-  camera.getWorldDirection(up);
-  up.cross(right).normalize().multiplyScalar(height);
-
-  console.log("🚀 ~ calculateImagePlaneVectors ~ right:", right)
-  console.log("🚀 ~ calculateImagePlaneVectors ~ up:", up)
-  return { right, up };
-}
-
-
-function getImagePlaneDimensions(camera) {
-  const fov = camera.fov * (Math.PI / 180); // Convert FOV to radians
-  const aspect = camera.aspect;
-
-  // Calculate the height and width of the near plane
-  const height = 2 * Math.tan(fov / 2) * camera.near;
-  const width = height * aspect;
-
-  return { width, height };
-}
-
-
-function getLeftBottomCorner(camera, width, height) {
-  const forward = new THREE.Vector3();
-  camera.getWorldDirection(forward);
-
-  // Calculate the right and up vectors
-  const right = new THREE.Vector3();
-  right.crossVectors(forward, camera.up).normalize().multiplyScalar(width / 2);
-
-  const up = new THREE.Vector3();
-  up.copy(camera.up).normalize().multiplyScalar(height / 2);
-
-  // Calculate the left bottom corner position
-  const leftBottomCorner = camera.position.clone()
-    .add(forward.multiplyScalar(camera.near))
-    .sub(right)
-    .sub(up);
-  console.log("🚀 ~ getLeftBottomCorner ~ leftBottomCorner:", leftBottomCorner)
-
-  return leftBottomCorner;
-}
 
 
 // Adjust canvas size
@@ -814,20 +732,3 @@ function createFramebuffer(gl, width, height) {
 
   return { framebuffer, texture };
 }
-
-
-function flattenBVH_Eytzinger(node, bvhArray, index = 0) {
-  if (node == null) return;
-
-  // Ensure the array has enough space
-  if (index >= bvhArray.length) bvhArray.length = index + 1;
-
-  // Store the node data
-  bvhArray[index] = node;
-
-  // Flatten the left and right children
-  flattenBVH_Eytzinger(node.left, bvhArray, 2 * index + 1);
-  flattenBVH_Eytzinger(node.right, bvhArray, 2 * index + 2);
-}
-
-// Assuming `bvhRoot` is your BVH root node
