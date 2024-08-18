@@ -17,6 +17,11 @@ class BVHNode {
         
         // computed values
         this.centroid = centroid;
+        
+        //to be filled later
+        this.missLink = null;
+        this.triangleCount = 0;
+        this.firstIndexInInorderTriangleIndicesArray = null;
     }
 
     isLeaf() {
