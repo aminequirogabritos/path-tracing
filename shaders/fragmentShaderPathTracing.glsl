@@ -22,6 +22,7 @@ struct BVHNode {
   vec3 maxBounds;
   int triangleInorderIndex;
   int triangleCount;
+  int missLink;
 };
 
 uniform sampler2D coordinatesTexture;
@@ -31,6 +32,7 @@ uniform sampler2D emissionsTexture;
 uniform sampler2D lightIndicesTexture;
 uniform sampler2D nodesBoundingBoxesMins;
 uniform sampler2D nodesBoundingBoxesMaxs;
+uniform sampler2D nodesMissLinkIndices;
 uniform sampler2D nodesInorderTrianglesIndices;
 uniform sampler2D nodesTrianglesCount;
 uniform sampler2D inorderTrianglesIndicesArray;
@@ -91,6 +93,7 @@ BVHNode getBVHNode(int index) {
   // node.triangleIndex = int(texture(nodesTrianglesIndices, vec2(float(index) / float(bvhNodeCount - 1), 0.0f)).x);
   node.triangleInorderIndex = int(texture(nodesInorderTrianglesIndices, vec2(float(index) / float(bvhNodeCount - 1), 0.0f)).x);
   node.triangleCount = int(texture(nodesTrianglesCount, vec2(float(index) / float(bvhNodeCount - 1), 0.0f)).x);
+  node.missLink = int(texture(nodesMissLinkIndices, vec2(float(index) / float(bvhNodeCount - 1), 0.0f)).x);
   return node;
 }
 
@@ -165,6 +168,40 @@ bool ray_mesh_intersection(out float out_t, out Triangle out_triangle, vec3 orig
   return out_t < 1.0e38f;
 }
 
+bool ray_bvh_intersection_hit_miss(out float out_t, out Triangle out_triangle, vec3 origin, vec3 direction) {
+  out_t = 1.0e38f;
+  int currentIndex = 0; // Start with the root node
+  bool triangleHit = false;
+
+  while(currentIndex != -1 && currentIndex < bvhNodeCount) {
+    BVHNode currentNode = getBVHNode(currentIndex);
+
+        // Check if the ray intersects the bounding box
+    if(ray_box_intersection(origin, direction, currentNode.minBounds, currentNode.maxBounds)) {
+            // If it's a leaf node, check intersection with the stored triangle(s)
+      if(currentNode.triangleInorderIndex != -2) {
+        for(int i = currentNode.triangleInorderIndex; i < currentNode.triangleInorderIndex + currentNode.triangleCount; i++) {
+          int triangleIndex = int(texture(inorderTrianglesIndicesArray, vec2(float(i) / float(triangleCount - 1), 0.0f)).x);
+          Triangle triangle = getTriangleFromTextures(triangleIndex);
+          float t;
+          triangleHit = ray_triangle_intersection(t, origin, direction, triangle);
+          if(triangleHit && t < out_t) {
+            outColor = vec4(0.0f, 1.0f, 0.0f, 1.0f);
+            out_t = t;
+            out_triangle = triangle;
+          }
+        }
+      }
+      currentIndex++;
+    } else {
+            // If the ray doesn't intersect, follow the miss link
+      currentIndex = currentNode.missLink;
+    }
+  }
+
+  return out_t < 1.0e38f;
+}
+
 bool ray_bvh_intersection(out float out_t, out Triangle out_triangle, vec3 origin, vec3 direction) {
   out_t = 1.0e38f; // Initialize with a large value
   int stack[256];  // Stack to keep track of node indices to visit
@@ -190,7 +227,6 @@ bool ray_bvh_intersection(out float out_t, out Triangle out_triangle, vec3 origi
         for(int i = currentNode.triangleInorderIndex; i < currentNode.triangleInorderIndex + currentNode.triangleCount; i++) {
 
           int triangleIndex = int(texture(inorderTrianglesIndicesArray, vec2(float(i) / float(triangleCount - 1), 0.0f)).x);
-          
           Triangle triangle = getTriangleFromTextures(triangleIndex);
           float t;
           if(ray_triangle_intersection(t, origin, direction, triangle) && t < out_t) {
@@ -271,7 +307,7 @@ vec2 get_random_barycentric(inout uvec2 seed) {
 bool is_light_visible(vec3 origin, vec3 light_point, Triangle light_triangle, vec3 direction) {
   float t;
   Triangle blocking_triangle;
-  bool hits = ray_bvh_intersection(t, blocking_triangle, origin, direction);
+  bool hits = ray_bvh_intersection_hit_miss(t, blocking_triangle, origin, direction);
 
     // If the ray hits something and it's not the light itself, the light is blocked
   if(hits && blocking_triangle.emission != light_triangle.emission) {
@@ -326,7 +362,7 @@ vec3 get_ray_radiance(vec3 origin, vec3 direction, inout uvec2 seed) {
     float t;
     Triangle triangle;
     // if(ray_bvh_intersection(t, triangle, origin, direction)) {
-    if(ray_bvh_intersection(t, triangle, origin, direction)) {
+    if(ray_bvh_intersection_hit_miss(t, triangle, origin, direction)) {
 
       // If it's the first step and the triangle is emmissive - it's a light, stop the algorithm
       if(i == 0 && (triangle.emission.x > 0.0f || triangle.emission.y > 0.0f || triangle.emission.z > 0.0f)) {
@@ -352,7 +388,7 @@ vec3 get_ray_radiance(vec3 origin, vec3 direction, inout uvec2 seed) {
 
         Triangle blockingTriangle;
         float tBlockingTriangle;
-        bool hits = ray_bvh_intersection(tBlockingTriangle, blockingTriangle, rayTriangleIntersectionPoint, intersectionToLightDirection);
+        bool hits = ray_bvh_intersection_hit_miss(tBlockingTriangle, blockingTriangle, rayTriangleIntersectionPoint, intersectionToLightDirection);
 
         // if doesn't hit anything or hits and it's a light source
         if(!hits || (hits && blockingTriangle.emission != vec3(0.0f))) {

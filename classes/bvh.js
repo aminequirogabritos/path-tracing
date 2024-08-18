@@ -7,6 +7,8 @@ class BVH {
     static epsilon = 0.5;
     constructor(trianglesArray) {
         this.eytzingerArray = [];
+        this.preorderArray = [];
+        this.nodeCount = 0;
 
         const triangleCount = trianglesArray.length;
 
@@ -36,22 +38,33 @@ class BVH {
 
 
         let root = this.buildBVH(leafNodesArray, 0, 5);
+        console.log("🚀 ~ BVH ~ constructor ~ this.nodeCount:", this.nodeCount)
 
-        this.planarizeEytzinger(root, 0, 0);
+        this.addMissLinks(root);
 
-        this.nodeCount = this.eytzingerArray.length;
+        this.fillPreorderArray(root);
 
+        this.updateMissLinks();
+        console.log("🚀 ~ BVH ~ constructor ~ this.preorderArray:", this.preorderArray)
 
-        for (let i = 0; i < this.nodeCount; i++) {
-            if (!(this.eytzingerArray.hasOwnProperty(i))) {
-                this.eytzingerArray[i] = {
-                    boundingBox: new THREE.Box3(),
-                    triangleIndicesArray: [-1],
-                };
-            }
-        }
+        // this.planarizeEytzinger(root, 0, 0);
+
+        // this.planarizePreorder(root, 0);
+
+        // this.nodeCount = this.eytzingerArray.length;
+
+        /* 
+                for (let i = 0; i < this.nodeCount; i++) {
+                    if (!(this.eytzingerArray.hasOwnProperty(i))) {
+                        this.eytzingerArray[i] = {
+                            boundingBox: new THREE.Box3(),
+                            triangleIndicesArray: [-1],
+                        };
+                    }
+                } */
 
         this.inorderTrianglesIndicesArray = this.addDoublePointer();
+        console.log("🚀 ~ BVH ~ constructor ~ this.inorderTrianglesIndicesArray:", this.inorderTrianglesIndicesArray)
 
 
 
@@ -70,6 +83,7 @@ class BVH {
                 triangleIndicesArray.push(...tri.triangleIndicesArray);
             });  // Compute bounding box for all triangles
 
+            this.nodeCount++;
             return new BVHNode(boundingBox, null, null, trianglesArray, triangleIndicesArray);
         } else if (triangles.length === 0) {
             return null;
@@ -99,11 +113,13 @@ class BVH {
             return null; // This should not normally happen, but just in case
         }
 
+        this.nodeCount++;
         return new BVHNode(boundingBox, leftChild, rightChild, null, [-2]);
     }
 
 
-    planarizeEytzinger(node, index, counter) {
+    planarizeEytzinger(node, index) {
+        if (!node) return -1; // Return a miss link placeholder
 
         // Ensure the array is large enough
         if (index >= this.eytzingerArray.length) {
@@ -130,24 +146,121 @@ class BVH {
         this.planarizeEytzinger(node.rightChild, 2 * index + 2);
     }
 
+    fillPreorderArray(node) {
+        if (!node) {
+            return;
+        }
+        // Visit the root node
+        this.preorderArray.push(node);
+        // Traverse the left subtree
+        this.fillPreorderArray(node.leftChild);
+        // Traverse the right subtree
+        this.fillPreorderArray(node.rightChild);
+    }
+
+    addMissLinks(root) {
+        // if (root === null) return [];
+        if (root === null) return;
+
+        const queue = [{ node: root, parentMissLink: -1 }];
+
+        while (queue.length > 0) {
+            const { node, parentMissLink } = queue.shift();
+
+            // Determine missLink for the current node
+            if (node === root) {
+                node.missLink = -1; // Root node has no missLink
+            } else if (queue.length > 0 && queue[0].parentMissLink === parentMissLink) {
+                node.missLink = queue[0].node.nodeId; // Right sibling exists
+            } else {
+                node.missLink = parentMissLink; // Use parent's missLink
+            }
+
+            // Enqueue left and right children with updated parentMissLink
+            if (node.leftChild !== null) {
+                queue.push({ node: node.leftChild, parentMissLink: node.rightChild ? node.rightChild.nodeId : -1 });
+            }
+            if (node.rightChild !== null) {
+                queue.push({ node: node.rightChild, parentMissLink: parentMissLink });
+            }
+        }
+    }
+/* 
+    planarizePreorder(node, index, parentIndex = -1, isLeftChild = false) {
+        if (!node) return -1; // Return -1 for missing nodes
+
+        // Store the current node information
+        let currentNode = {
+            ...node,
+            hitLink: -1, // Placeholder for now
+            missLink: -1 // Placeholder for now
+        };
+
+        // Add the current node to the array
+        this.preorderArray[index] = currentNode;
+
+        // Calculate the hit link: the next node in the preorder traversal
+        let nextIndex = index + 1;
+        currentNode.hitLink = nextIndex < this.nodeCount ? nextIndex : -1;
+
+        // Traverse the left child
+        let leftChildIndex = nextIndex;
+        if (node.leftChild) {
+            nextIndex = this.planarizePreorder(node.leftChild, leftChildIndex, index, true);
+        }
+
+        // Traverse the right child
+        let rightChildIndex = nextIndex;
+        if (node.rightChild) {
+            nextIndex = this.planarizePreorder(node.rightChild, rightChildIndex, index, false);
+        }
+
+        // Set the miss link based on the node type
+        if (!node.leftChild && !node.rightChild) {
+            // Leaf node: miss link is the same as hit link
+            currentNode.missLink = currentNode.hitLink;
+        } else if (isLeftChild) {
+            // Internal left child: miss link is the sibling node (right child of the parent)
+            currentNode.missLink = rightChildIndex < this.preorderArray.length ? rightChildIndex : -1;
+        } else if (parentIndex !== -1) {
+            // Internal right child: miss link is the parent's sibling node (miss link of the parent)
+            currentNode.missLink = this.preorderArray[parentIndex].missLink;
+        }
+
+        return nextIndex; // Return the next index in the preorder traversal
+    } */
+
+    updateMissLinks() {
+        this.preorderArray.forEach((currentNode, currentNodeIndex) => {
+            const currentNodeMissLinkNodeId = currentNode.missLink;
+            let missLink = this.preorderArray.map(node => node.nodeId).indexOf(currentNodeMissLinkNodeId)
+            currentNode.missLink = missLink;
+        })
+    }
+
     addDoublePointer() {
 
         // generar arreglo de punteros (indices) a arreglo original de triangulos
-        let onlyLeafNodesInorderTriangleIndicesArrays = this.eytzingerArray.filter(node => node.triangleIndicesArray[0] >= 0);
-        let onlyLeafNodesFirstIndexArray = this.eytzingerArray.filter(node => node.triangleIndicesArray[0] >= 0).map(x => x.triangleIndicesArray[0]);
+        let onlyLeafNodesInorderTriangleIndicesArrays = this.preorderArray.filter(node => node.triangleIndicesArray[0] >= 0);
+        let onlyLeafNodesFirstIndexArray = this.preorderArray.filter(node => node.triangleIndicesArray[0] >= 0).map(x => x.triangleIndicesArray[0]);
         let inorderTrianglesIndicesArray = [];
         onlyLeafNodesInorderTriangleIndicesArrays.forEach(node => {
             inorderTrianglesIndicesArray.push(...node.triangleIndicesArray);
         });
 
-        // agregar a eytzingerArray dos campos:
+        // agregar a preorderArray dos campos:
         // - indice de donde esta ubicado el primer indice de trianglesIndicesArrray dentro del arreglo inorderTrianglesIndicesArray
         // - cantidad de indices de triangleIndicesArray
-        this.eytzingerArray.forEach(node => {
-            if (!(node.triangleIndicesArray.length == 1 && node.triangleIndicesArray[0] < 0)) {// si no es un nodo interno o hoja vacia
+        this.preorderArray.forEach(node => {
+            if (node.triangleIndicesArray[0] != -2) {// si no es un nodo interno o hoja vacia
                 // agregar esos campos al nodo
                 node.firstIndexInInorderTriangleIndicesArray = inorderTrianglesIndicesArray.indexOf(node.triangleIndicesArray[0]);
+                
                 node.triangleCount = node.triangleIndicesArray.length;
+            } else {
+                node.firstIndexInInorderTriangleIndicesArray = -1;
+                
+                node.triangleCount = 0;
             }
         })
 
@@ -161,11 +274,14 @@ class BVH {
         let nodesTrianglesIndices = [];
         let nodesTrianglesCount = [];
         let nodesInorderTrianglesIndices = [];
+        let nodesMissLinkIndices = [];
 
-        this.eytzingerArray.forEach((node, i) => {
+        this.preorderArray.forEach((node, i) => {
+        // console.log("🚀 ~ BVH ~ this.preorderArray.forEach ~ node:", node)
 
             nodesBoundingBoxesMins.push(...[node.boundingBox.min.x, node.boundingBox.min.y, node.boundingBox.min.z]);
             nodesBoundingBoxesMaxs.push(...[node.boundingBox.max.x, node.boundingBox.max.y, node.boundingBox.max.z]);
+            nodesMissLinkIndices.push(...[node.missLink, node.missLink, node.missLink]);
             if (node.triangleIndicesArray[0] >= 0)
                 nodesInorderTrianglesIndices.push(...[node.firstIndexInInorderTriangleIndicesArray, node.firstIndexInInorderTriangleIndicesArray, node.firstIndexInInorderTriangleIndicesArray])
             else
@@ -184,6 +300,7 @@ class BVH {
             nodesTrianglesIndices,
             nodesTrianglesCount,
             nodesInorderTrianglesIndices,
+            nodesMissLinkIndices,
         }
 
     }
