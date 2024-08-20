@@ -96,29 +96,19 @@ Triangle getTriangleFromTextures(int index) {
   int indexV1 = 3 * index + 1;
   int indexV2 = 3 * index + 2;
 
-  float rowTexCoordV0 = float(indexV0 / coordinatesTexColCount) / float(coordinatesTexRowCount - 1);
-  float colTexCoordV0 = float(indexV0 % coordinatesTexColCount) / float(coordinatesTexColCount - 1);
+  ivec2 texCoordV0 = ivec2(indexV0 % coordinatesTexColCount, indexV0 / coordinatesTexColCount);
+  ivec2 texCoordV1 = ivec2(indexV1 % coordinatesTexColCount, indexV1 / coordinatesTexColCount);
+  ivec2 texCoordV2 = ivec2(indexV2 % coordinatesTexColCount, indexV2 / coordinatesTexColCount);
 
-  float rowTexCoordV1 = float(indexV1 / coordinatesTexColCount) / float(coordinatesTexRowCount - 1);
-  float colTexCoordV1 = float(indexV1 % coordinatesTexColCount) / float(coordinatesTexColCount - 1);
+  triangle.vertex0 = texelFetch(coordinatesTexture, texCoordV0, 0).xyz;
+  triangle.vertex1 = texelFetch(coordinatesTexture, texCoordV1, 0).xyz;
+  triangle.vertex2 = texelFetch(coordinatesTexture, texCoordV2, 0).xyz;
 
-  float rowTexCoordV2 = float(indexV2 / coordinatesTexColCount) / float(coordinatesTexRowCount - 1);
-  float colTexCoordV2 = float(indexV2 % coordinatesTexColCount) / float(coordinatesTexColCount - 1);
+  ivec2 texCoord = ivec2(index % trianglesTexColCount, index / trianglesTexColCount);
 
-  // Calculate texture coordinates for each vertex of the triangle
-
-  triangle.vertex0 = texture(coordinatesTexture, vec2(colTexCoordV0, rowTexCoordV0)).xyz;
-  triangle.vertex1 = texture(coordinatesTexture, vec2(colTexCoordV1, rowTexCoordV1)).xyz;
-  triangle.vertex2 = texture(coordinatesTexture, vec2(colTexCoordV2, rowTexCoordV2)).xyz;
-
-  float row = float(index / trianglesTexColCount) / float(trianglesTexRowCount - 1);
-  float col = float(index % trianglesTexColCount) / float(trianglesTexColCount - 1);
-
-  triangle.normal = texture(normalsTexture, vec2(col, row)).xyz;
-
-  triangle.color = texture(colorsTexture, vec2(col, row)).xyz;
-
-  triangle.emission = texture(emissionsTexture, vec2(col, row)).xyz;
+  triangle.normal = texelFetch(normalsTexture, texCoord, 0).xyz;
+  triangle.color = texelFetch(colorsTexture, texCoord, 0).xyz;
+  triangle.emission = texelFetch(emissionsTexture, texCoord, 0).xyz;
 
   return triangle;
 
@@ -127,29 +117,25 @@ Triangle getTriangleFromTextures(int index) {
 BVHNode getBVHNode(int index) {
   BVHNode node;
 
-  float row = float(index / nodesTexColCount) / float(nodesTexRowCount - 1);
-  float col = float(index % nodesTexColCount) / float(nodesTexColCount - 1);
+  ivec2 texCoord = ivec2(index % nodesTexColCount, index / nodesTexColCount);
 
-  node.minBounds = texture(nodesBoundingBoxesMins, vec2(col, row)).xyz;
-  node.maxBounds = texture(nodesBoundingBoxesMaxs, vec2(col, row)).xyz;
-  node.triangleInorderIndex = int(texture(nodesInorderTrianglesIndices, vec2(col, row)).x);
-  node.triangleCount = int(texture(nodesTrianglesCount, vec2(col, row)).x);
-  node.missLink = int(texture(nodesMissLinkIndices, vec2(col, row)).x);
+  node.minBounds = texelFetch(nodesBoundingBoxesMins, texCoord, 0).xyz;
+  node.maxBounds = texelFetch(nodesBoundingBoxesMaxs, texCoord, 0).xyz;
+  node.triangleInorderIndex = int(texelFetch(nodesInorderTrianglesIndices, texCoord, 0).x);
+  node.triangleCount = int(texelFetch(nodesTrianglesCount, texCoord, 0).x);
+  node.missLink = int(texelFetch(nodesMissLinkIndices, texCoord, 0).x);
+
   return node;
 }
 
 int getIndexFromInorderTrianglesIndicesArray(int index) {
-  float row = float(index / trianglesTexColCount) / float(trianglesTexRowCount - 1);
-  float col = float(index % trianglesTexColCount) / float(trianglesTexColCount - 1);
-
-  return int(texture(inorderTrianglesIndicesArray, vec2(col, row)).x);
+  ivec2 texCoord = ivec2(index % trianglesTexColCount, index / trianglesTexColCount);
+  return int(texelFetch(inorderTrianglesIndicesArray, texCoord, 0).x);
 }
 
 int getIndexFromLightIndicesTexture(int index) {
-  float row = float(index / lightsIndicesTexColCount) / float(lightsIndicesTexRowCount - 1);
-  float col = float(index % lightsIndicesTexColCount) / float(lightsIndicesTexColCount - 1);
-
-  return int(texture(lightIndicesTexture, vec2(col, row)).x);
+  ivec2 texCoord = ivec2(index % lightsIndicesTexColCount, index / lightsIndicesTexColCount);
+  return int(texelFetch(lightIndicesTexture, texCoord, 0).x);
 }
 
 vec4 getPreviousColorFromPreviousFrameTexture(vec2 texCoord) {

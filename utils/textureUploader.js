@@ -2,8 +2,6 @@
 const MAX_TEX_WIDTH = 4096;
 
 export default function uploadTexture(gl, program, data, name, index) {
-    console.log("🚀 ~ uploadTexture ~ data:", data)
-    console.log("🚀🎠🎫🎫🎫🎞🎗🎭🎭🧧🎑🎐🎐 ~ uploadTexture ~ name:", name)
     // console.log("🚀 ~ uploadTexture ~ index:", index)
 
     const { width, height } = calculateRGBTextureDimensions(gl, data);
@@ -38,22 +36,15 @@ export default function uploadTexture(gl, program, data, name, index) {
 function calculateRGBTextureDimensions(gl, data) {
     // console.log("🚀 ~ calculateRGBTextureDimensions ~ data:", data)
     // console.log("🚀 ~ calculateRGBTextureDimensions ~ data:", data.length)
-    console.log("🚀 ~ calculateRGBTextureDimensions ~ calculateRGBTextureDimensions")
     const maxTextureSize = MAX_TEX_WIDTH;
     // const maxTextureSize = gl.getParameter(gl.MAX_TEXTURE_SIZE)// / 2;
     const rgbValuesCount = data.length / 3;
-    console.log("🚀 ~ calculateRGBTextureDimensions ~ rgbValuesCount:", rgbValuesCount)
     const width = Math.min(maxTextureSize, rgbValuesCount);
-    console.log("🚀 ~ calculateRGBTextureDimensions ~ width:", width)
     const height = Math.ceil(rgbValuesCount / maxTextureSize);
-    console.log("🚀 ~ calculateRGBTextureDimensions ~ height:", height)
 
     const neededLength = width * height * 3;
-    console.log("🚀 ~ calculateRGBTextureDimensions ~ neededLength:", neededLength)
     if (data.length < neededLength) {
-        console.log("NEEDS ADDITIONAL ZEROES");
         const additionalZeroes = new Array(neededLength - data.length).fill(0.0);
-        console.log("🚀 ~ calculateRGBTextureDimensions ~ additionalZeroes:", additionalZeroes)
         data.push(...additionalZeroes);
     }
     return { width, height };

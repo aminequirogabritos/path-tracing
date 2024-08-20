@@ -1,14 +1,14 @@
 const PI_NUMBER = 3.14159265359;
-const SLEEP_TIME = 300;
-const SLEEP_TIME_BETWEEN_QUADS = 300;
+const SLEEP_TIME = 200;
+const SLEEP_TIME_BETWEEN_QUADS = 200;
 const MAX_TEX_WIDTH = 4096;
 
 
-const frames = 1;
+const frames = 5;
 const maxPathLength = 5;
 const sampleCount = 5;
-const canvasSize = 64;
-const quadSize = 16;
+const canvasSize = 256;
+const quadSize = 32;
 const urlSave = "image/png/v1";
 const fileNameSuffix = `v13_cornell6_BVH_${frames}frames_${maxPathLength}bounces_${sampleCount}samples_${512}px`
 
@@ -79,8 +79,8 @@ try {
     // '/resources/my_cornell_2/gltf/my_cornell_2.gltf'
     // '/resources/bedroom2/gltf/v3/bedroom2.gltf'
     // '/resources/bedroom2/gltf/v5/bedroom2_v5.gltf'
-    // '/resources/pixar_room/v1/pixar-room.gltf'
-    '/resources/pixar_room/v3/pixar-room-3.gltf'
+    '/resources/pixar_room/v1/pixar-room.gltf'
+    // '/resources/pixar_room/v3/pixar-room-3.gltf'
     // '/resources/my_cornell_6/gltf/my_cornell_6.gltf'
     // '/resources/bedroom1/customGLTF/bedroom1.gltf'
     // '/resources/bedroom2/gltf/bedroom2.gltf'
@@ -155,14 +155,20 @@ let cameraInstance = new Camera(50, width / height, 0.1, 1000);
 
 
 //pixar room
-cameraInstance.translate('x', 2);
-cameraInstance.translate('z', 4);
-cameraInstance.translate('y', 2);
-cameraInstance.lookAt(0, -2, -4);
+// cameraInstance.translate('x', 2);
+// cameraInstance.translate('z', 4);
+// cameraInstance.translate('y', 2);
+// cameraInstance.lookAt(0, -2, -4);
+
+// teapot
+cameraInstance.translate('x', 1);
+// cameraInstance.translate('z', 4);
+cameraInstance.translate('y', -1);
+cameraInstance.lookAt(2, -10, -12);
 
 
 
-cameraInstance.lookAt(0, 0, 0);
+// cameraInstance.lookAt(0, 0, 0);
 
 
 
@@ -176,13 +182,13 @@ console.log("🚀 ~ bvh:", bvh)
 newPropertiesArray = mapTrianglesArrayToTexturizedArray(trianglesArray);
 
 let texturizableTreeProperties = bvh.convertToTexturizableArrays();
-console.log("🚀 ~ texturizableTreeProperties:", texturizableTreeProperties)
+// console.log("🚀 ~ texturizableTreeProperties:", texturizableTreeProperties)
 
 let texturizableInorderTrianglesIndices = [];
 bvh.inorderTrianglesIndicesArray.forEach(element => {
   texturizableInorderTrianglesIndices.push(...[element, element, element])
 });
-console.log("🚀 ~ texturizableInorderTr ianglesIndices:", texturizableInorderTrianglesIndices)
+// console.log("🚀 ~ texturizableInorderTr ianglesIndices:", texturizableInorderTrianglesIndices)
 
 
 // const fpsElem = document.querySelector("#fps");

@@ -38,14 +38,14 @@ class BVH {
 
 
         let root = this.buildBVH(leafNodesArray, 0, 5);
-        console.log("🚀 ~ BVH ~ constructor ~ this.nodeCount:", this.nodeCount)
+        // console.log("🚀 ~ BVH ~ constructor ~ this.nodeCount:", this.nodeCount)
 
         this.addMissLinks(root);
 
         this.fillPreorderArray(root);
 
         this.updateMissLinks();
-        console.log("🚀 ~ BVH ~ constructor ~ this.preorderArray:", this.preorderArray)
+        // console.log("🚀 ~ BVH ~ constructor ~ this.preorderArray:", this.preorderArray)
 
         // this.planarizeEytzinger(root, 0, 0);
 
@@ -64,7 +64,7 @@ class BVH {
                 } */
 
         this.inorderTrianglesIndicesArray = this.addDoublePointer();
-        console.log("🚀 ~ BVH ~ constructor ~ this.inorderTrianglesIndicesArray:", this.inorderTrianglesIndicesArray)
+        // console.log("🚀 ~ BVH ~ constructor ~ this.inorderTrianglesIndicesArray:", this.inorderTrianglesIndicesArray)
 
 
 
