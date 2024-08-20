@@ -1,13 +1,14 @@
 const PI_NUMBER = 3.14159265359;
-const SLEEP_TIME = 50;
-const SLEEP_TIME_BETWEEN_QUADS = 50;
+const SLEEP_TIME = 200;
+const SLEEP_TIME_BETWEEN_QUADS = 200;
+const MAX_TEX_WIDTH = 4096;
 
 
-const frames = 50;
+const frames = 5;
 const maxPathLength = 5;
 const sampleCount = 5;
-const canvasSize = 128;
-const quadSize = 16;
+const canvasSize = 256;
+const quadSize = 32;
 const urlSave = "image/png/v1";
 const fileNameSuffix = `v13_cornell6_BVH_${frames}frames_${maxPathLength}bounces_${sampleCount}samples_${512}px`
 
@@ -78,8 +79,8 @@ try {
     // '/resources/my_cornell_2/gltf/my_cornell_2.gltf'
     // '/resources/bedroom2/gltf/v3/bedroom2.gltf'
     // '/resources/bedroom2/gltf/v5/bedroom2_v5.gltf'
-    // '/resources/pixar_room/v1/pixar-room.gltf'
-    '/resources/pixar_room/v3/pixar-room-3.gltf'
+    '/resources/pixar_room/v1/pixar-room.gltf'
+    // '/resources/pixar_room/v3/pixar-room-3.gltf'
     // '/resources/my_cornell_6/gltf/my_cornell_6.gltf'
     // '/resources/bedroom1/customGLTF/bedroom1.gltf'
     // '/resources/bedroom2/gltf/bedroom2.gltf'
@@ -153,12 +154,17 @@ let cameraInstance = new Camera(50, width / height, 0.1, 1000);
 // cameraInstance.rotate('y', PI_NUMBER / 2);
 
 
-//cornell room
-cameraInstance.translate('x', 2)
-cameraInstance.translate('z', 4)
-cameraInstance.translate('y', 2)
-// cameraInstance.rotate('y', PI_NUMBER / 2);
-cameraInstance.lookAt(0, -2, -4);
+//pixar room
+// cameraInstance.translate('x', 2);
+// cameraInstance.translate('z', 4);
+// cameraInstance.translate('y', 2);
+// cameraInstance.lookAt(0, -2, -4);
+
+// teapot
+cameraInstance.translate('x', 1);
+// cameraInstance.translate('z', 4);
+cameraInstance.translate('y', -1);
+cameraInstance.lookAt(2, -10, -12);
 
 
 
@@ -176,13 +182,13 @@ console.log("🚀 ~ bvh:", bvh)
 newPropertiesArray = mapTrianglesArrayToTexturizedArray(trianglesArray);
 
 let texturizableTreeProperties = bvh.convertToTexturizableArrays();
-console.log("🚀 ~ texturizableTreeProperties:", texturizableTreeProperties)
+// console.log("🚀 ~ texturizableTreeProperties:", texturizableTreeProperties)
 
 let texturizableInorderTrianglesIndices = [];
 bvh.inorderTrianglesIndicesArray.forEach(element => {
   texturizableInorderTrianglesIndices.push(...[element, element, element])
 });
-console.log("🚀 ~ texturizableInorderTr ianglesIndices:", texturizableInorderTrianglesIndices)
+// console.log("🚀 ~ texturizableInorderTr ianglesIndices:", texturizableInorderTrianglesIndices)
 
 
 // const fpsElem = document.querySelector("#fps");
@@ -263,18 +269,17 @@ async function render(now, frameNumber) {
 
 
   //function uploadTexture(gl, program, data, name, width, height, index)
-  uploadTexture(gl, programPathTracing, newPropertiesArray.coordinates, 'coordinatesTexture', (newPropertiesArray.coordinates.length / 3), 1, TextureIndex.getNextTextureIndex());
-  uploadTexture(gl, programPathTracing, newPropertiesArray.normals, 'normalsTexture', (newPropertiesArray.normals.length / 3), 1, TextureIndex.getNextTextureIndex());
-  uploadTexture(gl, programPathTracing, newPropertiesArray.colors, 'colorsTexture', (newPropertiesArray.colors.length / 3), 1, TextureIndex.getNextTextureIndex());
-  uploadTexture(gl, programPathTracing, newPropertiesArray.emissions, 'emissionsTexture', (newPropertiesArray.emissions.length / 3), 1, TextureIndex.getNextTextureIndex());
-  uploadTexture(gl, programPathTracing, newPropertiesArray.lightIndices, 'lightIndicesTexture', (newPropertiesArray.lightIndices.length / 3), 1, TextureIndex.getNextTextureIndex());
-  uploadTexture(gl, programPathTracing, texturizableTreeProperties.nodesBoundingBoxesMins, 'nodesBoundingBoxesMins', (texturizableTreeProperties.nodesBoundingBoxesMins.length / 3), 1, TextureIndex.getNextTextureIndex());
-  uploadTexture(gl, programPathTracing, texturizableTreeProperties.nodesBoundingBoxesMaxs, 'nodesBoundingBoxesMaxs', (texturizableTreeProperties.nodesBoundingBoxesMaxs.length / 3), 1, TextureIndex.getNextTextureIndex());
-  uploadTexture(gl, programPathTracing, texturizableTreeProperties.nodesMissLinkIndices, 'nodesMissLinkIndices', (texturizableTreeProperties.nodesMissLinkIndices.length / 3), 1, TextureIndex.getNextTextureIndex());
-  // uploadTexture(gl, programPathTracing, texturizableTreeProperties.nodesTrianglesIndices, 'nodesTrianglesIndices', (texturizableTreeProperties.nodesTrianglesIndices.length / 3), 1, TextureIndex.getNextTextureIndex());
-  uploadTexture(gl, programPathTracing, texturizableTreeProperties.nodesTrianglesCount, 'nodesTrianglesCount', (texturizableTreeProperties.nodesTrianglesCount.length / 3), 1, TextureIndex.getNextTextureIndex());
-  uploadTexture(gl, programPathTracing, texturizableTreeProperties.nodesInorderTrianglesIndices, 'nodesInorderTrianglesIndices', (texturizableTreeProperties.nodesInorderTrianglesIndices.length / 3), 1, TextureIndex.getNextTextureIndex());
-  uploadTexture(gl, programPathTracing, texturizableInorderTrianglesIndices, 'inorderTrianglesIndicesArray', (texturizableInorderTrianglesIndices.length / 3), 1, TextureIndex.getNextTextureIndex());
+  uploadTexture(gl, programPathTracing, newPropertiesArray.coordinates, 'coordinatesTexture', TextureIndex.getNextTextureIndex());
+  uploadTexture(gl, programPathTracing, newPropertiesArray.normals, 'normalsTexture', TextureIndex.getNextTextureIndex());
+  uploadTexture(gl, programPathTracing, newPropertiesArray.colors, 'colorsTexture', TextureIndex.getNextTextureIndex());
+  uploadTexture(gl, programPathTracing, newPropertiesArray.emissions, 'emissionsTexture', TextureIndex.getNextTextureIndex());
+  uploadTexture(gl, programPathTracing, newPropertiesArray.lightIndices, 'lightIndicesTexture', TextureIndex.getNextTextureIndex());
+  uploadTexture(gl, programPathTracing, texturizableTreeProperties.nodesBoundingBoxesMins, 'nodesBoundingBoxesMins', TextureIndex.getNextTextureIndex());
+  uploadTexture(gl, programPathTracing, texturizableTreeProperties.nodesBoundingBoxesMaxs, 'nodesBoundingBoxesMaxs', TextureIndex.getNextTextureIndex());
+  uploadTexture(gl, programPathTracing, texturizableTreeProperties.nodesMissLinkIndices, 'nodesMissLinkIndices', TextureIndex.getNextTextureIndex());
+  uploadTexture(gl, programPathTracing, texturizableTreeProperties.nodesTrianglesCount, 'nodesTrianglesCount', TextureIndex.getNextTextureIndex());
+  uploadTexture(gl, programPathTracing, texturizableTreeProperties.nodesInorderTrianglesIndices, 'nodesInorderTrianglesIndices', TextureIndex.getNextTextureIndex());
+  uploadTexture(gl, programPathTracing, texturizableInorderTrianglesIndices, 'inorderTrianglesIndicesArray', TextureIndex.getNextTextureIndex());
 
 
   // Set uniforms
@@ -298,6 +303,7 @@ async function render(now, frameNumber) {
   gl.uniform1i(gl.getUniformLocation(programPathTracing, 'frameNumber'), frameNumber);
   gl.uniform1i(gl.getUniformLocation(programPathTracing, 'totalFrames'), frames);
   gl.uniform1i(gl.getUniformLocation(programPathTracing, 'bvhNodeCount'), bvh.nodeCount);
+  gl.uniform1i(gl.getUniformLocation(programPathTracing, 'maxTextureSize'), MAX_TEX_WIDTH /* maxTextureSize */);
 
   gl.uniform1i(gl.getUniformLocation(programPathTracing, 'quadSize'), quadSize);
 

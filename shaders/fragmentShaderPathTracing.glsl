@@ -58,29 +58,57 @@ uniform int quadX;
 uniform int quadY;
 uniform int quadSize;
 uniform int bvhNodeCount;
+uniform int maxTextureSize;
 
 out vec4 outColor;
+
+int coordinatesTexRowCount;
+int coordinatesTexColCount;
+
+int trianglesTexRowCount;
+int trianglesTexColCount;
+
+int nodesTexRowCount;
+int nodesTexColCount;
+
+int lightsIndicesTexRowCount;
+int lightsIndicesTexColCount;
+
+void getRowAndColCount() {
+  coordinatesTexRowCount = (vertexCount + maxTextureSize - 1) / maxTextureSize;
+  coordinatesTexColCount = min(vertexCount, maxTextureSize);
+
+  trianglesTexRowCount = (triangleCount + maxTextureSize - 1) / maxTextureSize;
+  trianglesTexColCount = min(triangleCount, maxTextureSize);
+
+  nodesTexRowCount = (bvhNodeCount + maxTextureSize - 1) / maxTextureSize;
+  nodesTexColCount = min(bvhNodeCount, maxTextureSize);
+
+  lightsIndicesTexRowCount = (lightIndicesCount + maxTextureSize - 1) / maxTextureSize;
+  lightsIndicesTexColCount = min(lightIndicesCount, maxTextureSize);
+}
 
 Triangle getTriangleFromTextures(int index) {
 
   Triangle triangle;
 
-    // Calculate texture coordinates for each vertex of the triangle
-  float texCoordV0 = float(3 * index) / float(vertexCount - 1);
-  float texCoordV1 = float(3 * index + 1) / float(vertexCount - 1);
-  float texCoordV2 = float(3 * index + 2) / float(vertexCount - 1);
+  int indexV0 = 3 * index;
+  int indexV1 = 3 * index + 1;
+  int indexV2 = 3 * index + 2;
 
-  triangle.vertex0 = texture(coordinatesTexture, vec2(texCoordV0, 0.0f)).xyz;
-  triangle.vertex1 = texture(coordinatesTexture, vec2(texCoordV1, 0.0f)).xyz;
-  triangle.vertex2 = texture(coordinatesTexture, vec2(texCoordV2, 0.0f)).xyz;
+  ivec2 texCoordV0 = ivec2(indexV0 % coordinatesTexColCount, indexV0 / coordinatesTexColCount);
+  ivec2 texCoordV1 = ivec2(indexV1 % coordinatesTexColCount, indexV1 / coordinatesTexColCount);
+  ivec2 texCoordV2 = ivec2(indexV2 % coordinatesTexColCount, indexV2 / coordinatesTexColCount);
 
-  float triangleCoord = float(index) / float(triangleCount - 1);
+  triangle.vertex0 = texelFetch(coordinatesTexture, texCoordV0, 0).xyz;
+  triangle.vertex1 = texelFetch(coordinatesTexture, texCoordV1, 0).xyz;
+  triangle.vertex2 = texelFetch(coordinatesTexture, texCoordV2, 0).xyz;
 
-  triangle.normal = texture(normalsTexture, vec2(triangleCoord, 0.0f)).xyz;
+  ivec2 texCoord = ivec2(index % trianglesTexColCount, index / trianglesTexColCount);
 
-  triangle.color = texture(colorsTexture, vec2(triangleCoord, 0.0f)).xyz;
-
-  triangle.emission = texture(emissionsTexture, vec2(triangleCoord, 0.0f)).xyz;
+  triangle.normal = texelFetch(normalsTexture, texCoord, 0).xyz;
+  triangle.color = texelFetch(colorsTexture, texCoord, 0).xyz;
+  triangle.emission = texelFetch(emissionsTexture, texCoord, 0).xyz;
 
   return triangle;
 
@@ -88,28 +116,36 @@ Triangle getTriangleFromTextures(int index) {
 
 BVHNode getBVHNode(int index) {
   BVHNode node;
-  node.minBounds = texture(nodesBoundingBoxesMins, vec2(float(index) / float(bvhNodeCount - 1), 0.0f)).xyz;
-  node.maxBounds = texture(nodesBoundingBoxesMaxs, vec2(float(index) / float(bvhNodeCount - 1), 0.0f)).xyz;
-  // node.triangleIndex = int(texture(nodesTrianglesIndices, vec2(float(index) / float(bvhNodeCount - 1), 0.0f)).x);
-  node.triangleInorderIndex = int(texture(nodesInorderTrianglesIndices, vec2(float(index) / float(bvhNodeCount - 1), 0.0f)).x);
-  node.triangleCount = int(texture(nodesTrianglesCount, vec2(float(index) / float(bvhNodeCount - 1), 0.0f)).x);
-  node.missLink = int(texture(nodesMissLinkIndices, vec2(float(index) / float(bvhNodeCount - 1), 0.0f)).x);
+
+  ivec2 texCoord = ivec2(index % nodesTexColCount, index / nodesTexColCount);
+
+  node.minBounds = texelFetch(nodesBoundingBoxesMins, texCoord, 0).xyz;
+  node.maxBounds = texelFetch(nodesBoundingBoxesMaxs, texCoord, 0).xyz;
+  node.triangleInorderIndex = int(texelFetch(nodesInorderTrianglesIndices, texCoord, 0).x);
+  node.triangleCount = int(texelFetch(nodesTrianglesCount, texCoord, 0).x);
+  node.missLink = int(texelFetch(nodesMissLinkIndices, texCoord, 0).x);
+
   return node;
+}
+
+int getIndexFromInorderTrianglesIndicesArray(int index) {
+  ivec2 texCoord = ivec2(index % trianglesTexColCount, index / trianglesTexColCount);
+  return int(texelFetch(inorderTrianglesIndicesArray, texCoord, 0).x);
+}
+
+int getIndexFromLightIndicesTexture(int index) {
+  ivec2 texCoord = ivec2(index % lightsIndicesTexColCount, index / lightsIndicesTexColCount);
+  return int(texelFetch(lightIndicesTexture, texCoord, 0).x);
+}
+
+vec4 getPreviousColorFromPreviousFrameTexture(vec2 texCoord) {
+  return vec4(texture(previousFrameTexture, texCoord).rgb, 1.0f);
 }
 
 vec3 get_primary_ray_direction(float x, float y, vec3 camera_position, vec3 left_bottom, vec3 right, vec3 up) {
   vec3 image_plane_pos = left_bottom + x * right + y * up;
   return normalize(image_plane_pos - camera_position);
 }
-
-/* bool ray_triangle_intersection(out float out_t, vec3 origin, vec3 direction, Triangle triangle) {
-  vec3 v0 = triangle.vertex0;
-  mat3 matrix = mat3(-direction, triangle.vertex1 - v0, triangle.vertex2 - v0);
-  vec3 solution = inverse(matrix) * (origin - v0);
-  out_t = solution.x;
-  vec2 barys = solution.yz;
-  return out_t >= 0.001f && barys.x >= 0.0f && barys.y >= 0.0f && barys.x + barys.y <= 1.0f;
-} */
 
 bool ray_triangle_intersection(out float out_t, vec3 origin, vec3 direction, Triangle triangle) {
   vec3 edge1 = triangle.vertex1 - triangle.vertex0;
@@ -171,30 +207,40 @@ bool ray_mesh_intersection(out float out_t, out Triangle out_triangle, vec3 orig
 bool ray_bvh_intersection_hit_miss(out float out_t, out Triangle out_triangle, vec3 origin, vec3 direction) {
   out_t = 1.0e38f;
   int currentIndex = 0; // Start with the root node
-  bool triangleHit = false;
 
   while(currentIndex != -1 && currentIndex < bvhNodeCount) {
     BVHNode currentNode = getBVHNode(currentIndex);
+    // outColor = vec4(1.0f, 1.0f, 0.0f, 1.0f);
+    // outColor = vec4(0.0f, float(currentNode.missLink == -1), 0.0f, 1.0f);
 
         // Check if the ray intersects the bounding box
     if(ray_box_intersection(origin, direction, currentNode.minBounds, currentNode.maxBounds)) {
+
             // If it's a leaf node, check intersection with the stored triangle(s)
+    // outColor = vec4(1.0f, 1.0f, 0.0f, 1.0f);
+
+      // if(currentNode.triangleCount > 0)
+
       if(currentNode.triangleInorderIndex != -2) {
+        // outColor = vec4(0.0f, 1.0f, 0.0f, 1.0f);
+
         for(int i = currentNode.triangleInorderIndex; i < currentNode.triangleInorderIndex + currentNode.triangleCount; i++) {
-          int triangleIndex = int(texture(inorderTrianglesIndicesArray, vec2(float(i) / float(triangleCount - 1), 0.0f)).x);
+          int triangleIndex = getIndexFromInorderTrianglesIndicesArray(i);
           Triangle triangle = getTriangleFromTextures(triangleIndex);
           float t;
-          triangleHit = ray_triangle_intersection(t, origin, direction, triangle);
-          if(triangleHit && t < out_t) {
-            outColor = vec4(0.0f, 1.0f, 0.0f, 1.0f);
+          if(ray_triangle_intersection(t, origin, direction, triangle) && t < out_t) {
+            // outColor = vec4(0.0f, 1.0f, 0.0f, 1.0f);
             out_t = t;
             out_triangle = triangle;
           }
         }
       }
       currentIndex++;
+
     } else {
             // If the ray doesn't intersect, follow the miss link
+      // outColor = vec4(1.0f, 0.0f, 0.0f, 1.0f);
+
       currentIndex = currentNode.missLink;
     }
   }
@@ -202,7 +248,7 @@ bool ray_bvh_intersection_hit_miss(out float out_t, out Triangle out_triangle, v
   return out_t < 1.0e38f;
 }
 
-bool ray_bvh_intersection(out float out_t, out Triangle out_triangle, vec3 origin, vec3 direction) {
+/* bool ray_bvh_intersection(out float out_t, out Triangle out_triangle, vec3 origin, vec3 direction) {
   out_t = 1.0e38f; // Initialize with a large value
   int stack[256];  // Stack to keep track of node indices to visit
   int stackPointer = 0;
@@ -226,7 +272,7 @@ bool ray_bvh_intersection(out float out_t, out Triangle out_triangle, vec3 origi
         // It's a leaf node with triangles, check intersection with the stored triangle
         for(int i = currentNode.triangleInorderIndex; i < currentNode.triangleInorderIndex + currentNode.triangleCount; i++) {
 
-          int triangleIndex = int(texture(inorderTrianglesIndicesArray, vec2(float(i) / float(triangleCount - 1), 0.0f)).x);
+          int triangleIndex = getIndexFromInorderTrianglesIndicesArray(i);
           Triangle triangle = getTriangleFromTextures(triangleIndex);
           float t;
           if(ray_triangle_intersection(t, origin, direction, triangle) && t < out_t) {
@@ -251,7 +297,7 @@ bool ray_bvh_intersection(out float out_t, out Triangle out_triangle, vec3 origi
   }
 
   return out_t < 1.0e38f;
-}
+} */
 
 vec2 get_random_numbers(inout uvec2 seed) {
     // This is PCG2D: https://jcgt.org/published/0009/03/02/
@@ -327,7 +373,8 @@ void sample_random_light(inout uvec2 seed, inout Triangle lightTriangle, inout v
     attempts++;
 
     randomIndex = int(float(lightIndicesCount) * get_random_numbers(seed).x) % (lightIndicesCount);
-    lightIndex = int(texture(lightIndicesTexture, vec2(float(randomIndex) / float(lightIndicesCount - 1), 0.0f)).x);
+    lightIndex = getIndexFromLightIndicesTexture(randomIndex);
+    // outColor = vec4(float(lightIndex / lightIndicesCount), float(lightIndex / lightIndicesCount), float(lightIndex / lightIndicesCount), 1.0f);
 
     lightTriangle = getTriangleFromTextures(lightIndex);
 
@@ -361,6 +408,7 @@ vec3 get_ray_radiance(vec3 origin, vec3 direction, inout uvec2 seed) {
   for(int i = 0; i < maxPathLength; i++) {
     float t;
     Triangle triangle;
+
     // if(ray_bvh_intersection(t, triangle, origin, direction)) {
     if(ray_bvh_intersection_hit_miss(t, triangle, origin, direction)) {
 
@@ -443,6 +491,7 @@ vec3 get_ray_radiance(vec3 origin, vec3 direction, inout uvec2 seed) {
 }
 
 void main() {
+  getRowAndColCount();
   //gl_FragColor = vec4(color, 1.0);
 
     // Define the camera position and the view plane
@@ -480,7 +529,7 @@ void main() {
   currentColor.rgb = clamp(currentColor.rgb, 0.0f, 1.0f);
 
   // Get the color from the previous frame
-  vec4 previousColor = vec4(texture(previousFrameTexture, tex_coord).rgb, 1.0f);
+  vec4 previousColor = getPreviousColorFromPreviousFrameTexture(tex_coord);
   previousColor.rgb = clamp(previousColor.rgb, 0.0f, 1.0f);
 
   // Blend the current color with the previous color
@@ -501,5 +550,6 @@ void main() {
 
   // vec3 gammaCorrectedColor = pow(blendedColor.rgb, vec3(1.0f / 2.2f));
   outColor = vec4(blendedColor.rgb, 1.0f);
+  // outColor = getBVHNode(7).triangleInorderIndex == -2 ? vec4(0.0f,  1.0f, 0.0f, 1.0f) : vec4(1.0f,  0.0f, 0.0f, 1.0f);
 
 }

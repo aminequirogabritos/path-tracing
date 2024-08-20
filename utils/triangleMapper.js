@@ -66,7 +66,7 @@ export function mapTrianglesArrayToTexturizedArray(trianglesArray) {
     });
 
 
-    console.log("🚀 ~ mapTrianglesArrayToTexturizedArray ~ coordinates:", coordinates)
+    // console.log("🚀 ~ mapTrianglesArrayToTexturizedArray ~ coordinates:", coordinates)
 
 
     return {
