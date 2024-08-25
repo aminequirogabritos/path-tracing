@@ -152,7 +152,8 @@ bool ray_triangle_intersection(out float out_t, vec3 origin, vec3 direction, Tri
   vec3 edge2 = triangle.vertex2 - triangle.vertex0;
   vec3 h = cross(direction, edge2);
   float a = dot(edge1, h);
-  if(a > -0.0001f && a < 0.0001f)
+  float epsilon = 1e-6f;
+  if(a > epsilon && a < epsilon)
     return false;    // This ray is parallel to this triangle.
   float f = 1.0f / a;
   vec3 s = origin - triangle.vertex0;
@@ -165,7 +166,7 @@ bool ray_triangle_intersection(out float out_t, vec3 origin, vec3 direction, Tri
     return false;
     // At this stage we can compute t to find out where the intersection point is on the line.
   float t = f * dot(edge2, q);
-  if(t > 0.0001f) { // ray intersection
+  if(t > epsilon) { // ray intersection
     out_t = t;
     return true;
   } else // This means that there is a line intersection but not a ray intersection.
@@ -198,7 +199,6 @@ bool ray_mesh_intersection(out float out_t, out Triangle out_triangle, vec3 orig
     if(ray_triangle_intersection(t, origin, direction, triangle) && t < out_t) {
       out_t = t;
       out_triangle = triangle;
-      // return out_t < 1.0e38f; // NO PUEDO HACER ESTO!!!!
     }
   }
   return out_t < 1.0e38f;
@@ -210,26 +210,17 @@ bool ray_bvh_intersection_hit_miss(out float out_t, out Triangle out_triangle, v
 
   while(currentIndex != -1 && currentIndex < bvhNodeCount) {
     BVHNode currentNode = getBVHNode(currentIndex);
-    // outColor = vec4(1.0f, 1.0f, 0.0f, 1.0f);
-    // outColor = vec4(0.0f, float(currentNode.missLink == -1), 0.0f, 1.0f);
 
-        // Check if the ray intersects the bounding box
+    // Check if the ray intersects the bounding box
     if(ray_box_intersection(origin, direction, currentNode.minBounds, currentNode.maxBounds)) {
 
-            // If it's a leaf node, check intersection with the stored triangle(s)
-    // outColor = vec4(1.0f, 1.0f, 0.0f, 1.0f);
-
-      // if(currentNode.triangleCount > 0)
-
       if(currentNode.triangleInorderIndex != -2) {
-        // outColor = vec4(0.0f, 1.0f, 0.0f, 1.0f);
 
         for(int i = currentNode.triangleInorderIndex; i < currentNode.triangleInorderIndex + currentNode.triangleCount; i++) {
           int triangleIndex = getIndexFromInorderTrianglesIndicesArray(i);
           Triangle triangle = getTriangleFromTextures(triangleIndex);
           float t;
           if(ray_triangle_intersection(t, origin, direction, triangle) && t < out_t) {
-            // outColor = vec4(0.0f, 1.0f, 0.0f, 1.0f);
             out_t = t;
             out_triangle = triangle;
           }
@@ -238,66 +229,13 @@ bool ray_bvh_intersection_hit_miss(out float out_t, out Triangle out_triangle, v
       currentIndex++;
 
     } else {
-            // If the ray doesn't intersect, follow the miss link
-      // outColor = vec4(1.0f, 0.0f, 0.0f, 1.0f);
-
+      // If the ray doesn't intersect, follow the miss link
       currentIndex = currentNode.missLink;
     }
   }
 
   return out_t < 1.0e38f;
 }
-
-/* bool ray_bvh_intersection(out float out_t, out Triangle out_triangle, vec3 origin, vec3 direction) {
-  out_t = 1.0e38f; // Initialize with a large value
-  int stack[256];  // Stack to keep track of node indices to visit
-  int stackPointer = 0;
-  stack[stackPointer++] = 0;  // Start with the root node
-
-  while(stackPointer > 0) {
-    int currentIndex = stack[--stackPointer]; // Pop from stack
-
-    // Sample min and max bounds for the current node
-    BVHNode currentNode = getBVHNode(currentIndex);
-
-    if(currentNode.triangleInorderIndex == -1) {
-      // it's an empty leaf node - skip
-      continue;
-    }
-
-    // Check if ray intersects bounding box
-    if(ray_box_intersection(origin, direction, currentNode.minBounds, currentNode.maxBounds)) {
-      // Check if the current node is a leaf
-      if(currentNode.triangleInorderIndex != -2) {
-        // It's a leaf node with triangles, check intersection with the stored triangle
-        for(int i = currentNode.triangleInorderIndex; i < currentNode.triangleInorderIndex + currentNode.triangleCount; i++) {
-
-          int triangleIndex = getIndexFromInorderTrianglesIndicesArray(i);
-          Triangle triangle = getTriangleFromTextures(triangleIndex);
-          float t;
-          if(ray_triangle_intersection(t, origin, direction, triangle) && t < out_t) {
-            out_t = t;
-            out_triangle = triangle;
-          }
-        }
-      } else if(currentNode.triangleInorderIndex == -2) {
-        // Push right child to stack first (since we'll process left child next)
-        int rightChildIndex = 2 * currentIndex + 2;
-        if(rightChildIndex < bvhNodeCount) {
-          stack[stackPointer++] = rightChildIndex;
-        }
-
-        // Push left child to stack
-        int leftChildIndex = 2 * currentIndex + 1;
-        if(leftChildIndex < bvhNodeCount) {
-          stack[stackPointer++] = leftChildIndex;
-        }
-      }
-    }
-  }
-
-  return out_t < 1.0e38f;
-} */
 
 vec2 get_random_numbers(inout uvec2 seed) {
     // This is PCG2D: https://jcgt.org/published/0009/03/02/

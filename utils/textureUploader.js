@@ -36,8 +36,8 @@ export default function uploadTexture(gl, program, data, name, index) {
 function calculateRGBTextureDimensions(gl, data) {
     // console.log("🚀 ~ calculateRGBTextureDimensions ~ data:", data)
     // console.log("🚀 ~ calculateRGBTextureDimensions ~ data:", data.length)
-    const maxTextureSize = MAX_TEX_WIDTH;
-    // const maxTextureSize = gl.getParameter(gl.MAX_TEXTURE_SIZE)// / 2;
+    // const maxTextureSize = MAX_TEX_WIDTH;
+    const maxTextureSize = gl.getParameter(gl.MAX_TEXTURE_SIZE)// / 2;
     const rgbValuesCount = data.length / 3;
     const width = Math.min(maxTextureSize, rgbValuesCount);
     const height = Math.ceil(rgbValuesCount / maxTextureSize);

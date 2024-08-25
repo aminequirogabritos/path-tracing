@@ -1,16 +1,16 @@
-const PI_NUMBER = 3.14159265359;
-const SLEEP_TIME = 200;
-const SLEEP_TIME_BETWEEN_QUADS = 200;
+const PI_NUMBER = 3.300;
+const SLEEP_TIME = 300;
+const SLEEP_TIME_BETWEEN_QUADS = 300;
 const MAX_TEX_WIDTH = 4096;
 
 
-const frames = 5;
+const frames = 10;
 const maxPathLength = 5;
 const sampleCount = 5;
 const canvasSize = 256;
 const quadSize = 32;
 const urlSave = "image/png/v1";
-const fileNameSuffix = `v13_cornell6_BVH_${frames}frames_${maxPathLength}bounces_${sampleCount}samples_${512}px`
+const fileNameSuffix = `cornell_YES_FXAA_BVH_${frames}frames_${maxPathLength}bounces_${sampleCount}samples_${canvasSize}px`
 
 const saveFrame = false;
 
@@ -79,8 +79,11 @@ try {
     // '/resources/my_cornell_2/gltf/my_cornell_2.gltf'
     // '/resources/bedroom2/gltf/v3/bedroom2.gltf'
     // '/resources/bedroom2/gltf/v5/bedroom2_v5.gltf'
-    '/resources/pixar_room/v1/pixar-room.gltf'
-    // '/resources/pixar_room/v3/pixar-room-3.gltf'
+    // '/resources/pixar_room/v1/pixar-room.gltf'
+    // '/resources/pixar_room/v7/pixar-room-7.gltf'
+    // '/resources/pixar_room/v8/pixar-room-8.gltf'
+    '/resources/pixar_room/v9/pixar-room-9.gltf'
+    // '/resources/pixar_room/v6/pixar-room-6.gltf'
     // '/resources/my_cornell_6/gltf/my_cornell_6.gltf'
     // '/resources/bedroom1/customGLTF/bedroom1.gltf'
     // '/resources/bedroom2/gltf/bedroom2.gltf'
@@ -157,17 +160,25 @@ let cameraInstance = new Camera(50, width / height, 0.1, 1000);
 //pixar room
 // cameraInstance.translate('x', 2);
 // cameraInstance.translate('z', 4);
-// cameraInstance.translate('y', 2);
-// cameraInstance.lookAt(0, -2, -4);
+// cameraInstance.translate('y', 1);
+// cameraInstance.lookAt(0, -3, -4);
 
 // teapot
-cameraInstance.translate('x', 1);
-// cameraInstance.translate('z', 4);
-cameraInstance.translate('y', -1);
-cameraInstance.lookAt(2, -10, -12);
+//angle 1
+cameraInstance.translate('x', 1.2);
+cameraInstance.translate('y', -2);
+cameraInstance.translate('z', -2.4);
+cameraInstance.lookAt(1.1909498999602326, -2.7629803217301294, -3.220145704258792);
+
+// angle 2
+// cameraInstance.translate('x', 1.2);
+// cameraInstance.translate('y', -2.5629);
+// cameraInstance.translate('z', -2.4);
+// cameraInstance.lookAt(1.1909498999602326, -2.7629803217301294, -3.220145704258792);
 
 
 
+// cameraInstance.translate('z', 8);
 // cameraInstance.lookAt(0, 0, 0);
 
 
@@ -303,7 +314,7 @@ async function render(now, frameNumber) {
   gl.uniform1i(gl.getUniformLocation(programPathTracing, 'frameNumber'), frameNumber);
   gl.uniform1i(gl.getUniformLocation(programPathTracing, 'totalFrames'), frames);
   gl.uniform1i(gl.getUniformLocation(programPathTracing, 'bvhNodeCount'), bvh.nodeCount);
-  gl.uniform1i(gl.getUniformLocation(programPathTracing, 'maxTextureSize'), MAX_TEX_WIDTH /* maxTextureSize */);
+  gl.uniform1i(gl.getUniformLocation(programPathTracing, 'maxTextureSize'), maxTextureSize);
 
   gl.uniform1i(gl.getUniformLocation(programPathTracing, 'quadSize'), quadSize);
 
@@ -366,6 +377,9 @@ async function render(now, frameNumber) {
   gl.activeTexture(gl.TEXTURE0 + BufferManager.getTextureIndex(frameNumber));
   gl.bindTexture(gl.TEXTURE_2D, simpleTexture);
   gl.uniform1i(simpleTextureLocation, BufferManager.getTextureIndex(frameNumber));
+
+  gl.uniform2f(gl.getUniformLocation(programOutput, 'windowSize'), width, height);
+
 
   gl.viewport(0, 0, width, height);
   gl.clear(gl.COLOR_BUFFER_BIT);
@@ -584,10 +598,15 @@ async function loadModel(url) {
 
           // Check if the child is a Mesh and has a material
           if (child instanceof THREE.Mesh) {
-            // console.log("-------------------------------------------------------------------------------")
-            // console.log("🌸 ~ child:", child)
+            console.log("-------------------------------------------------------------------------------")
+            console.log("🌸 ~ child:", child)
+            // console.log("🌸 ~ child:", child.material)
 
-            // console.log(child.name);
+            // getCenterPoint(child);
+            // console.log("🚀 ~ getCenterPoint(child):", getCenterPoint(child))
+
+
+            console.log(child.name);
             const geometry = child.geometry;
 
             // Ensure the geometry is not indexed, for simplicity
@@ -659,16 +678,19 @@ async function loadModel(url) {
               // get triangle's color
               const color = child.material.color;
               mappedTrianglesArray[i].color = color;
-              /* if (color) {
-                colors.push(...[color.r, color.g, color.b]); //TODO: opacidad?
-              } */
 
 
-              const emission = child.material.emissive;
+              const emission = new THREE.Color(child.material.emissive.r * child.material.emissiveIntensity, child.material.emissive.g * child.material.emissiveIntensity, child.material.emissive.b * child.material.emissiveIntensity)
               mappedTrianglesArray[i].emission = emission;
               // console.log("🚀 ~ emission:", emission)
               // emissions.push(...[emission.r * 50, emission.g * 50, emission.b * 50]);
               // emissions.push(...[emission.r, emission.g, emission.b]);
+
+              mappedTrianglesArray[i].ior = child.material.ior;
+              mappedTrianglesArray[i].metallic = child.material.metalness;
+              mappedTrianglesArray[i].roughness = child.material.roughness;
+              mappedTrianglesArray[i].specular = child.material.specularIntensity;
+              mappedTrianglesArray[i].transmission = child.material._transmission;
 
 
             }
@@ -737,4 +759,19 @@ function createFramebuffer(gl, width, height) {
   gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0);
 
   return { framebuffer, texture };
+}
+
+
+function getCenterPoint(mesh) {
+  var middle = new THREE.Vector3();
+  var geometry = mesh.geometry;
+
+  geometry.computeBoundingBox();
+
+  middle.x = (geometry.boundingBox.max.x + geometry.boundingBox.min.x) / 2;
+  middle.y = (geometry.boundingBox.max.y + geometry.boundingBox.min.y) / 2;
+  middle.z = (geometry.boundingBox.max.z + geometry.boundingBox.min.z) / 2;
+
+  mesh.localToWorld(middle);
+  return middle;
 }
