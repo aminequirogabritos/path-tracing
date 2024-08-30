@@ -5,7 +5,6 @@
 	},
 	"extensionsUsed":[
 		"KHR_materials_specular",
-		"KHR_materials_ior",
 		"KHR_materials_emissive_strength",
 		"KHR_materials_transmission"
 	],
@@ -26,7 +25,9 @@
 				9,
 				10,
 				11,
-				12
+				12,
+				13,
+				14
 			]
 		}
 	],
@@ -75,7 +76,7 @@
 				4
 			],
 			"translation":[
-				6,
+				4.055124759674072,
 				4,
 				0
 			]
@@ -261,6 +262,34 @@
 				1,
 				-3.239291191101074
 			]
+		},
+		{
+			"mesh":13,
+			"name":"Cube.001",
+			"scale":[
+				0.30000001192092896,
+				1,
+				0.30000001192092896
+			],
+			"translation":[
+				-0.474264919757843,
+				1,
+				-2.34287166595459
+			]
+		},
+		{
+			"mesh":14,
+			"name":"Cube.002",
+			"scale":[
+				0.30000001192092896,
+				1,
+				0.30000001192092896
+			],
+			"translation":[
+				3.121652126312256,
+				1,
+				-2.34287166595459
+			]
 		}
 	],
 	"materials":[
@@ -269,9 +298,6 @@
 			"extensions":{
 				"KHR_materials_specular":{
 					"specularFactor":0
-				},
-				"KHR_materials_ior":{
-					"ior":0
 				}
 			},
 			"name":"Material.003",
@@ -325,7 +351,11 @@
 			"doubleSided":true,
 			"extensions":{
 				"KHR_materials_specular":{
-					"specularFactor":0
+					"specularColorFactor":[
+						2.0,
+						2.0,
+						2.0
+					]
 				}
 			},
 			"name":"TorusMaterial",
@@ -336,8 +366,7 @@
 					0.012643365189433098,
 					1
 				],
-				"metallicFactor":0,
-				"roughnessFactor":0.5
+				"roughnessFactor":0
 			}
 		},
 		{
@@ -399,7 +428,8 @@
 					0.0021528671495616436,
 					1
 				],
-				"metallicFactor":0
+				"metallicFactor":0.5,
+				"roughnessFactor":0
 			}
 		},
 		{
@@ -417,11 +447,20 @@
 					0.5586147308349609,
 					1
 				],
-				"metallicFactor":0
+				"metallicFactor":0.5,
+				"roughnessFactor":0
 			}
 		},
 		{
 			"doubleSided":true,
+			"extensions":{
+				"KHR_materials_transmission":{
+					"transmissionFactor":0.5
+				},
+				"KHR_materials_specular":{
+					"specularFactor":0
+				}
+			},
 			"name":"Material.005",
 			"pbrMetallicRoughness":{
 				"baseColorFactor":[
@@ -430,8 +469,7 @@
 					0.3139890134334564,
 					1
 				],
-				"metallicFactor":0,
-				"roughnessFactor":0.5
+				"metallicFactor":0
 			}
 		},
 		{
@@ -455,18 +493,12 @@
 		{
 			"doubleSided":true,
 			"extensions":{
-				"KHR_materials_transmission":{
-					"transmissionFactor":0.41999998688697815
-				},
 				"KHR_materials_specular":{
 					"specularColorFactor":[
-						1.2000000476837158,
-						1.2000000476837158,
-						1.2000000476837158
+						1.600000023841858,
+						1.600000023841858,
+						1.600000023841858
 					]
-				},
-				"KHR_materials_ior":{
-					"ior":0.6000000238418579
 				}
 			},
 			"name":"TeapotMaterial",
@@ -477,8 +509,25 @@
 					0,
 					1
 				],
-				"metallicFactor":0.20000000298023224,
-				"roughnessFactor":0.20000000298023224
+				"roughnessFactor":0
+			}
+		},
+		{
+			"doubleSided":true,
+			"extensions":{
+				"KHR_materials_specular":{
+					"specularFactor":0
+				}
+			},
+			"name":"WallsMaterial.001",
+			"pbrMetallicRoughness":{
+				"baseColorFactor":[
+					0.6450698375701904,
+					0.5695692896842957,
+					0.4806259870529175,
+					1
+				],
+				"metallicFactor":0
 			}
 		}
 	],
@@ -506,7 +555,8 @@
 						"NORMAL":5,
 						"TANGENT":6
 					},
-					"indices":3
+					"indices":3,
+					"material":1
 				}
 			]
 		},
@@ -533,7 +583,8 @@
 						"NORMAL":11,
 						"TANGENT":12
 					},
-					"indices":3
+					"indices":3,
+					"material":1
 				}
 			]
 		},
@@ -658,6 +709,34 @@
 					},
 					"indices":46,
 					"material":10
+				}
+			]
+		},
+		{
+			"name":"Cube",
+			"primitives":[
+				{
+					"attributes":{
+						"POSITION":47,
+						"NORMAL":48,
+						"TANGENT":49
+					},
+					"indices":16,
+					"material":1
+				}
+			]
+		},
+		{
+			"name":"Cube.002",
+			"primitives":[
+				{
+					"attributes":{
+						"POSITION":50,
+						"NORMAL":51,
+						"TANGENT":52
+					},
+					"indices":16,
+					"material":11
 				}
 			]
 		}
@@ -1074,6 +1153,62 @@
 			"componentType":5123,
 			"count":47112,
 			"type":"SCALAR"
+		},
+		{
+			"bufferView":47,
+			"componentType":5126,
+			"count":24,
+			"max":[
+				1,
+				1,
+				1
+			],
+			"min":[
+				-1,
+				-1,
+				-1
+			],
+			"type":"VEC3"
+		},
+		{
+			"bufferView":48,
+			"componentType":5126,
+			"count":24,
+			"type":"VEC3"
+		},
+		{
+			"bufferView":49,
+			"componentType":5126,
+			"count":24,
+			"type":"VEC4"
+		},
+		{
+			"bufferView":50,
+			"componentType":5126,
+			"count":24,
+			"max":[
+				1,
+				1,
+				1
+			],
+			"min":[
+				-1,
+				-1,
+				-1
+			],
+			"type":"VEC3"
+		},
+		{
+			"bufferView":51,
+			"componentType":5126,
+			"count":24,
+			"type":"VEC3"
+		},
+		{
+			"bufferView":52,
+			"componentType":5126,
+			"count":24,
+			"type":"VEC4"
 		}
 	],
 	"bufferViews":[
@@ -1358,11 +1493,47 @@
 			"byteLength":94224,
 			"byteOffset":1912568,
 			"target":34963
+		},
+		{
+			"buffer":0,
+			"byteLength":288,
+			"byteOffset":2006792,
+			"target":34962
+		},
+		{
+			"buffer":0,
+			"byteLength":288,
+			"byteOffset":2007080,
+			"target":34962
+		},
+		{
+			"buffer":0,
+			"byteLength":384,
+			"byteOffset":2007368,
+			"target":34962
+		},
+		{
+			"buffer":0,
+			"byteLength":288,
+			"byteOffset":2007752,
+			"target":34962
+		},
+		{
+			"buffer":0,
+			"byteLength":288,
+			"byteOffset":2008040,
+			"target":34962
+		},
+		{
+			"buffer":0,
+			"byteLength":384,
+			"byteOffset":2008328,
+			"target":34962
 		}
 	],
 	"buffers":[
 		{
-			"byteLength":2006792,
+			"byteLength":2008712,
 			"uri":"pixar-room-9.bin"
 		}
 	]

@@ -1,13 +1,13 @@
 const PI_NUMBER = 3.300;
 const SLEEP_TIME = 300;
-const SLEEP_TIME_BETWEEN_QUADS = 300;
+const SLEEP_TIME_BETWEEN_QUADS = 50;
 const MAX_TEX_WIDTH = 4096;
 
 
-const frames = 10;
+const frames = 30;
 const maxPathLength = 5;
 const sampleCount = 5;
-const canvasSize = 256;
+const canvasSize = 512;
 const quadSize = 32;
 const urlSave = "image/png/v1";
 const fileNameSuffix = `cornell_YES_FXAA_BVH_${frames}frames_${maxPathLength}bounces_${sampleCount}samples_${canvasSize}px`
@@ -77,12 +77,13 @@ try {
   console.log("b4 loading");
   model = await loadModel(
     // '/resources/my_cornell_2/gltf/my_cornell_2.gltf'
+    '/resources/my_cornell_7/gltf/my_cornell_7.gltf'
     // '/resources/bedroom2/gltf/v3/bedroom2.gltf'
     // '/resources/bedroom2/gltf/v5/bedroom2_v5.gltf'
     // '/resources/pixar_room/v1/pixar-room.gltf'
     // '/resources/pixar_room/v7/pixar-room-7.gltf'
     // '/resources/pixar_room/v8/pixar-room-8.gltf'
-    '/resources/pixar_room/v9/pixar-room-9.gltf'
+    // '/resources/pixar_room/v9/pixar-room-9.gltf'
     // '/resources/pixar_room/v6/pixar-room-6.gltf'
     // '/resources/my_cornell_6/gltf/my_cornell_6.gltf'
     // '/resources/bedroom1/customGLTF/bedroom1.gltf'
@@ -130,10 +131,6 @@ if (!gl) {
 }
 
 const maxTextureSize = gl.getParameter(gl.MAX_TEXTURE_SIZE);
-console.log("🚀 ~ maxTextureSize:", maxTextureSize)
-console.log('Max Fragment Shader Texture Units:', gl.getParameter(gl.MAX_TEXTURE_IMAGE_UNITS));
-console.log('Max Vertex Shader Texture Units:', gl.getParameter(gl.MAX_VERTEX_TEXTURE_IMAGE_UNITS));
-console.log('Max Combined Texture Units:', gl.getParameter(gl.MAX_COMBINED_TEXTURE_IMAGE_UNITS));
 
 canvas.height = canvasSize;
 canvas.width = canvasSize;
@@ -153,28 +150,34 @@ let cameraInstance = new Camera(50, width / height, 0.1, 1000);
 
 
 //cornell room
-// cameraInstance.translate('x', 12.4)
+cameraInstance.translate('x', 12.4)
+// cameraInstance.translate('z', 6)
 // cameraInstance.rotate('y', PI_NUMBER / 2);
+cameraInstance.lookAt(0, 0, 0);
 
 
 //pixar room
-// cameraInstance.translate('x', 2);
-// cameraInstance.translate('z', 4);
-// cameraInstance.translate('y', 1);
-// cameraInstance.lookAt(0, -3, -4);
+/* cameraInstance.translate('x', 2*0.8);
+cameraInstance.translate('z', 4*0.8);
+cameraInstance.translate('y', 1*0.8);
+cameraInstance.lookAt(0, -3, -4); */
+/* cameraInstance.translate('x', 2);
+cameraInstance.translate('z', 4);
+cameraInstance.translate('y', 1);
+cameraInstance.lookAt(0, -3, -4); */
 
 // teapot
 //angle 1
-cameraInstance.translate('x', 1.2);
+/* cameraInstance.translate('x', 1.2);
 cameraInstance.translate('y', -2);
 cameraInstance.translate('z', -2.4);
-cameraInstance.lookAt(1.1909498999602326, -2.7629803217301294, -3.220145704258792);
+cameraInstance.lookAt(1.1909498999602326, -2.7629803217301294, -3.220145704258792); */
 
 // angle 2
-// cameraInstance.translate('x', 1.2);
-// cameraInstance.translate('y', -2.5629);
-// cameraInstance.translate('z', -2.4);
-// cameraInstance.lookAt(1.1909498999602326, -2.7629803217301294, -3.220145704258792);
+/* cameraInstance.translate('x', 1.2);
+cameraInstance.translate('y', -2.5629);
+cameraInstance.translate('z', -2.4);
+cameraInstance.lookAt(1.1909498999602326, -2.7629803217301294, -3.220145704258792); */
 
 
 
@@ -191,6 +194,7 @@ let camera = cameraInstance.getCamera();
 let bvh = new BVH(trianglesArray);
 console.log("🚀 ~ bvh:", bvh)
 newPropertiesArray = mapTrianglesArrayToTexturizedArray(trianglesArray);
+console.log("🚀 ~ newPropertiesArray:", newPropertiesArray)
 
 let texturizableTreeProperties = bvh.convertToTexturizableArrays();
 // console.log("🚀 ~ texturizableTreeProperties:", texturizableTreeProperties)
@@ -285,6 +289,11 @@ async function render(now, frameNumber) {
   uploadTexture(gl, programPathTracing, newPropertiesArray.colors, 'colorsTexture', TextureIndex.getNextTextureIndex());
   uploadTexture(gl, programPathTracing, newPropertiesArray.emissions, 'emissionsTexture', TextureIndex.getNextTextureIndex());
   uploadTexture(gl, programPathTracing, newPropertiesArray.lightIndices, 'lightIndicesTexture', TextureIndex.getNextTextureIndex());
+  uploadTexture(gl, programPathTracing, newPropertiesArray.iors, 'iorsTexture', TextureIndex.getNextTextureIndex());
+  uploadTexture(gl, programPathTracing, newPropertiesArray.metallics, 'metallicsTexture', TextureIndex.getNextTextureIndex());
+  uploadTexture(gl, programPathTracing, newPropertiesArray.roughnesses, 'roughnessesTexture', TextureIndex.getNextTextureIndex());
+  uploadTexture(gl, programPathTracing, newPropertiesArray.speculars, 'specularsTexture', TextureIndex.getNextTextureIndex());
+  uploadTexture(gl, programPathTracing, newPropertiesArray.transmissions, 'transmissionsTexture', TextureIndex.getNextTextureIndex());
   uploadTexture(gl, programPathTracing, texturizableTreeProperties.nodesBoundingBoxesMins, 'nodesBoundingBoxesMins', TextureIndex.getNextTextureIndex());
   uploadTexture(gl, programPathTracing, texturizableTreeProperties.nodesBoundingBoxesMaxs, 'nodesBoundingBoxesMaxs', TextureIndex.getNextTextureIndex());
   uploadTexture(gl, programPathTracing, texturizableTreeProperties.nodesMissLinkIndices, 'nodesMissLinkIndices', TextureIndex.getNextTextureIndex());
@@ -686,11 +695,11 @@ async function loadModel(url) {
               // emissions.push(...[emission.r * 50, emission.g * 50, emission.b * 50]);
               // emissions.push(...[emission.r, emission.g, emission.b]);
 
-              mappedTrianglesArray[i].ior = child.material.ior;
-              mappedTrianglesArray[i].metallic = child.material.metalness;
-              mappedTrianglesArray[i].roughness = child.material.roughness;
-              mappedTrianglesArray[i].specular = child.material.specularIntensity;
-              mappedTrianglesArray[i].transmission = child.material._transmission;
+              mappedTrianglesArray[i].ior = child.material.ior || 1.5;
+              mappedTrianglesArray[i].metallic = /* 0.0;// */child.material.metalness || 0.0;
+              mappedTrianglesArray[i].roughness = /* 1;// */(child.material.roughness < 0.03 ? 0.03 : child.material.roughness);
+              mappedTrianglesArray[i].specular = /* 0;// */child.material.specularIntensity || 0.0;
+              mappedTrianglesArray[i].transmission = /* 0;// */child.material._transmission || 0.0;
 
 
             }
