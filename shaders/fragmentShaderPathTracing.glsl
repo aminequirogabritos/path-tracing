@@ -320,7 +320,7 @@ void sample_random_light(inout uvec2 seed, inout Triangle lightTriangle, inout v
 
   if(visible) {
     lightArea = 0.5f * length(cross(lightTriangle.vertex1 - lightTriangle.vertex0, lightTriangle.vertex2 - lightTriangle.vertex0));
-    // lightPdf = (1.0f / (float(lightIndicesCount) * lightArea));
+    lightPdf = (1.0f / (float(lightIndicesCount) * lightArea));
     float distanceToShadowRayLightIntersection = abs(length(lightPoint - origin));
 
     lightPdf = (distanceToShadowRayLightIntersection * distanceToShadowRayLightIntersection) / (lightArea * max(dot(lightTriangle.normal, -directionToLight), 0.0f));
@@ -411,30 +411,55 @@ vec3 sample_hemisphere_uniform(vec2 random_numbers, vec3 normal) {
   return normalize(sample_dir);
 }
 
+float calculate_pdf(vec3 incomingDir, vec3 selectedDir, vec3 normal, Triangle triangle, float rand) {
+  float pdf = 0.0f;
+
+  vec3 halfwayDir = normalize(incomingDir + selectedDir);
+  float NdotH = max(dot(normal, halfwayDir), 0.0f);
+  float HdotV = max(dot(halfwayDir, selectedDir), 0.0f);
+
+  float reflect_prob = triangle.metallic + triangle.specular;
+  float refract_prob = triangle.transmission * (1.0f - reflect_prob);
+  float diffuse_prob = 1.0f - reflect_prob - refract_prob;
+
+    // Calculate PDF based on surface type
+  if(rand < reflect_prob) {  // Specular reflection case
+    float D = triangle.roughness * triangle.roughness /
+      (M_PI * pow((NdotH * NdotH * (triangle.roughness * triangle.roughness - 1.0f) + 1.0f), 2.0f));
+    pdf = (D * NdotH) / (4.0f * HdotV);
+    pdf *= reflect_prob; // Scale by reflection probability
+  } else if(rand < reflect_prob + refract_prob) {
+        // Refraction case
+    pdf = 1.0f / (2.0f * M_PI); // Example uniform PDF, adjust as needed
+    pdf *= refract_prob; // Scale by refraction probability
+  } else {
+        // Diffuse reflection case
+    float cosTheta = max(dot(normal, selectedDir), 0.0f);
+    pdf = cosTheta * M_1_PI;
+    pdf *= diffuse_prob; // Scale by diffuse probability
+  }
+
+  return pdf;
+}
+
 vec3 sample_direction(Triangle triangle, vec3 normal, vec3 incomingDir, inout uvec2 seed, inout float pdf) {
   vec3 reflectedDir = reflect(-incomingDir, normal);
-
-    // Apply roughness to the reflection direction using a microfacet model
-  vec3 lambertSample;
-  vec3 roughSample;
+  vec3 roughSample = vec3(0.0f);
+  vec3 lambertSample = vec3(0.0f);
+  vec3 selectedDir;
 
   if(triangle.metallic > 0.0f) {
-    // Use a microfacet distribution to adjust the reflected direction
+        // Use a microfacet distribution to adjust the reflected direction
     roughSample = sample_hemisphere_uniform(get_random_numbers(seed), normal);
     reflectedDir = normalize(mix(reflectedDir, roughSample, triangle.roughness));
   }
 
-  vec3 selectedDir;
-
     // Calculate the refracted direction
   float eta = 1.0f / triangle.ior; // Assuming the incoming medium is air (IOR = 1.0)
   vec3 refractedDir = refract(-incomingDir, normal, eta);
+    // Handle Total Internal Reflection (TIR)
   if(length(refractedDir) == 0.0f) {
-    // Total internal reflection occurs, handle accordingly
-    selectedDir = reflectedDir; // Fallback to reflection in case of TIR
-  } else {
-    selectedDir = refractedDir; // Fallback to reflection in case of TIR
-
+    refractedDir = reflectedDir;  // Fallback to reflection in case of TIR
   }
 
   vec2 rand = get_random_numbers(seed);
@@ -443,38 +468,32 @@ vec3 sample_direction(Triangle triangle, vec3 normal, vec3 incomingDir, inout uv
   float diffuse_prob = 1.0f - reflect_prob - refract_prob;
 
     // Normalize probabilities to ensure they sum to 1
-  // float total_prob = reflect_prob + refract_prob + (1.0f - triangle.transmission);
   float total_prob = reflect_prob + refract_prob + diffuse_prob;
   reflect_prob /= total_prob;
   refract_prob /= total_prob;
 
+    // Sample the new direction based on the probabilities
   if(rand.x < reflect_prob) {
         // Specular reflection selected
     selectedDir = reflectedDir;
-    float NdotH = max(dot(normal, normalize(incomingDir + reflectedDir)), 0.0f);
-    float HdotV = max(dot(normalize(incomingDir + reflectedDir), reflectedDir), 0.0f);
-    float D = triangle.roughness * triangle.roughness /
-      (M_PI * pow((NdotH * NdotH * (triangle.roughness * triangle.roughness - 1.0f) + 1.0f), 2.0f));
-    pdf = (D * NdotH) / (4.0f * HdotV);
-    // pdf = 1.0f / (2.0f * M_PI);
-    pdf *= reflect_prob; // Scale by the reflection probability
   } else if(rand.x < reflect_prob + refract_prob) {
         // Refraction selected
-    // selectedDir = refractedDir;
-    pdf = 1.0f / (2.0f * M_PI); // Example uniform PDF, adjust as needed
-    pdf *= refract_prob; // Scale by the refraction probability
+    selectedDir = refractedDir;
   } else {
         // Diffuse reflection selected
     lambertSample = sample_hemisphere_cosine_weighted(get_random_numbers(seed), normal);
     selectedDir = lambertSample;
-    float cosTheta = max(dot(normal, lambertSample), 0.0f);
-    pdf = cosTheta * M_1_PI;
-    pdf *= diffuse_prob; // Scale by the diffuse probability
   }
 
-  return selectedDir;
+    // Calculate the PDF for the selected direction
+  pdf = calculate_pdf(incomingDir, selectedDir, normal, triangle, rand.x);
 
+  return selectedDir;
 }
+
+/* float calculate_pdf() {
+
+} */
 
 /* vec3 sample_direction(Triangle triangle, vec3 normal, vec3 incomingDir, inout uvec2 seed) {
     // Calculate the reflected direction based on the incoming direction and surface normal
@@ -506,7 +525,7 @@ vec3 bsdf(Triangle triangle, vec3 incomingDir, vec3 outgoingDir, vec3 normal) {
 
   float D = alpha2 / (M_PI * (((NdotH * NdotH) * (alpha2 - 1.0f)) + 1.0f) * (((NdotH * NdotH) * (alpha2 - 1.0f)) + 1.0f));
 
-  float kDirect = ((alpha + 1.0f) * (alpha + 1.0f)) / (8.0f);
+  float kDirect = ((triangle.roughness + 1.0f) * (triangle.roughness + 1.0f)) / (8.0f);
   float Gv = (NdotV) / (NdotV * (1.0f - kDirect) + kDirect);
   float Gl = (NdotL) / (NdotL * (1.0f - kDirect) + kDirect);
   float G = Gv * Gl;
@@ -514,6 +533,7 @@ vec3 bsdf(Triangle triangle, vec3 incomingDir, vec3 outgoingDir, vec3 normal) {
     // Fresnel (F) - Schlick's approximation
   vec3 F0 = vec3(0.04f);
   F0 = (mix(F0, triangle.color, triangle.metallic));
+  // F0 = vec3((triangle.ior - 1.0) * (triangle.ior - 1.0)) / ((triangle.ior + 1.0) * (triangle.ior + 1.0));
 
   vec3 F = F0 + (1.0f - F0) * pow(clamp(1.0f - HdotV, 0.0f, 1.0f), 5.0f);//F0 + (1.0f - F0) * pow(clamp
   // F *= triangle.specular; // Scale by specular intensity
@@ -525,11 +545,11 @@ vec3 bsdf(Triangle triangle, vec3 incomingDir, vec3 outgoingDir, vec3 normal) {
   vec3 diffuse = vec3(0.0f);
   // vec3 diffuse = triangle.color * M_1_PI; // Lambertian reflection (1/π for energy conservation)
 
-  if(triangle.metallic == 0.0f) {
-    diffuse = triangle.color * M_1_PI; // Lambertian reflection (1/π for energy conservation)
-  }
+  // if(triangle.metallic == 0.0f) {
+  diffuse = triangle.color * M_1_PI; // Lambertian reflection (1/π for energy conservation)
+  // }
   vec3 kD = vec3(1.0f) - F;
-// kD *= 1.0f - triangle.metallic;
+  kD *= 1.0f - triangle.metallic;
 
     // Combine specular and diffuse components
   return diffuse * kD + specular;
@@ -541,7 +561,7 @@ struct BSDFResult {
   vec3 bsdfValue; // BSDF value for the sampled direction
   float pdf;      // PDF value for the sampled direction
 };
-float calculate_pdf(Triangle triangle, vec3 normal, vec3 sampledDir, vec3 incomingDir) {
+/* float calculate_pdf(Triangle triangle, vec3 normal, vec3 sampledDir, vec3 incomingDir) {
   float cosTheta = max(dot(normal, sampledDir), 0.0f);
 
   if(triangle.transmission > 0.0f) {
@@ -567,7 +587,7 @@ float calculate_pdf(Triangle triangle, vec3 normal, vec3 sampledDir, vec3 incomi
         // Diffuse (Lambertian) Material
     return cosTheta * M_1_PI;
 
-}
+} */
 
 /* float calculate_pdf(Triangle triangle, vec3 normal, vec3 sampledDir, vec3 incomingDir) {
   float cosTheta = max(dot(normal, sampledDir), 0.0f);
@@ -625,21 +645,38 @@ vec3 get_ray_radiance(vec3 origin, vec3 direction, inout uvec2 seed) {
   vec3 radiance = vec3(0.0f);
   vec3 throughput_weight = vec3(1.0f);
   float directLighting, indirectLighting;
+
+  float tPrimaryTriangle;
+  Triangle primaryTriangle;
+  vec3 originPrimaryTriangle = origin;
+  vec3 directionPrimaryTriangle = direction;
+
   for(int i = 0; i < maxPathLength; i++) {
     float t;
     Triangle triangle;
+    float pdf;
+    vec3 new_direction;
 
-    if(ray_bvh_intersection_hit_miss(t, triangle, origin, direction)) {
+    // primary ray
+
+    // bool primaryRayHits = ray_bvh_intersection_hit_miss(tPrimaryTriangle, primaryTriangle, originPrimaryTriangle, directionPrimaryTriangle);
+
+    // vec3 rayPrimaryTriangleIntersectionPoint = (originPrimaryTriangle + primaryTriangle.normal * EPSILON) + tPrimaryTriangle * directionPrimaryTriangle; // epsilon to avoid self intersection
+// = ray_bvh_intersection_hit_miss(tSecondaryTriangle, secondaryTriangle, rayPrimaryTriangleIntersectionPoint, directionSecondaryTriangle);
+
+    if(ray_bvh_intersection_hit_miss(tPrimaryTriangle, primaryTriangle, originPrimaryTriangle, directionPrimaryTriangle)) {
 
       // If it's the first step and the triangle is emmissive - it's a light, stop the algorithm
-      if(/* i == 0 && */ (triangle.emission.x > 0.0f || triangle.emission.y > 0.0f || triangle.emission.z > 0.0f)) {
-        if(i == 0)
-          radiance = triangle.color * triangle.emission;
+      if(i == 0 && primaryTriangle.emission != vec3(0.0f)) {
+        radiance = primaryTriangle.color * primaryTriangle.emission;
         return radiance;
-        // break;
       }
 
-      vec3 rayTriangleIntersectionPoint = (origin + triangle.normal * EPSILON) + t * direction; // epsilon to avoid self intersection
+    // vec3 rayPrimaryTriangleIntersectionPoint = (originPrimaryTriangle + primaryTriangle.normal * EPSILON) + tPrimaryTriangle * directionPrimaryTriangle; // epsilon to avoid self intersection
+    
+      vec3 intersection = originPrimaryTriangle + tPrimaryTriangle * directionPrimaryTriangle;
+      vec3 rayPrimaryTriangleIntersectionPoint = intersection + primaryTriangle.normal * EPSILON;
+      // vec3 rayPrimaryTriangleIntersectionPoint = (originPrimaryTriangle + primaryTriangle.normal * EPSILON) + tPrimaryTriangle * directionPrimaryTriangle; // epsilon to avoid self intersection
 
       // Next Event Estimation
 
@@ -648,18 +685,18 @@ vec3 get_ray_radiance(vec3 origin, vec3 direction, inout uvec2 seed) {
       vec3 lightPoint = vec3(0.0f, 0.0f, 0.0f);
       float lightPdf = 1.0f;
       float lightArea = 0.0f;
-      sample_random_light(seed, lightTriangle, lightPoint, lightPdf, lightArea, rayTriangleIntersectionPoint);
+      sample_random_light(seed, lightTriangle, lightPoint, lightPdf, lightArea, /* origin of the ray: */rayPrimaryTriangleIntersectionPoint);
 
-      vec3 directionToShadowRayLightIntersection = normalize(lightPoint - rayTriangleIntersectionPoint);
-      float distanceToShadowRayLightIntersection = abs(length(lightPoint - rayTriangleIntersectionPoint));
+      vec3 directionToShadowRayLightIntersection = normalize(lightPoint - rayPrimaryTriangleIntersectionPoint);
+      float distanceToShadowRayLightIntersection = abs(length(lightPoint - rayPrimaryTriangleIntersectionPoint));
 
       vec3 direct_light = vec3(0.0f);
       // Check visibility of the light source
-      if(dot(triangle.normal, directionToShadowRayLightIntersection) > 0.0f && dot(lightTriangle.normal, -directionToShadowRayLightIntersection) > 0.0f) {
+      if(dot(primaryTriangle.normal, directionToShadowRayLightIntersection) > 0.0f && dot(lightTriangle.normal, -directionToShadowRayLightIntersection) > 0.0f) {
 
         Triangle blockingTriangle;
         float tBlockingTriangle;
-        bool hits = ray_bvh_intersection_hit_miss(tBlockingTriangle, blockingTriangle, rayTriangleIntersectionPoint, directionToShadowRayLightIntersection);
+        bool hits = ray_bvh_intersection_hit_miss(tBlockingTriangle, blockingTriangle, rayPrimaryTriangleIntersectionPoint, directionToShadowRayLightIntersection);
 
         // if doesn't hit anything or hits and it's the light source or a transmittant material?????????
         if(!hits || (hits && (blockingTriangle.emission != vec3(0.0f)/*  || blockingTriangle.transmission > 0.0f */))) {
@@ -667,58 +704,57 @@ vec3 get_ray_radiance(vec3 origin, vec3 direction, inout uvec2 seed) {
 
           float solid_angle = max(dot(lightTriangle.normal, -directionToShadowRayLightIntersection), 0.0f) / (distanceToShadowRayLightIntersection * distanceToShadowRayLightIntersection);
 
-          // vec3 brdf = triangle.color * M_1_PI * dot(triangle.normal, directionToShadowRayLightIntersection);
-          // vec3 brdf = bsdf(triangle, directionToShadowRayLightIntersection, -direction, triangle.normal);
-                    // Apply MIS weight
-          // float brdfPdf;// = lightPdf * solid_angle; // Approximation, adjust based on your implementation
-          // float brdfPdf = dot(lightTriangle.normal, -directionToShadowRayLightIntersection) * M_1_PI;
-          // sample_direction(triangle, triangle.normal, directionToShadowRayLightIntersection, seed, brdfPdf);
-          // brdfPdf = lightPdf * solid_angle; // Approximation, adjust based on your implementation
 
-          // lightPdf = ((distanceToShadowRayLightIntersection * distanceToShadowRayLightIntersection) / (lightArea * max(dot(lightTriangle.normal, normalize(-directionToShadowRayLightIntersection)), 0.0f)));
+          vec3 brdf = bsdf(primaryTriangle, -directionPrimaryTriangle, directionToShadowRayLightIntersection, primaryTriangle.normal);
+          // MISweight = power_heuristic(lightPdf, pdf);
 
-          // MISweight = power_heuristic(lightPdf, brdfPdf);
-          direct_light = lightTriangle.emission * (solid_angle / lightPdf);
+          float brdfPdf = calculate_pdf(-directionPrimaryTriangle, directionToShadowRayLightIntersection, primaryTriangle.normal, primaryTriangle, get_random_numbers(seed).x);
+
+          // secondaryRayHits = ray_bvh_intersection_hit_miss(tSecondaryTriangle, secondaryTriangle, rayPrimaryTriangleIntersectionPoint, directionSecondaryTriangle);
+
+          // calculate MIS weight
+          // direct_light = lightTriangle.emission * (solid_angle / lightPdf);
+
+          MISweight = power_heuristic(lightPdf, brdfPdf);
+          // Compute direct light contribution
+          direct_light = lightTriangle.emission * solid_angle /* * (max(dot(primaryTriangle.normal, directionToShadowRayLightIntersection), 0.0f))  */* brdf * vec3(MISweight) / lightPdf;
+
+          // outColor = vec4(brdf, 1.0f);
+
+          // radiance += throughput_weight * direct_light; * vec3(MISweight);
 
         }
 
       }
 
-      // radiance += throughput_weight * triangle.emission;
+      radiance += throughput_weight * direct_light;
 
-      // vec3 new_direction = sample_hemisphere_cosine_weighted(get_random_numbers(seed), triangle.normal);
+      // float pdf;
+      new_direction = sample_direction(primaryTriangle, primaryTriangle.normal, -directionPrimaryTriangle, seed, pdf);
 
-      float pdf;
-      vec3 new_direction = sample_direction(triangle, triangle.normal, -direction, seed, pdf);
+      float cos_theta = max(dot(new_direction, primaryTriangle.normal), 0.0f);
 
-      float cos_theta = dot(new_direction, triangle.normal);
-      if(cos_theta < 0.0f && triangle.transmission == 0.0f) {
+      if(cos_theta < 0.0f && primaryTriangle.transmission == 0.0f) {
         break; // Skip if the new direction is below the surface
-      } 
+      }
 
-      // vec3 eval = triangle.color * M_1_PI * dot(new_direction, triangle.normal);
-      // vec3 brdf = triangle.color * M_1_PI; // aka eval?
+      vec3 brdf = bsdf(primaryTriangle, -directionPrimaryTriangle, new_direction, primaryTriangle.normal);
+      // MISweight = power_heuristic(lightPdf, pdf);
 
-      // float pdf = cos_theta * M_1_PI;
-      // vec3 brdf = triangle.color * M_1_PI;
-
-      // float pdf = (cos_theta * M_1_PI); // Update for correct PDF considering specular and transmission
-      // Compute PDF for this direction
-      // float pdf = calculate_pdf(triangle, triangle.normal, new_direction, direction);
-
-      vec3 brdf = bsdf(triangle, new_direction, -direction, triangle.normal);
-      MISweight = power_heuristic(lightPdf, pdf);
-
-      // throughput_weight *= eval / pdf;
       if(pdf > 0.0f)
-        throughput_weight *= (brdf * cos_theta) / pdf;
+        throughput_weight *= brdf * cos_theta / pdf; // Update throughput
+      
 
-
-      radiance += throughput_weight * direct_light * vec3(MISweight);
+      // radiance += throughput_weight * direct_light * vec3(MISweight);
 
       // Update the direction for the next bounce
-      origin = rayTriangleIntersectionPoint;
-      direction = new_direction;
+      // origin = rayPrimaryTriangleIntersectionPoint;
+      // direction = new_direction;
+
+      originPrimaryTriangle = rayPrimaryTriangleIntersectionPoint;
+      // origin = originPrimaryTriangle;
+      directionPrimaryTriangle = new_direction;
+      // direction = directionPrimaryTriangle;
 
       if(length(throughput_weight) < 0.001f) {
         if(get_random_numbers(seed).x > 0.1f)
@@ -726,7 +762,6 @@ vec3 get_ray_radiance(vec3 origin, vec3 direction, inout uvec2 seed) {
         throughput_weight /= 0.1f;
       }
     } else {
-      // radiance += throughput_weight * vec3(0.0f);
 
       break;
     }
