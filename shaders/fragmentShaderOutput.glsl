@@ -47,15 +47,6 @@ void main() {
 
     vec3 inputColor = texture(u_texture, texCoord).rgb;
 
-    // Reinhard tone mapping
-    // vec3 toneMappedColor = inputColor / (inputColor + vec3(1.0));
-
-    // ACES tone mapping
-    // vec3 toneMappedColor = toneMapACES(inputColor);
-
-    // vec3 gammaCorrectedColor = pow(toneMappedColor, vec3(1.0 / 2.2));
-    ///////////////
-
     vec3 gammaCorrectedColor = pow(inputColor, vec3(1.0 / 2.2));
 
     outColor = vec4(gammaCorrectedColor, 1.0f);

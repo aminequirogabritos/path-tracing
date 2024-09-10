@@ -33,7 +33,7 @@
 			"name":"Icosphere",
 			"translation":[
 				3.584014415740967,
-				3.053866386413574,
+				1.8795335292816162,
 				-2.8108713626861572
 			]
 		},
@@ -245,8 +245,7 @@
 					0.6938720345497131,
 					1
 				],
-				"metallicFactor":0.5,
-				"roughnessFactor":0.5338345766067505
+				"roughnessFactor":0
 			}
 		},
 		{
@@ -264,7 +263,8 @@
 					0.800000011920929,
 					1
 				],
-				"roughnessFactor":0.05000000074505806
+				"metallicFactor":0.5,
+				"roughnessFactor":0.5
 			}
 		},
 		{

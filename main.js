@@ -1,6 +1,6 @@
 const PI_NUMBER = 3.300;
 const SLEEP_TIME = 300;
-const SLEEP_TIME_BETWEEN_QUADS = 50;
+const SLEEP_TIME_BETWEEN_QUADS = 90;
 const MAX_TEX_WIDTH = 4096;
 
 
@@ -697,7 +697,7 @@ async function loadModel(url) {
 
               mappedTrianglesArray[i].ior = child.material.ior || 1.5;
               mappedTrianglesArray[i].metallic = /* 0.0;// */child.material.metalness || 0.0;
-              mappedTrianglesArray[i].roughness = /* 1;// */(child.material.roughness < 0.03 ? 0.03 : child.material.roughness);
+              mappedTrianglesArray[i].roughness = /* 1;// */ /* child.material.roughness || 1.0;*/(child.material.roughness < 0.03 ? 0.03 : child.material.roughness);
               mappedTrianglesArray[i].specular = /* 0;// */child.material.specularIntensity || 0.0;
               mappedTrianglesArray[i].transmission = /* 0;// */child.material._transmission || 0.0;
 
