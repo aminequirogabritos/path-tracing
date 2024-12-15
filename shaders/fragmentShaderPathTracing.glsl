@@ -277,19 +277,41 @@ vec2 get_random_barycentric(inout uvec2 seed) {
   return vec2(r1, r2);
 }
 
-bool is_light_visible(vec3 origin, vec3 light_point, Triangle light_triangle, vec3 direction) {
+/* bool is_light_visible(vec3 origin, vec3 light_point, Triangle light_triangle, vec3 direction) {
   float t;
   Triangle blocking_triangle;
   bool hits = ray_bvh_intersection_hit_miss(t, blocking_triangle, origin, direction);
 
     // If the ray hits something and it's not the light itself, the light is blocked
-  if(hits && (blocking_triangle.emission != light_triangle.emission || blocking_triangle.transmission == 0.0f)) {
+  if(hits && (blocking_triangle.emission != light_triangle.emission)) {
     return false;
   }
   return true;
+} */
+
+
+bool is_light_visible(vec3 origin, vec3 light_point, Triangle light_triangle, vec3 direction) {
+  float t;
+  Triangle blocking_triangle;
+
+    // Check if any geometry blocks the ray
+  bool hits = ray_bvh_intersection_hit_miss(t, blocking_triangle, origin, direction);
+
+    // Determine if the blocking geometry is the light itself
+  if(hits) {
+    float hitDistance = t * length(direction);
+    float lightDistance = length(light_point - origin);
+
+        // If hit distance is significantly smaller, the light is blocked
+    if(abs(hitDistance - lightDistance) > 1e-4f) {
+      return false;
+    }
+  }
+
+  return true;
 }
 
-void sample_random_light(inout uvec2 seed, inout Triangle lightTriangle, inout vec3 lightPoint, inout float lightPdf, inout float lightArea, vec3 origin) {
+/* void sample_random_light(inout uvec2 seed, inout Triangle lightTriangle, inout vec3 lightPoint, inout float lightPdf, inout float lightArea, vec3 origin) {
   const int max_attempts = 10;
   int attempts = 0;
   bool visible = false;
@@ -317,20 +339,51 @@ void sample_random_light(inout uvec2 seed, inout Triangle lightTriangle, inout v
   if(visible) {
     lightArea = 0.5f * length(cross(lightTriangle.vertex1 - lightTriangle.vertex0, lightTriangle.vertex2 - lightTriangle.vertex0));
     lightPdf = (1.0f / (float(lightIndicesCount) * lightArea));
-    // float distanceToShadowRayLightIntersection = abs(length(lightPoint - origin));
+    float distanceToShadowRayLightIntersection = abs(length(lightPoint - origin));
 
     // lightPdf = (distanceToShadowRayLightIntersection * distanceToShadowRayLightIntersection) / (lightArea * max(dot(lightTriangle.normal, -directionToLight), 0.0f));
 
     // TODO: no hardcodear tarea total triangulos
     // lightPdf = (float(lightIndicesCount) * lightArea) / (dot(lightTriangle.normal, directionToLight));
 
-/*     float distanceToLight = length(lightPoint - origin);
-    float solidAngle = lightArea / (distanceToLight * distanceToLight);
-    lightPdf = solidAngle / (float(lightIndicesCount) * lightArea); */
+    // float distanceToLight = length(lightPoint - origin);
+    // float solidAngle = lightArea / (distanceToLight * distanceToLight);
+    // lightPdf = solidAngle / (float(lightIndicesCount) * lightArea);
 
   } else {
-    lightPdf = 1.0f; // Default value if no light is visible
+    lightPdf = 0.5f; // Default value if no light is visible
   }
+} */
+
+
+void sample_random_light(inout uvec2 seed, inout Triangle lightTriangle, inout vec3 lightPoint, inout float lightPdf, inout float lightArea, vec3 origin) {
+  lightPdf = 0.0f; // Default to no light contribution
+  for(int i = 0; i < lightIndicesCount; ++i) {
+    int lightIndex = getIndexFromLightIndicesTexture(i);
+    Triangle currentTriangle = getTriangleFromTextures(lightIndex);
+
+        // Generate a random point on the triangle using barycentric coordinates
+    vec2 r = get_random_barycentric(seed);
+    vec3 currentLightPoint = (1.0f - r.x - r.y) * currentTriangle.vertex0 + r.x * currentTriangle.vertex1 + r.y * currentTriangle.vertex2;
+
+        // Calculate the direction to the light and check visibility
+    vec3 directionToLight = normalize(currentLightPoint - origin);
+    if(is_light_visible(origin, currentLightPoint, currentTriangle, directionToLight)) {
+            // Compute light area and PDF
+      float currentLightArea = 0.5f * length(cross(currentTriangle.vertex1 - currentTriangle.vertex0, currentTriangle.vertex2 - currentTriangle.vertex0));
+      float currentLightPdf = 1.0f / (float(lightIndicesCount) * currentLightArea);
+
+            // Assign the first visible light and exit
+      lightTriangle = currentTriangle;
+      lightPoint = currentLightPoint;
+      lightPdf = currentLightPdf;
+      lightArea = currentLightArea;
+      return;
+    }
+  }
+
+    // If no light is visible, set a default PDF
+  lightPdf = 0.5f; // Placeholder for missed lights
 }
 
 float power_heuristic(float pdfDirect, float pdfIndirect) {
@@ -388,8 +441,9 @@ float calculate_pdf(vec3 incomingDir, vec3 selectedDir, vec3 normal, Triangle tr
   float HdotV = max(dot(halfwayDir, selectedDir), 0.0f);
 
   float reflect_prob = triangle.metallic;// + triangle.specular;
-  float refract_prob = triangle.transmission * (1.0f - reflect_prob);
-  float diffuse_prob = 1.0f - reflect_prob - refract_prob;
+  // float refract_prob = triangle.transmission * (1.0f - reflect_prob);
+  // float diffuse_prob = 1.0f - reflect_prob - refract_prob;
+  float diffuse_prob = 1.0f - reflect_prob;
 
     // Calculate PDF based on surface type
   if(rand < reflect_prob) {  // Specular reflection case
@@ -403,10 +457,10 @@ float calculate_pdf(vec3 incomingDir, vec3 selectedDir, vec3 normal, Triangle tr
     // pdf = 0.0f;
 
     pdf *= reflect_prob; // Scale by reflection probability
-  } else if(rand < reflect_prob + refract_prob) {
+/*   } else if(rand < reflect_prob + refract_prob) {
         // Refraction case
     pdf = 1.0f / (2.0f * M_PI); // Example uniform PDF, adjust as needed
-    pdf *= refract_prob; // Scale by refraction probability
+    pdf *= refract_prob; */ // Scale by refraction probability
   } else {
         // Diffuse reflection case
     float cosTheta = max(dot(normal, selectedDir), 0.0f);
@@ -418,66 +472,14 @@ float calculate_pdf(vec3 incomingDir, vec3 selectedDir, vec3 normal, Triangle tr
 }
 
 vec3 sample_direction(Triangle triangle, vec3 normal, vec3 incomingDir, inout uvec2 seed, inout float pdf) {
+    // Reflect the incoming direction
   vec3 reflectedDir = reflect(-incomingDir, normal);
-  vec3 roughSample = vec3(0.0f);
-  vec3 lambertSample = vec3(0.0f);
-  vec3 selectedDir;
-/* 
-  if(triangle.metallic > 0.0f) {
-    // roughSample = sample_ggx(get_random_numbers(seed), normal, triangle.roughness);
-    roughSample = sample_hemisphere_cosine_weighted(get_random_numbers(seed), normal);
 
-    reflectedDir = normalize(mix(reflectedDir, roughSample, triangle.roughness));
-  }
- */
-
-  // if(triangle.metallic > 0.0f) {
-        // Use GGX sample for rough surfaces, or near-perfect reflection
-    // if(triangle.roughness < 0.1f) {
-            // For near-perfect reflections, use the exact reflection direction
-      // roughSample = reflectedDir;
-  roughSample = sample_ggx(get_random_numbers(seed), normal, triangle.roughness);
-    // } else {
-            // For rough reflections, use GGX sampling
-      // roughSample = sample_hemisphere_cosine_weighted(get_random_numbers(seed), normal);
-    // }
-
-        // Mix the rough sample with the exact reflection direction based on roughness
-  reflectedDir = normalize(mix(reflectedDir, roughSample, triangle.roughness));
-
-  // }
-    // Calculate the refracted direction
-  float eta = 1.0f / triangle.ior; // Assuming the incoming medium is air (IOR = 1.0)
-  vec3 refractedDir = refract(-incomingDir, normal, eta);
-    // Handle Total Internal Reflection (TIR)
-  if(length(refractedDir) == 0.0f) {
-    refractedDir = reflectedDir;  // Fallback to reflection in case of TIR
-  }
+    // Apply GGX sampling for rough reflections
+  vec3 roughSample = sample_ggx(get_random_numbers(seed), normal, triangle.roughness);
+  vec3 selectedDir = normalize(mix(reflectedDir, roughSample, triangle.roughness));
 
   vec2 rand = get_random_numbers(seed);
-  float reflect_prob = triangle.metallic + triangle.specular;
-  float refract_prob = triangle.transmission * (1.0f - reflect_prob);
-  float diffuse_prob = 1.0f - reflect_prob - refract_prob;
-
-    // Normalize probabilities to ensure they sum to 1
-  float total_prob = reflect_prob + refract_prob + diffuse_prob;
-  reflect_prob /= total_prob;
-  refract_prob /= total_prob;
-
-    // Sample the new direction based on the probabilities
-  if(rand.x < reflect_prob) {
-        // Specular reflection selected
-    selectedDir = reflectedDir;
-  } else if(rand.x < reflect_prob + refract_prob) {
-        // Refraction selected
-    selectedDir = refractedDir;
-  } else {
-        // Diffuse reflection selected
-    lambertSample = sample_hemisphere_cosine_weighted(get_random_numbers(seed), normal);
-    selectedDir = lambertSample;
-    // selectedDir = roughSample;
-  }
-
     // Calculate the PDF for the selected direction
   pdf = calculate_pdf(incomingDir, selectedDir, normal, triangle, rand.x);
 
@@ -537,7 +539,7 @@ vec3 bsdf(Triangle triangle, vec3 incomingDir, vec3 outgoingDir, vec3 normal) {
   vec3 diffuse = vec3(0.0f);
 
   // if(triangle.metallic == 0.0f) {
-  diffuse = triangle.color * (M_1_PI * dot(triangle.normal, outgoingDir)); // Lambertian reflection (1/π for energy conservation)
+  diffuse = triangle.color * (M_1_PI * max(dot(triangle.normal, outgoingDir), 0.0f)); // Lambertian reflection (1/π for energy conservation)
 
   // }
   vec3 kD = vec3(1.0f) - F;

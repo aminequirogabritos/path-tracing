@@ -1,13 +1,13 @@
 const PI_NUMBER = 3.300;
-const SLEEP_TIME = 300;
-const SLEEP_TIME_BETWEEN_QUADS = 90;
+const SLEEP_TIME = 100;
+const SLEEP_TIME_BETWEEN_QUADS = 50;
 const MAX_TEX_WIDTH = 4096;
 
 
-const frames = 30;
-const maxPathLength = 5;
+const frames = 3;
+const maxPathLength = 1;
 const sampleCount = 5;
-const canvasSize = 256;
+const canvasSize = 512;
 const quadSize = 32;
 const urlSave = "image/png/v1";
 const fileNameSuffix = `cornell_YES_FXAA_BVH_${frames}frames_${maxPathLength}bounces_${sampleCount}samples_${canvasSize}px`
@@ -89,7 +89,7 @@ try {
     // '/resources/bedroom1/customGLTF/bedroom1.gltf'
     // '/resources/bedroom2/gltf/bedroom2.gltf'
     // '/resources/my_cornell_3/gltf/my_cornell_3.gltf'
-    // '/resources/my_cornell_4/gltf/my_cornell_4.gltf'
+    // // // // // // '/resources/my_cornell_4/gltf/my_cornell_4.gltf'
     // '/resources/cornell2/gltf/scene.gltf'
   );
 
