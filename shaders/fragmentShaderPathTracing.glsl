@@ -289,7 +289,6 @@ vec2 get_random_barycentric(inout uvec2 seed) {
   return true;
 } */
 
-
 bool is_light_visible(vec3 origin, vec3 light_point, Triangle light_triangle, vec3 direction) {
   float t;
   Triangle blocking_triangle;
@@ -354,7 +353,6 @@ bool is_light_visible(vec3 origin, vec3 light_point, Triangle light_triangle, ve
     lightPdf = 0.5f; // Default value if no light is visible
   }
 } */
-
 
 void sample_random_light(inout uvec2 seed, inout Triangle lightTriangle, inout vec3 lightPoint, inout float lightPdf, inout float lightArea, vec3 origin) {
   lightPdf = 0.0f; // Default to no light contribution
@@ -446,7 +444,7 @@ float calculate_pdf(vec3 incomingDir, vec3 selectedDir, vec3 normal, Triangle tr
   float diffuse_prob = 1.0f - reflect_prob;
 
     // Calculate PDF based on surface type
-  if(rand < reflect_prob) {  // Specular reflection case
+  if(triangle.metallic > 0.0f/* rand < reflect_prob */) {  // Specular reflection case
 
             // For rough reflections
     float alpha = triangle.roughness * triangle.roughness;
@@ -475,11 +473,12 @@ vec3 sample_direction(Triangle triangle, vec3 normal, vec3 incomingDir, inout uv
     // Reflect the incoming direction
   vec3 reflectedDir = reflect(-incomingDir, normal);
 
+  vec2 rand = get_random_numbers(seed);
+
     // Apply GGX sampling for rough reflections
-  vec3 roughSample = sample_ggx(get_random_numbers(seed), normal, triangle.roughness);
+  vec3 roughSample = sample_ggx(rand, normal, triangle.roughness);
   vec3 selectedDir = normalize(mix(reflectedDir, roughSample, triangle.roughness));
 
-  vec2 rand = get_random_numbers(seed);
     // Calculate the PDF for the selected direction
   pdf = calculate_pdf(incomingDir, selectedDir, normal, triangle, rand.x);
 
@@ -507,6 +506,17 @@ vec3 sample_direction(Triangle triangle, vec3 normal, vec3 incomingDir, inout uv
   return reflectedDir;
 } */
 
+float calculate_F0(float refractiveIndex, float extinctionCoefficient) {
+  if(extinctionCoefficient > 0.0f) { // Metallic material
+    float numerator = pow(refractiveIndex - 1.0f, 2.0f) + pow(extinctionCoefficient, 2.0f);
+    float denominator = pow(refractiveIndex + 1.0f, 2.0f) + pow(extinctionCoefficient, 2.0f);
+    return numerator / denominator;
+  } else { // Dielectric material
+    float F0 = pow((refractiveIndex - 1.0f) / (refractiveIndex + 1.0f), 2.0f);
+    return F0;
+  }
+}
+
 vec3 bsdf(Triangle triangle, vec3 incomingDir, vec3 outgoingDir, vec3 normal) {
 
   vec3 halfVector = normalize(incomingDir + outgoingDir);
@@ -526,8 +536,10 @@ vec3 bsdf(Triangle triangle, vec3 incomingDir, vec3 outgoingDir, vec3 normal) {
   float G = Gv * Gl;
 
     // Fresnel (F) - Schlick's approximation
-  vec3 F0 = vec3(0.04f);
+  // vec3 F0 = vec3(0.004f);
+  vec3 F0 = vec3(calculate_F0(1.0f, 0.0f));
   F0 = (mix(F0, triangle.color, triangle.metallic));
+
   // F0 = vec3((triangle.ior - 1.0) * (triangle.ior - 1.0)) / ((triangle.ior + 1.0) * (triangle.ior + 1.0));
 
   vec3 F = F0 + (1.0f - F0) * pow(clamp(1.0f - HdotV, 0.0f, 1.0f), 5.0f);
@@ -643,7 +655,7 @@ vec3 get_ray_radiance(vec3 origin, vec3 direction, inout uvec2 seed) {
 
       vec3 brdf = bsdf(primaryTriangle, -directionPrimaryTriangle, new_direction, primaryTriangle.normal);
 
-      MISweight = power_heuristic(lightPdf, pdf);
+      // MISweight = power_heuristic(lightPdf, pdf);
 
       if(pdf > 0.0f)
         throughput_weight *= brdf * cos_theta / pdf; // Update throughput

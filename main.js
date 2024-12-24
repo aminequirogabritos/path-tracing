@@ -1,16 +1,16 @@
 const PI_NUMBER = 3.300;
-const SLEEP_TIME = 100;
-const SLEEP_TIME_BETWEEN_QUADS = 50;
+const SLEEP_TIME = 300;
+const SLEEP_TIME_BETWEEN_QUADS = 300;
 const MAX_TEX_WIDTH = 4096;
 
 
-const frames = 3;
-const maxPathLength = 1;
+const frames = 10;
+const maxPathLength = 5;
 const sampleCount = 5;
-const canvasSize = 512;
+const canvasSize = 256;
 const quadSize = 32;
-const urlSave = "image/png/v1";
-const fileNameSuffix = `cornell_YES_FXAA_BVH_${frames}frames_${maxPathLength}bounces_${sampleCount}samples_${canvasSize}px`
+const urlSave = "/scene_2/";
+const fileNameSuffix = `scene_2_${frames}frames_${maxPathLength}bounces_${sampleCount}samples_${canvasSize}px`
 
 const saveFrame = false;
 
@@ -76,16 +76,23 @@ let model, scene;
 try {
   console.log("b4 loading");
   model = await loadModel(
+
+
+    // '/resources/scene_1/scene_1.gltf'
+    '/resources/scene_2/scene_2.gltf'
     // '/resources/my_cornell_2/gltf/my_cornell_2.gltf'
-    '/resources/my_cornell_7/gltf/my_cornell_7.gltf'
-    // '/resources/bedroom2/gltf/v3/bedroom2.gltf'
+    // '/resources/my_cornell_7/gltf/my_cornell_7.gltf'
+    // '/resources/my_cornell_8/gltf/my_cornell_8.gltf'
+    // // '/resources/bedroom2/gltf/v3/bedroom2.gltf'
     // '/resources/bedroom2/gltf/v5/bedroom2_v5.gltf'
     // '/resources/pixar_room/v1/pixar-room.gltf'
     // '/resources/pixar_room/v7/pixar-room-7.gltf'
     // '/resources/pixar_room/v8/pixar-room-8.gltf'
     // '/resources/pixar_room/v9/pixar-room-9.gltf'
     // '/resources/pixar_room/v6/pixar-room-6.gltf'
+    
     // '/resources/my_cornell_6/gltf/my_cornell_6.gltf'
+
     // '/resources/bedroom1/customGLTF/bedroom1.gltf'
     // '/resources/bedroom2/gltf/bedroom2.gltf'
     // '/resources/my_cornell_3/gltf/my_cornell_3.gltf'
@@ -147,13 +154,14 @@ let cameraInstance = new Camera(50, width / height, 0.1, 1000);
 // cameraInstance.translate('x', 14)
 // cameraInstance.translate('z', -14)
 // cameraInstance.translate('y', 3)
+// cameraInstance.lookAt(0, 0, 0);
 
 
 //cornell room
-cameraInstance.translate('x', 12.4)
-// cameraInstance.translate('z', 6)
-// cameraInstance.rotate('y', PI_NUMBER / 2);
-cameraInstance.lookAt(0, 0, 0);
+// cameraInstance.translate('x', 12.4)
+// // // // cameraInstance.translate('z', 6)
+// // // // cameraInstance.rotate('y', PI_NUMBER / 2);
+// cameraInstance.lookAt(0, 0, 0);
 
 
 //pixar room
@@ -165,6 +173,27 @@ cameraInstance.lookAt(0, -3, -4); */
 cameraInstance.translate('z', 4);
 cameraInstance.translate('y', 1);
 cameraInstance.lookAt(0, -3, -4); */
+
+// lo mas parecido posible a como esta en blender
+// cameraInstance.translate('x', 3);
+// cameraInstance.translate('z', 4);
+// cameraInstance.translate('y', 1.3);
+cameraInstance.lookAt(0, 0, 0);
+// cameraInstance.lookAt(1, -1, -1);
+// cameraInstance.lookAt(1, -2, -3);
+// cameraInstance.lookAt(0, 100, -4);
+
+
+
+//testing
+cameraInstance.translate('x', 4 * 0.9);
+cameraInstance.translate('y', 3 * 0.3);
+cameraInstance.translate('z', 4.5 * 0.8);
+// cameraInstance.lookAt(0.5, -2, -2.5);
+cameraInstance.lookAt(0.5, -2.2, -2.5);
+// cameraInstance.lookAt(0, 0, 0);
+
+
 
 // teapot
 //angle 1
