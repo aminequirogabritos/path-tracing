@@ -617,7 +617,7 @@ vec3 get_ray_radiance(vec3 origin, vec3 direction, inout uvec2 seed) {
         float tBlockingTriangle;
         bool hits = ray_bvh_intersection_hit_miss(tBlockingTriangle, blockingTriangle, rayPrimaryTriangleIntersectionPoint, directionToShadowRayLightIntersection);
 
-        // if doesn't hit anything or hits and it's the light source or a transmittant material?????????
+        // if doesn't hit anything or hits and it's the light source /* or a transmittant material????????? */
         if(!hits || (hits && (blockingTriangle.emission != vec3(0.0f)/*  || blockingTriangle.transmission > 0.0f */))) {
           // Calculate direct light contribution
 

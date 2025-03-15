@@ -5,8 +5,7 @@
 	},
 	"extensionsUsed":[
 		"KHR_materials_specular",
-		"KHR_materials_emissive_strength",
-		"KHR_materials_transmission"
+		"KHR_materials_emissive_strength"
 	],
 	"scene":0,
 	"scenes":[
@@ -144,10 +143,10 @@
 			"mesh":6,
 			"name":"LampBulb",
 			"rotation":[
-				-0.0871557667851448,
+				0.8191521763801575,
 				0,
-				-0.9961947202682495,
-				1.6969854854664845e-08
+				0.5735764503479004,
+				3.5806273501748365e-08
 			],
 			"scale":[
 				4.089926369488239e-05,
@@ -276,7 +275,12 @@
 			"doubleSided":true,
 			"extensions":{
 				"KHR_materials_specular":{
-					"specularFactor":0
+					"specularFactor":0,
+					"specularColorFactor":[
+						0.2461996078491211,
+						0.036889683455228806,
+						0.0012138064485043287
+					]
 				}
 			},
 			"name":"Material.003",
@@ -287,7 +291,7 @@
 					0.0011198727879673243,
 					1
 				],
-				"metallicFactor":0.6000000238418579,
+				"metallicFactor":0.800000011920929,
 				"roughnessFactor":0.20000000298023224
 			}
 		},
@@ -435,9 +439,6 @@
 		{
 			"doubleSided":true,
 			"extensions":{
-				"KHR_materials_transmission":{
-					"transmissionFactor":0.5
-				},
 				"KHR_materials_specular":{
 					"specularFactor":0
 				}

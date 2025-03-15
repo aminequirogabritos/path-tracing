@@ -1,6 +1,6 @@
 const PI_NUMBER = 3.300;
 const SLEEP_TIME = 300;
-const SLEEP_TIME_BETWEEN_QUADS = 300;
+const SLEEP_TIME_BETWEEN_QUADS = 500;
 const MAX_TEX_WIDTH = 4096;
 
 
@@ -9,10 +9,13 @@ const maxPathLength = 5;
 const sampleCount = 5;
 const canvasSize = 256;
 const quadSize = 32;
-const urlSave = "/scene_2/";
-const fileNameSuffix = `scene_2_${frames}frames_${maxPathLength}bounces_${sampleCount}samples_${canvasSize}px`
 
-const saveFrame = false;
+const saveFrame = 0
+
+const sceneNumber = 2
+
+const urlSave = "/scene_2/";
+const fileNameSuffix = `scene_${sceneNumber}_${frames}frames_${maxPathLength}bounces_${sampleCount}samples_${canvasSize}px`
 
 // ------------------------------------------------------------------
 
@@ -73,13 +76,25 @@ let vertexCount = 0;
 
 let model, scene;
 
+let scenePath;
+
+switch (sceneNumber) {
+  case 1: scenePath = '/resources/scene_1/scene_1.gltf'; break;
+  case 2: scenePath = '/resources/scene_2/scene_2.gltf'; break;
+  case 3: scenePath = '/resources/scene_3/scene_3.gltf'; break;
+  default: scenePath = '/resources/scene_1/scene_1.gltf'; break;
+}
+
+
 try {
   console.log("b4 loading");
   model = await loadModel(
 
 
+    scenePath
+
     // '/resources/scene_1/scene_1.gltf'
-    '/resources/scene_2/scene_2.gltf'
+    // '/resources/scene_2/scene_2.gltf'
     // '/resources/my_cornell_2/gltf/my_cornell_2.gltf'
     // '/resources/my_cornell_7/gltf/my_cornell_7.gltf'
     // '/resources/my_cornell_8/gltf/my_cornell_8.gltf'
@@ -90,7 +105,7 @@ try {
     // '/resources/pixar_room/v8/pixar-room-8.gltf'
     // '/resources/pixar_room/v9/pixar-room-9.gltf'
     // '/resources/pixar_room/v6/pixar-room-6.gltf'
-    
+
     // '/resources/my_cornell_6/gltf/my_cornell_6.gltf'
 
     // '/resources/bedroom1/customGLTF/bedroom1.gltf'
@@ -100,14 +115,11 @@ try {
     // '/resources/cornell2/gltf/scene.gltf'
   );
 
-  console.log("😀 ~ model:", model)
 
   scene = model.scene;
-  console.log("🌸 ~ scene:", scene)
 } catch (e) {
   console.log(e);
 }
-// console.log("🚀 ~ triangleCount:", triangleCount)
 
 
 // scene.updateMatrixWorld(true);
@@ -178,7 +190,7 @@ cameraInstance.lookAt(0, -3, -4); */
 // cameraInstance.translate('x', 3);
 // cameraInstance.translate('z', 4);
 // cameraInstance.translate('y', 1.3);
-cameraInstance.lookAt(0, 0, 0);
+// cameraInstance.lookAt(0, 0, 0);
 // cameraInstance.lookAt(1, -1, -1);
 // cameraInstance.lookAt(1, -2, -3);
 // cameraInstance.lookAt(0, 100, -4);
@@ -186,11 +198,11 @@ cameraInstance.lookAt(0, 0, 0);
 
 
 //testing
-cameraInstance.translate('x', 4 * 0.9);
-cameraInstance.translate('y', 3 * 0.3);
-cameraInstance.translate('z', 4.5 * 0.8);
+// cameraInstance.translate('x', 4 * 0.9);
+// cameraInstance.translate('y', 3 * 0.3);
+// cameraInstance.translate('z', 4.5 * 0.8);
 // cameraInstance.lookAt(0.5, -2, -2.5);
-cameraInstance.lookAt(0.5, -2.2, -2.5);
+// cameraInstance.lookAt(0.5, -2.2, -2.5);
 // cameraInstance.lookAt(0, 0, 0);
 
 
@@ -213,7 +225,26 @@ cameraInstance.lookAt(1.1909498999602326, -2.7629803217301294, -3.22014570425879
 // cameraInstance.translate('z', 8);
 // cameraInstance.lookAt(0, 0, 0);
 
-
+switch (sceneNumber) {
+  case 1:
+    cameraInstance.translate('x', 12.4)
+    cameraInstance.lookAt(0, 0, 0);
+    break;
+  case 2:
+    cameraInstance.lookAt(0, 0, 0);
+    cameraInstance.translate('x', 4 * 0.9);
+    cameraInstance.translate('y', 3 * 0.3);
+    cameraInstance.translate('z', 4.5 * 0.8);
+    cameraInstance.lookAt(0.5, -2.2, -2.5);
+    break;
+  case 3:
+    cameraInstance.translate('x', 14)
+    cameraInstance.translate('z', -14)
+    cameraInstance.translate('y', 3)
+    cameraInstance.lookAt(0, 0, 0);
+    break;
+  default: break;
+}
 
 
 let camera = cameraInstance.getCamera();
@@ -718,8 +749,12 @@ async function loadModel(url) {
               mappedTrianglesArray[i].color = color;
 
 
-              const emission = new THREE.Color(child.material.emissive.r * child.material.emissiveIntensity, child.material.emissive.g * child.material.emissiveIntensity, child.material.emissive.b * child.material.emissiveIntensity)
-              mappedTrianglesArray[i].emission = emission;
+              const emission = new THREE.Color(
+                child.material.emissive.r * child.material.emissiveIntensity,
+                child.material.emissive.g * child.material.emissiveIntensity,
+                child.material.emissive.b * child.material.emissiveIntensity
+              )
+              mappedTrianglesArray[i].emission = emission /// new THREE.Vector3(2.0);
               // console.log("🚀 ~ emission:", emission)
               // emissions.push(...[emission.r * 50, emission.g * 50, emission.b * 50]);
               // emissions.push(...[emission.r, emission.g, emission.b]);
@@ -745,9 +780,7 @@ async function loadModel(url) {
         // armar arreglo de indices de triangulos de luces
         for (let i = 0; i < emissions.length; i = i + 3) {
           if (trianglesArray[i].emission.r > 0.0 || trianglesArray[i].emission.r > 0.0 || trianglesArray[i].emission.r > 0.0) {
-            lightIndices.push(i / 3);
-            lightIndices.push(i / 3);
-            lightIndices.push(i / 3);
+            lightIndices.push(...[i / 3, i / 3, i / 3]);
           }
         }
 
