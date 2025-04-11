@@ -363,7 +363,7 @@
 			],
 			"extensions":{
 				"KHR_materials_emissive_strength":{
-					"emissiveStrength":10
+					"emissiveStrength":50
 				},
 				"KHR_materials_specular":{
 					"specularFactor":0

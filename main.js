@@ -1,18 +1,22 @@
 const PI_NUMBER = 3.300;
-const SLEEP_TIME = 300;
-const SLEEP_TIME_BETWEEN_QUADS = 500;
+let SLEEP_TIME_BETWEEN_FRAMES;// = 8;
+let SLEEP_TIME_BETWEEN_QUADS;//= 8;
+const MIN_SLEEP_TIME = 300;
 const MAX_TEX_WIDTH = 4096;
 
+let initialSleepTime = 300;  // Initial estimate, can be adjusted based on your GPU
+let targetQuadTime = 1000; // Target frame time in milliseconds 
+let cooldownMultiplier = 1.0; // Multiplier to control dynamic adjustments
 
-const frames = 10;
-const maxPathLength = 5;
-const sampleCount = 5;
-const canvasSize = 256;
-const quadSize = 32;
+const frames = 30
+const maxPathLength = 5
+const sampleCount = 5
+const canvasSize = 512
+const quadSize = 32
 
 const saveFrame = 0
 
-const sceneNumber = 2
+const sceneNumber = 1
 
 const urlSave = "/scene_2/";
 const fileNameSuffix = `scene_${sceneNumber}_${frames}frames_${maxPathLength}bounces_${sampleCount}samples_${canvasSize}px`
@@ -21,23 +25,13 @@ const fileNameSuffix = `scene_${sceneNumber}_${frames}frames_${maxPathLength}bou
 
 import * as THREE from 'three';
 import Stats from 'three/examples/jsm/libs/stats.module.js';
-//import { ObjectLoader } from 'three/addons/loaders/GLTFLoader.js';
-// import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
-// import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import * as BufferGeometryUtils from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 
 // Load vertex and fragment shaders
 import vertexShaderPathTracing from './shaders/vertexShader.glsl';
 import vertexShaderOutput from './shaders/vertexShader.glsl';
 import fragmentShaderPathTracing from './shaders/fragmentShaderPathTracing.glsl';
 import fragmentShaderOutput from './shaders/fragmentShaderOutput.glsl';
-// import { texture } from 'three/examples/jsm/nodes/Nodes.js';
-// import { PI, floor } from 'three/examples/jsm/nodes/Nodes.js';
-
-// utils
-// import { createRGBDataTexture } from './utils/dataTextureCreator.js';
-// import { mapCoordinates } from './utils/coordinatesMapper.js';
 import { mapTrianglesArrayToTexturizedArray } from './utils/triangleMapper.js';
 import { shuffleArray, sortTrianglesByBVHInorderIndices, sortTrianglesByDistanceToCamera } from './utils/triangleSorter.js';
 import uploadTexture from './utils/textureUploader.js';
@@ -87,32 +81,9 @@ switch (sceneNumber) {
 
 
 try {
-  console.log("b4 loading");
+  // console.log("b4 loading");
   model = await loadModel(
-
-
     scenePath
-
-    // '/resources/scene_1/scene_1.gltf'
-    // '/resources/scene_2/scene_2.gltf'
-    // '/resources/my_cornell_2/gltf/my_cornell_2.gltf'
-    // '/resources/my_cornell_7/gltf/my_cornell_7.gltf'
-    // '/resources/my_cornell_8/gltf/my_cornell_8.gltf'
-    // // '/resources/bedroom2/gltf/v3/bedroom2.gltf'
-    // '/resources/bedroom2/gltf/v5/bedroom2_v5.gltf'
-    // '/resources/pixar_room/v1/pixar-room.gltf'
-    // '/resources/pixar_room/v7/pixar-room-7.gltf'
-    // '/resources/pixar_room/v8/pixar-room-8.gltf'
-    // '/resources/pixar_room/v9/pixar-room-9.gltf'
-    // '/resources/pixar_room/v6/pixar-room-6.gltf'
-
-    // '/resources/my_cornell_6/gltf/my_cornell_6.gltf'
-
-    // '/resources/bedroom1/customGLTF/bedroom1.gltf'
-    // '/resources/bedroom2/gltf/bedroom2.gltf'
-    // '/resources/my_cornell_3/gltf/my_cornell_3.gltf'
-    // // // // // // '/resources/my_cornell_4/gltf/my_cornell_4.gltf'
-    // '/resources/cornell2/gltf/scene.gltf'
   );
 
 
@@ -122,26 +93,7 @@ try {
 }
 
 
-// scene.updateMatrixWorld(true);
-
-
-
-
-// const canvas = document.getElementById('webgl-canvas');
 const canvas = document.createElement('canvas');
-// canvas.height = canvasSize * 0.8;
-// canvas.width = canvasSize * 1;
-
-// canvas.height = canvasSize * 1;
-// canvas.width = canvasSize * 0.8;
-
-/* // Turn off automatic recovery
-canvas.set
-
-// Restore the context when the mouse is clicked.
-window.addEventListener("mousedown", function () {
-  canvas.restoreContext();
-}); */
 
 const gl = canvas.getContext('webgl2');
 
@@ -162,73 +114,13 @@ gl.canvas.height = height;
 
 let cameraInstance = new Camera(50, width / height, 0.1, 1000);
 
-// room v3
-// cameraInstance.translate('x', 14)
-// cameraInstance.translate('z', -14)
-// cameraInstance.translate('y', 3)
-// cameraInstance.lookAt(0, 0, 0);
-
-
-//cornell room
-// cameraInstance.translate('x', 12.4)
-// // // // cameraInstance.translate('z', 6)
-// // // // cameraInstance.rotate('y', PI_NUMBER / 2);
-// cameraInstance.lookAt(0, 0, 0);
-
-
-//pixar room
-/* cameraInstance.translate('x', 2*0.8);
-cameraInstance.translate('z', 4*0.8);
-cameraInstance.translate('y', 1*0.8);
-cameraInstance.lookAt(0, -3, -4); */
-/* cameraInstance.translate('x', 2);
-cameraInstance.translate('z', 4);
-cameraInstance.translate('y', 1);
-cameraInstance.lookAt(0, -3, -4); */
-
-// lo mas parecido posible a como esta en blender
-// cameraInstance.translate('x', 3);
-// cameraInstance.translate('z', 4);
-// cameraInstance.translate('y', 1.3);
-// cameraInstance.lookAt(0, 0, 0);
-// cameraInstance.lookAt(1, -1, -1);
-// cameraInstance.lookAt(1, -2, -3);
-// cameraInstance.lookAt(0, 100, -4);
-
-
-
-//testing
-// cameraInstance.translate('x', 4 * 0.9);
-// cameraInstance.translate('y', 3 * 0.3);
-// cameraInstance.translate('z', 4.5 * 0.8);
-// cameraInstance.lookAt(0.5, -2, -2.5);
-// cameraInstance.lookAt(0.5, -2.2, -2.5);
-// cameraInstance.lookAt(0, 0, 0);
-
-
-
-// teapot
-//angle 1
-/* cameraInstance.translate('x', 1.2);
-cameraInstance.translate('y', -2);
-cameraInstance.translate('z', -2.4);
-cameraInstance.lookAt(1.1909498999602326, -2.7629803217301294, -3.220145704258792); */
-
-// angle 2
-/* cameraInstance.translate('x', 1.2);
-cameraInstance.translate('y', -2.5629);
-cameraInstance.translate('z', -2.4);
-cameraInstance.lookAt(1.1909498999602326, -2.7629803217301294, -3.220145704258792); */
-
-
-
-// cameraInstance.translate('z', 8);
-// cameraInstance.lookAt(0, 0, 0);
 
 switch (sceneNumber) {
   case 1:
     cameraInstance.translate('x', 12.4)
     cameraInstance.lookAt(0, 0, 0);
+    SLEEP_TIME_BETWEEN_FRAMES = 20;
+    SLEEP_TIME_BETWEEN_QUADS = 20;
     break;
   case 2:
     cameraInstance.lookAt(0, 0, 0);
@@ -236,12 +128,16 @@ switch (sceneNumber) {
     cameraInstance.translate('y', 3 * 0.3);
     cameraInstance.translate('z', 4.5 * 0.8);
     cameraInstance.lookAt(0.5, -2.2, -2.5);
+    SLEEP_TIME_BETWEEN_FRAMES = 300;
+    SLEEP_TIME_BETWEEN_QUADS = 300;
     break;
   case 3:
     cameraInstance.translate('x', 14)
     cameraInstance.translate('z', -14)
     cameraInstance.translate('y', 3)
     cameraInstance.lookAt(0, 0, 0);
+    SLEEP_TIME_BETWEEN_FRAMES = 8;
+    SLEEP_TIME_BETWEEN_QUADS = 8;
     break;
   default: break;
 }
@@ -252,9 +148,12 @@ let camera = cameraInstance.getCamera();
 
 
 let bvh = new BVH(trianglesArray);
-console.log("🚀 ~ bvh:", bvh)
+// console.log("🚀 ~ bvh:", bvh)
 newPropertiesArray = mapTrianglesArrayToTexturizedArray(trianglesArray);
 console.log("🚀 ~ newPropertiesArray:", newPropertiesArray)
+
+console.log("🚀 ~ coordinates.length", newPropertiesArray.coordinates.length / 3)
+console.log("🚀 ~ lights count", newPropertiesArray.lightIndices.length / 3)
 
 let texturizableTreeProperties = bvh.convertToTexturizableArrays();
 // console.log("🚀 ~ texturizableTreeProperties:", texturizableTreeProperties)
@@ -506,7 +405,7 @@ fps: ${fps}`);
 
     previousTime = endTime;
 
-    await sleep(SLEEP_TIME);
+    await sleep(SLEEP_TIME_BETWEEN_FRAMES);
     // stats.end();
 
   }
@@ -518,8 +417,11 @@ fps: ${fps}`);
 
 }
 
-await renderAsync(frames);
 
+
+document.querySelector("#startButton").addEventListener("click", async () => {
+  await renderAsync(frames);
+})
 
 
 // -------------------------------------------------------------------------------------
@@ -628,9 +530,9 @@ async function loadModel(url) {
       function (model) {
         var materialModelColor;
         //var obj = model;//.scene;
-        console.log("🚀 ~ returnnewPromise ~ model:", model)
+        // console.log("🚀 ~ returnnewPromise ~ model:", model)
         var obj = model.scene;
-        console.log("🚀 ~ returnnewPromise ~ obj:", obj)
+        // console.log("🚀 ~ returnnewPromise ~ obj:", obj)
         obj.updateMatrixWorld(true);
 
         const boundingBox = new THREE.Box3().setFromObject(obj);
@@ -667,15 +569,15 @@ async function loadModel(url) {
 
           // Check if the child is a Mesh and has a material
           if (child instanceof THREE.Mesh) {
-            console.log("-------------------------------------------------------------------------------")
-            console.log("🌸 ~ child:", child)
+            // console.log("-------------------------------------------------------------------------------")
+            // console.log("🌸 ~ child:", child)
             // console.log("🌸 ~ child:", child.material)
 
             // getCenterPoint(child);
             // console.log("🚀 ~ getCenterPoint(child):", getCenterPoint(child))
 
 
-            console.log(child.name);
+            // console.log(child.name);
             const geometry = child.geometry;
 
             // Ensure the geometry is not indexed, for simplicity
@@ -717,6 +619,7 @@ async function loadModel(url) {
 
 
             }
+
 
             // console.log("🚀 ~ mappedTrianglesArray:", mappedTrianglesArray)
 
@@ -774,13 +677,9 @@ async function loadModel(url) {
         });
 
         // console.log("🌸 ~ coordinates.length:", coordinates.length)
-
-        console.log("🚀 ~ triangle Count:", trianglesArray.length)
-
-        // armar arreglo de indices de triangulos de luces
-        for (let i = 0; i < emissions.length; i = i + 3) {
-          if (trianglesArray[i].emission.r > 0.0 || trianglesArray[i].emission.r > 0.0 || trianglesArray[i].emission.r > 0.0) {
-            lightIndices.push(...[i / 3, i / 3, i / 3]);
+        for (let i = 0; i < trianglesArray.length; i++) {
+          if (trianglesArray[i].emission.r > 0.0 || trianglesArray[i].emission.g > 0.0 || trianglesArray[i].emission.b > 0.0) {
+            lightIndices.push(...[i, i, i]);
           }
         }
 
