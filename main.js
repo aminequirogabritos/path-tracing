@@ -8,7 +8,7 @@ let initialSleepTime = 300;  // Initial estimate, can be adjusted based on your 
 let targetQuadTime = 1000; // Target frame time in milliseconds 
 let cooldownMultiplier = 1.0; // Multiplier to control dynamic adjustments
 
-const frames = 30
+const frames = 10
 const maxPathLength = 5
 const sampleCount = 5
 const canvasSize = 512
@@ -16,7 +16,7 @@ const quadSize = 32
 
 const saveFrame = 0
 
-const sceneNumber = 1
+const sceneNumber = 2
 
 const urlSave = "/scene_2/";
 const fileNameSuffix = `scene_${sceneNumber}_${frames}frames_${maxPathLength}bounces_${sampleCount}samples_${canvasSize}px`
@@ -119,8 +119,8 @@ switch (sceneNumber) {
   case 1:
     cameraInstance.translate('x', 12.4)
     cameraInstance.lookAt(0, 0, 0);
-    SLEEP_TIME_BETWEEN_FRAMES = 20;
-    SLEEP_TIME_BETWEEN_QUADS = 20;
+    SLEEP_TIME_BETWEEN_FRAMES = 30;
+    SLEEP_TIME_BETWEEN_QUADS = 30;
     break;
   case 2:
     cameraInstance.lookAt(0, 0, 0);
@@ -128,16 +128,16 @@ switch (sceneNumber) {
     cameraInstance.translate('y', 3 * 0.3);
     cameraInstance.translate('z', 4.5 * 0.8);
     cameraInstance.lookAt(0.5, -2.2, -2.5);
-    SLEEP_TIME_BETWEEN_FRAMES = 300;
-    SLEEP_TIME_BETWEEN_QUADS = 300;
+    SLEEP_TIME_BETWEEN_FRAMES = 800;
+    SLEEP_TIME_BETWEEN_QUADS = 800;
     break;
   case 3:
     cameraInstance.translate('x', 14)
     cameraInstance.translate('z', -14)
     cameraInstance.translate('y', 3)
     cameraInstance.lookAt(0, 0, 0);
-    SLEEP_TIME_BETWEEN_FRAMES = 8;
-    SLEEP_TIME_BETWEEN_QUADS = 8;
+    SLEEP_TIME_BETWEEN_FRAMES = 10;
+    SLEEP_TIME_BETWEEN_QUADS = 10;
     break;
   default: break;
 }
