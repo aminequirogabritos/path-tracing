@@ -16,7 +16,7 @@ const quadSize = 32
 
 const saveFrame = 0
 
-const sceneNumber = 2
+const sceneNumber = 1
 
 const urlSave = "/scene_2/";
 const fileNameSuffix = `scene_${sceneNumber}_${frames}frames_${maxPathLength}bounces_${sampleCount}samples_${canvasSize}px`
