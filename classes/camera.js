@@ -56,7 +56,7 @@ class Camera {
 
     update = () => {
 
-        console.log('Camera.update - start');
+        // console.log('Camera.update - start');
 
         // console.log('camera', this.camera)
 
@@ -82,7 +82,7 @@ class Camera {
         // console.log("🚀 ~ cameraLeftBottom:", this.camera.cameraLeftBottom)
         // (?) cameraLeftBottom.x += -0.5; // esta escala se hace para que el plano "near" no esté tan pegado a la cámara
 
-        console.log('Camera.update - end');
+        // console.log('Camera.update - end');
     };
     
     getCamera() {

@@ -41,14 +41,23 @@ export function mapTexturizedArraysToTriangles(coordinates) {
 };
 
 export function mapTrianglesArrayToTexturizedArray(trianglesArray) {
-    const emissionConstant = 50;
+    const emissionConstant = 1;
     let coordinates = [];
     let normals = [];
     let colors = [];
     let emissions = [];
     let lightIndices = [];
+    let iors = [];
+    let metallics = [];
+    let roughnesses = [];
+    let speculars = [];
+    let transmissions = [];
 
     trianglesArray.forEach((triangle, triangleIndex) => {
+/* 
+        if (triangle.metallic > 0)
+            console.log("🚀 ~ trianglesArray.forEach ~ triangle:", triangle) */
+
 
         coordinates.push(...[
             triangle.triangle.a.x, triangle.triangle.a.y, triangle.triangle.a.z,
@@ -56,12 +65,19 @@ export function mapTrianglesArrayToTexturizedArray(trianglesArray) {
             triangle.triangle.c.x, triangle.triangle.c.y, triangle.triangle.c.z,
         ]);
         normals.push(...[triangle.normal.x, triangle.normal.y, triangle.normal.z]);
+
+        // material properties
         colors.push(...[triangle.color.r, triangle.color.g, triangle.color.b]);
         emissions.push(...[triangle.emission.r * emissionConstant, triangle.emission.g * emissionConstant, triangle.emission.b * emissionConstant]);
-
-        if (triangle.emission.r > 0 || triangle.emission.g > 0 || triangle.emission.b > 0){
+        if (triangle.emission.r > 0 || triangle.emission.g > 0 || triangle.emission.b > 0) {
             lightIndices.push(...[triangleIndex, triangleIndex, triangleIndex]);
         }
+        iors.push(...[triangle.ior, triangle.ior, triangle.ior]);
+        metallics.push(...[triangle.metallic, triangle.metallic, triangle.metallic]);
+        roughnesses.push(...[triangle.roughness, triangle.roughness, triangle.roughness]);
+        speculars.push(...[triangle.specular, triangle.specular, triangle.specular]);
+        transmissions.push(...[triangle.transmission, triangle.transmission, triangle.transmission]);
+
 
     });
 
@@ -75,6 +91,11 @@ export function mapTrianglesArrayToTexturizedArray(trianglesArray) {
         colors,
         emissions,
         lightIndices,
+        iors,
+        metallics,
+        roughnesses,
+        speculars,
+        transmissions,
     }
 }
 

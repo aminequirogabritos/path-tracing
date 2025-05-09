@@ -1,40 +1,36 @@
-const PI_NUMBER = 3.14159265359;
-const SLEEP_TIME = 200;
-const SLEEP_TIME_BETWEEN_QUADS = 200;
+const PI_NUMBER = 3.300;
+let SLEEP_TIME_BETWEEN_FRAMES;// = 8;
+let SLEEP_TIME_BETWEEN_QUADS;//= 8;
+const MIN_SLEEP_TIME = 300;
 const MAX_TEX_WIDTH = 4096;
 
+let initialSleepTime = 300;  // Initial estimate, can be adjusted based on your GPU
+let targetQuadTime = 1000; // Target frame time in milliseconds 
+let cooldownMultiplier = 1.0; // Multiplier to control dynamic adjustments
 
-const frames = 5;
-const maxPathLength = 5;
-const sampleCount = 5;
-const canvasSize = 256;
-const quadSize = 32;
-const urlSave = "image/png/v1";
-const fileNameSuffix = `v13_cornell6_BVH_${frames}frames_${maxPathLength}bounces_${sampleCount}samples_${512}px`
+const frames = 10
+const maxPathLength = 5
+const sampleCount = 5
+const canvasSize = 512
+const quadSize = 32
 
-const saveFrame = false;
+const saveFrame = 0
+
+const sceneNumber = 3
+
+const fileNameSuffix = `scene_${sceneNumber}_${frames}frames_${maxPathLength}bounces_${sampleCount}samples_${canvasSize}px`
 
 // ------------------------------------------------------------------
 
 import * as THREE from 'three';
 import Stats from 'three/examples/jsm/libs/stats.module.js';
-//import { ObjectLoader } from 'three/addons/loaders/GLTFLoader.js';
-// import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
-// import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import * as BufferGeometryUtils from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 
 // Load vertex and fragment shaders
 import vertexShaderPathTracing from './shaders/vertexShader.glsl';
 import vertexShaderOutput from './shaders/vertexShader.glsl';
 import fragmentShaderPathTracing from './shaders/fragmentShaderPathTracing.glsl';
 import fragmentShaderOutput from './shaders/fragmentShaderOutput.glsl';
-// import { texture } from 'three/examples/jsm/nodes/Nodes.js';
-// import { PI, floor } from 'three/examples/jsm/nodes/Nodes.js';
-
-// utils
-// import { createRGBDataTexture } from './utils/dataTextureCreator.js';
-// import { mapCoordinates } from './utils/coordinatesMapper.js';
 import { mapTrianglesArrayToTexturizedArray } from './utils/triangleMapper.js';
 import { shuffleArray, sortTrianglesByBVHInorderIndices, sortTrianglesByDistanceToCamera } from './utils/triangleSorter.js';
 import uploadTexture from './utils/textureUploader.js';
@@ -73,52 +69,30 @@ let vertexCount = 0;
 
 let model, scene;
 
+let scenePath;
+
+switch (sceneNumber) {
+  case 1: scenePath = '/resources/scene_1/scene_1.gltf'; break;
+  case 2: scenePath = '/resources/scene_2/scene_2.gltf'; break;
+  case 3: scenePath = '/resources/scene_3/scene_3.gltf'; break;
+  default: scenePath = '/resources/scene_1/scene_1.gltf'; break;
+}
+
+
 try {
-  console.log("b4 loading");
+  // console.log("b4 loading");
   model = await loadModel(
-    // '/resources/my_cornell_2/gltf/my_cornell_2.gltf'
-    // '/resources/bedroom2/gltf/v3/bedroom2.gltf'
-    // '/resources/bedroom2/gltf/v5/bedroom2_v5.gltf'
-    '/resources/pixar_room/v1/pixar-room.gltf'
-    // '/resources/pixar_room/v3/pixar-room-3.gltf'
-    // '/resources/my_cornell_6/gltf/my_cornell_6.gltf'
-    // '/resources/bedroom1/customGLTF/bedroom1.gltf'
-    // '/resources/bedroom2/gltf/bedroom2.gltf'
-    // '/resources/my_cornell_3/gltf/my_cornell_3.gltf'
-    // '/resources/my_cornell_4/gltf/my_cornell_4.gltf'
-    // '/resources/cornell2/gltf/scene.gltf'
+    scenePath
   );
 
-  console.log("😀 ~ model:", model)
 
   scene = model.scene;
-  console.log("🌸 ~ scene:", scene)
 } catch (e) {
   console.log(e);
 }
-// console.log("🚀 ~ triangleCount:", triangleCount)
 
 
-// scene.updateMatrixWorld(true);
-
-
-
-
-// const canvas = document.getElementById('webgl-canvas');
 const canvas = document.createElement('canvas');
-// canvas.height = canvasSize * 0.8;
-// canvas.width = canvasSize * 1;
-
-// canvas.height = canvasSize * 1;
-// canvas.width = canvasSize * 0.8;
-
-/* // Turn off automatic recovery
-canvas.set
-
-// Restore the context when the mouse is clicked.
-window.addEventListener("mousedown", function () {
-  canvas.restoreContext();
-}); */
 
 const gl = canvas.getContext('webgl2');
 
@@ -127,10 +101,6 @@ if (!gl) {
 }
 
 const maxTextureSize = gl.getParameter(gl.MAX_TEXTURE_SIZE);
-console.log("🚀 ~ maxTextureSize:", maxTextureSize)
-console.log('Max Fragment Shader Texture Units:', gl.getParameter(gl.MAX_TEXTURE_IMAGE_UNITS));
-console.log('Max Vertex Shader Texture Units:', gl.getParameter(gl.MAX_VERTEX_TEXTURE_IMAGE_UNITS));
-console.log('Max Combined Texture Units:', gl.getParameter(gl.MAX_COMBINED_TEXTURE_IMAGE_UNITS));
 
 canvas.height = canvasSize;
 canvas.width = canvasSize;
@@ -143,34 +113,33 @@ gl.canvas.height = height;
 
 let cameraInstance = new Camera(50, width / height, 0.1, 1000);
 
-// room v3
-// cameraInstance.translate('x', 14)
-// cameraInstance.translate('z', -14)
-// cameraInstance.translate('y', 3)
 
-
-//cornell room
-// cameraInstance.translate('x', 12.4)
-// cameraInstance.rotate('y', PI_NUMBER / 2);
-
-
-//pixar room
-// cameraInstance.translate('x', 2);
-// cameraInstance.translate('z', 4);
-// cameraInstance.translate('y', 2);
-// cameraInstance.lookAt(0, -2, -4);
-
-// teapot
-cameraInstance.translate('x', 1);
-// cameraInstance.translate('z', 4);
-cameraInstance.translate('y', -1);
-cameraInstance.lookAt(2, -10, -12);
-
-
-
-// cameraInstance.lookAt(0, 0, 0);
-
-
+switch (sceneNumber) {
+  case 1:
+    cameraInstance.translate('x', 12.4)
+    cameraInstance.lookAt(0, 0, 0);
+    SLEEP_TIME_BETWEEN_FRAMES = 30;
+    SLEEP_TIME_BETWEEN_QUADS = 30;
+    break;
+  case 2:
+    cameraInstance.lookAt(0, 0, 0);
+    cameraInstance.translate('x', 4 * 0.9);
+    cameraInstance.translate('y', 3 * 0.3);
+    cameraInstance.translate('z', 4.5 * 0.8);
+    cameraInstance.lookAt(0.5, -2.2, -2.5);
+    SLEEP_TIME_BETWEEN_FRAMES = 800;
+    SLEEP_TIME_BETWEEN_QUADS = 800;
+    break;
+  case 3:
+    cameraInstance.translate('x', 14)
+    cameraInstance.translate('z', -14)
+    cameraInstance.translate('y', 3)
+    cameraInstance.lookAt(0, 0, 0);
+    SLEEP_TIME_BETWEEN_FRAMES = 10;
+    SLEEP_TIME_BETWEEN_QUADS = 10;
+    break;
+  default: break;
+}
 
 
 let camera = cameraInstance.getCamera();
@@ -178,8 +147,12 @@ let camera = cameraInstance.getCamera();
 
 
 let bvh = new BVH(trianglesArray);
-console.log("🚀 ~ bvh:", bvh)
+// console.log("🚀 ~ bvh:", bvh)
 newPropertiesArray = mapTrianglesArrayToTexturizedArray(trianglesArray);
+console.log("🚀 ~ newPropertiesArray:", newPropertiesArray)
+
+console.log("🚀 ~ coordinates.length", newPropertiesArray.coordinates.length / 3)
+console.log("🚀 ~ lights count", newPropertiesArray.lightIndices.length / 3)
 
 let texturizableTreeProperties = bvh.convertToTexturizableArrays();
 // console.log("🚀 ~ texturizableTreeProperties:", texturizableTreeProperties)
@@ -274,6 +247,11 @@ async function render(now, frameNumber) {
   uploadTexture(gl, programPathTracing, newPropertiesArray.colors, 'colorsTexture', TextureIndex.getNextTextureIndex());
   uploadTexture(gl, programPathTracing, newPropertiesArray.emissions, 'emissionsTexture', TextureIndex.getNextTextureIndex());
   uploadTexture(gl, programPathTracing, newPropertiesArray.lightIndices, 'lightIndicesTexture', TextureIndex.getNextTextureIndex());
+  uploadTexture(gl, programPathTracing, newPropertiesArray.iors, 'iorsTexture', TextureIndex.getNextTextureIndex());
+  uploadTexture(gl, programPathTracing, newPropertiesArray.metallics, 'metallicsTexture', TextureIndex.getNextTextureIndex());
+  uploadTexture(gl, programPathTracing, newPropertiesArray.roughnesses, 'roughnessesTexture', TextureIndex.getNextTextureIndex());
+  uploadTexture(gl, programPathTracing, newPropertiesArray.speculars, 'specularsTexture', TextureIndex.getNextTextureIndex());
+  uploadTexture(gl, programPathTracing, newPropertiesArray.transmissions, 'transmissionsTexture', TextureIndex.getNextTextureIndex());
   uploadTexture(gl, programPathTracing, texturizableTreeProperties.nodesBoundingBoxesMins, 'nodesBoundingBoxesMins', TextureIndex.getNextTextureIndex());
   uploadTexture(gl, programPathTracing, texturizableTreeProperties.nodesBoundingBoxesMaxs, 'nodesBoundingBoxesMaxs', TextureIndex.getNextTextureIndex());
   uploadTexture(gl, programPathTracing, texturizableTreeProperties.nodesMissLinkIndices, 'nodesMissLinkIndices', TextureIndex.getNextTextureIndex());
@@ -303,7 +281,7 @@ async function render(now, frameNumber) {
   gl.uniform1i(gl.getUniformLocation(programPathTracing, 'frameNumber'), frameNumber);
   gl.uniform1i(gl.getUniformLocation(programPathTracing, 'totalFrames'), frames);
   gl.uniform1i(gl.getUniformLocation(programPathTracing, 'bvhNodeCount'), bvh.nodeCount);
-  gl.uniform1i(gl.getUniformLocation(programPathTracing, 'maxTextureSize'), MAX_TEX_WIDTH /* maxTextureSize */);
+  gl.uniform1i(gl.getUniformLocation(programPathTracing, 'maxTextureSize'), maxTextureSize);
 
   gl.uniform1i(gl.getUniformLocation(programPathTracing, 'quadSize'), quadSize);
 
@@ -367,6 +345,9 @@ async function render(now, frameNumber) {
   gl.bindTexture(gl.TEXTURE_2D, simpleTexture);
   gl.uniform1i(simpleTextureLocation, BufferManager.getTextureIndex(frameNumber));
 
+  gl.uniform2f(gl.getUniformLocation(programOutput, 'windowSize'), width, height);
+
+
   gl.viewport(0, 0, width, height);
   gl.clear(gl.COLOR_BUFFER_BIT);
   gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
@@ -423,7 +404,7 @@ fps: ${fps}`);
 
     previousTime = endTime;
 
-    await sleep(SLEEP_TIME);
+    await sleep(SLEEP_TIME_BETWEEN_FRAMES);
     // stats.end();
 
   }
@@ -435,8 +416,11 @@ fps: ${fps}`);
 
 }
 
-await renderAsync(frames);
 
+
+document.querySelector("#startButton").addEventListener("click", async () => {
+  await renderAsync(frames);
+})
 
 
 // -------------------------------------------------------------------------------------
@@ -545,9 +529,9 @@ async function loadModel(url) {
       function (model) {
         var materialModelColor;
         //var obj = model;//.scene;
-        console.log("🚀 ~ returnnewPromise ~ model:", model)
+        // console.log("🚀 ~ returnnewPromise ~ model:", model)
         var obj = model.scene;
-        console.log("🚀 ~ returnnewPromise ~ obj:", obj)
+        // console.log("🚀 ~ returnnewPromise ~ obj:", obj)
         obj.updateMatrixWorld(true);
 
         const boundingBox = new THREE.Box3().setFromObject(obj);
@@ -586,6 +570,11 @@ async function loadModel(url) {
           if (child instanceof THREE.Mesh) {
             // console.log("-------------------------------------------------------------------------------")
             // console.log("🌸 ~ child:", child)
+            // console.log("🌸 ~ child:", child.material)
+
+            // getCenterPoint(child);
+            // console.log("🚀 ~ getCenterPoint(child):", getCenterPoint(child))
+
 
             // console.log(child.name);
             const geometry = child.geometry;
@@ -630,6 +619,7 @@ async function loadModel(url) {
 
             }
 
+
             // console.log("🚀 ~ mappedTrianglesArray:", mappedTrianglesArray)
 
             //  push the array of mapped coordinates of the mesh into coordinates
@@ -659,16 +649,23 @@ async function loadModel(url) {
               // get triangle's color
               const color = child.material.color;
               mappedTrianglesArray[i].color = color;
-              /* if (color) {
-                colors.push(...[color.r, color.g, color.b]); //TODO: opacidad?
-              } */
 
 
-              const emission = child.material.emissive;
-              mappedTrianglesArray[i].emission = emission;
+              const emission = new THREE.Color(
+                child.material.emissive.r * child.material.emissiveIntensity,
+                child.material.emissive.g * child.material.emissiveIntensity,
+                child.material.emissive.b * child.material.emissiveIntensity
+              )
+              mappedTrianglesArray[i].emission = emission /// new THREE.Vector3(2.0);
               // console.log("🚀 ~ emission:", emission)
               // emissions.push(...[emission.r * 50, emission.g * 50, emission.b * 50]);
               // emissions.push(...[emission.r, emission.g, emission.b]);
+
+              mappedTrianglesArray[i].ior = child.material.ior || 1.5;
+              mappedTrianglesArray[i].metallic = /* 0.0;// */child.material.metalness || 0.0;
+              mappedTrianglesArray[i].roughness = /* 1;// */ /* child.material.roughness || 1.0;*/(child.material.roughness < 0.03 ? 0.03 : child.material.roughness);
+              mappedTrianglesArray[i].specular = /* 0;// */child.material.specularIntensity || 0.0;
+              mappedTrianglesArray[i].transmission = /* 0;// */child.material._transmission || 0.0;
 
 
             }
@@ -679,15 +676,9 @@ async function loadModel(url) {
         });
 
         // console.log("🌸 ~ coordinates.length:", coordinates.length)
-
-        console.log("🚀 ~ triangle Count:", trianglesArray.length)
-
-        // armar arreglo de indices de triangulos de luces
-        for (let i = 0; i < emissions.length; i = i + 3) {
-          if (trianglesArray[i].emission.r > 0.0 || trianglesArray[i].emission.r > 0.0 || trianglesArray[i].emission.r > 0.0) {
-            lightIndices.push(i / 3);
-            lightIndices.push(i / 3);
-            lightIndices.push(i / 3);
+        for (let i = 0; i < trianglesArray.length; i++) {
+          if (trianglesArray[i].emission.r > 0.0 || trianglesArray[i].emission.g > 0.0 || trianglesArray[i].emission.b > 0.0) {
+            lightIndices.push(...[i, i, i]);
           }
         }
 
@@ -737,4 +728,19 @@ function createFramebuffer(gl, width, height) {
   gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0);
 
   return { framebuffer, texture };
+}
+
+
+function getCenterPoint(mesh) {
+  var middle = new THREE.Vector3();
+  var geometry = mesh.geometry;
+
+  geometry.computeBoundingBox();
+
+  middle.x = (geometry.boundingBox.max.x + geometry.boundingBox.min.x) / 2;
+  middle.y = (geometry.boundingBox.max.y + geometry.boundingBox.min.y) / 2;
+  middle.z = (geometry.boundingBox.max.z + geometry.boundingBox.min.z) / 2;
+
+  mesh.localToWorld(middle);
+  return middle;
 }
