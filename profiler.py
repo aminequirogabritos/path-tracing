@@ -1,12 +1,27 @@
-import csv, time
+import csv, time, argparse
 from pynvml import *
 
-sleep_time = 0.266
+import os
+import ctypes
+
+# Force-load nvml.dll manually
+nvml_path = r"C:\Windows\System32\\nvml.dll"
+ctypes.WinDLL(nvml_path)
 
 nvmlInit()
+
+# Parse arguments
+parser = argparse.ArgumentParser(description="GPU Logger")
+parser.add_argument("--scene", type=str, required=True, help="Scene name (used for CSV filename)")
+parser.add_argument("--interval", type=float, default=0.266, help="Sleep time between samples (in seconds)")
+args = parser.parse_args()
+
+sleep_time = args.interval
+filename = f"{args.scene}.csv"
+
 handle = nvmlDeviceGetHandleByIndex(0)
 
-with open('scene_1.csv', 'w', newline='') as f:
+with open(filename, 'w', newline='') as f:
     writer = csv.writer(f)
     writer.writerow(['Time', 'GPU Util (%)', 'Memory Used (MB)', 'Temp (C)'])
 
@@ -22,5 +37,3 @@ with open('scene_1.csv', 'w', newline='') as f:
     except KeyboardInterrupt:
         print("Logging stopped.")
         nvmlShutdown()
-
-
