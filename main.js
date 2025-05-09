@@ -16,7 +16,7 @@ const quadSize = 32
 
 const saveFrame = 0
 
-const sceneNumber = 3
+const sceneNumber = 2
 
 const fileNameSuffix = `scene_${sceneNumber}_${frames}frames_${maxPathLength}bounces_${sampleCount}samples_${canvasSize}px`
 
@@ -127,8 +127,8 @@ switch (sceneNumber) {
     cameraInstance.translate('y', 3 * 0.3);
     cameraInstance.translate('z', 4.5 * 0.8);
     cameraInstance.lookAt(0.5, -2.2, -2.5);
-    SLEEP_TIME_BETWEEN_FRAMES = 800;
-    SLEEP_TIME_BETWEEN_QUADS = 800;
+    SLEEP_TIME_BETWEEN_FRAMES = 400;
+    SLEEP_TIME_BETWEEN_QUADS = 400;
     break;
   case 3:
     cameraInstance.translate('x', 14)

@@ -26,6 +26,7 @@ with open(filename, 'w', newline='') as f:
     writer.writerow(['Time', 'GPU Util (%)', 'Memory Used (MB)', 'Temp (C)'])
 
     try:
+        print("Logging started for ", filename)
         while True:
             util = nvmlDeviceGetUtilizationRates(handle)
             mem = nvmlDeviceGetMemoryInfo(handle)

@@ -16,7 +16,6 @@ struct Triangle {
   vec3 normal;
   vec3 color;
   vec3 emission;
-  float ior;
   float metallic;
   float roughness;
   float specular;
@@ -36,7 +35,6 @@ uniform sampler2D normalsTexture;
 uniform sampler2D colorsTexture;
 uniform sampler2D emissionsTexture;
 uniform sampler2D lightIndicesTexture;
-uniform sampler2D iorsTexture;
 uniform sampler2D metallicsTexture;
 uniform sampler2D roughnessesTexture;
 uniform sampler2D specularsTexture;
@@ -121,7 +119,6 @@ Triangle getTriangleFromTextures(int index) {
   triangle.normal = texelFetch(normalsTexture, texCoord, 0).xyz;
   triangle.color = texelFetch(colorsTexture, texCoord, 0).xyz;
   triangle.emission = texelFetch(emissionsTexture, texCoord, 0).xyz;
-  triangle.ior = texelFetch(iorsTexture, texCoord, 0).x;
   triangle.metallic = texelFetch(metallicsTexture, texCoord, 0).x;
   triangle.roughness = texelFetch(roughnessesTexture, texCoord, 0).x;
   triangle.specular = texelFetch(specularsTexture, texCoord, 0).x;
