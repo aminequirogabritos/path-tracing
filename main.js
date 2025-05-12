@@ -10,11 +10,11 @@ const quadSize = 32
 
 const saveFrame = 0
 
-const sceneNumber = 3
+const sceneNumber = 2
 
-const scene1Cooldown =16;
-const scene2Cooldown = 300;
-const scene3Cooldown = 5;
+const scene1Cooldown =30;
+const scene2Cooldown = 400;
+const scene3Cooldown = 10;
 
 const fileNameSuffix = `scene_${sceneNumber}_${frames}frames_${maxPathLength}bounces_${sampleCount}samples_${canvasSize}px`
 
