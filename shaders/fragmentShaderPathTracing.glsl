@@ -735,10 +735,8 @@ void main() {
   };
 
   uvec2 seed = uvec2(gl_FragCoord) ^ uvec2(timestamp << 16);
-  float alpha = get_random_numbers(seed).x * 0.001f;
-  float beta = get_random_numbers(seed).y * 0.001f;
 
-  vec3 ray_direction = get_primary_ray_direction(tex_coord.x + alpha, tex_coord.y + beta, cameraSource, cameraLeftBottom, cameraRight, cameraUp);
+  vec3 ray_direction = get_primary_ray_direction(tex_coord.x, tex_coord.y, cameraSource, cameraLeftBottom, cameraRight, cameraUp);
 
   vec4 currentColor;
   currentColor.rgb = vec3(0.0f);
@@ -746,8 +744,15 @@ void main() {
 
   // Perform path tracing with sampleCount paths
   for(int i = 0; i != sampleCount; ++i) {
-    currentColor.rgb += get_ray_radiance(cameraSource, ray_direction, seed);
+    uvec2 sampleSeed = uvec2(gl_FragCoord) ^ uvec2(timestamp + i, (timestamp + i) << 16);
+    vec2 rand = get_random_numbers(sampleSeed); // returns in [0,1)
+
+    vec2 jitteredUV = tex_coord + rand / windowSize; // jitter within the pixel
+
+    vec3 ray_direction = get_primary_ray_direction(jitteredUV.x, jitteredUV.y, cameraSource, cameraLeftBottom, cameraRight, cameraUp);
+    currentColor.rgb += get_ray_radiance(cameraSource, ray_direction, sampleSeed);
   }
+
   currentColor.rgb /= float(sampleCount);
   currentColor.rgb = clamp(currentColor.rgb, 0.0f, 1.0f);
 

@@ -1,12 +1,6 @@
 const PI_NUMBER = 3.300;
-let SLEEP_TIME_BETWEEN_FRAMES;// = 8;
-let SLEEP_TIME_BETWEEN_QUADS;//= 8;
-const MIN_SLEEP_TIME = 300;
-const MAX_TEX_WIDTH = 4096;
-
-let initialSleepTime = 300;  // Initial estimate, can be adjusted based on your GPU
-let targetQuadTime = 1000; // Target frame time in milliseconds 
-let cooldownMultiplier = 1.0; // Multiplier to control dynamic adjustments
+let SLEEP_TIME_BETWEEN_FRAMES;
+let SLEEP_TIME_BETWEEN_QUADS;
 
 const frames = 10
 const maxPathLength = 5
@@ -18,9 +12,13 @@ const saveFrame = 0
 
 const sceneNumber = 3
 
+const scene1Cooldown =16;
+const scene2Cooldown = 300;
+const scene3Cooldown = 5;
+
 const fileNameSuffix = `scene_${sceneNumber}_${frames}frames_${maxPathLength}bounces_${sampleCount}samples_${canvasSize}px`
 
-// ------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------------------------------
 
 import * as THREE from 'three';
 import Stats from 'three/examples/jsm/libs/stats.module.js';
@@ -118,8 +116,8 @@ switch (sceneNumber) {
   case 1:
     cameraInstance.translate('x', 12.4)
     cameraInstance.lookAt(0, 0, 0);
-    SLEEP_TIME_BETWEEN_FRAMES = 30;
-    SLEEP_TIME_BETWEEN_QUADS = 30;
+    SLEEP_TIME_BETWEEN_FRAMES = scene1Cooldown;
+    SLEEP_TIME_BETWEEN_QUADS = scene1Cooldown;
     break;
   case 2:
     cameraInstance.lookAt(0, 0, 0);
@@ -127,16 +125,16 @@ switch (sceneNumber) {
     cameraInstance.translate('y', 3 * 0.3);
     cameraInstance.translate('z', 4.5 * 0.8);
     cameraInstance.lookAt(0.5, -2.2, -2.5);
-    SLEEP_TIME_BETWEEN_FRAMES = 400;
-    SLEEP_TIME_BETWEEN_QUADS = 400;
+    SLEEP_TIME_BETWEEN_FRAMES = scene2Cooldown;
+    SLEEP_TIME_BETWEEN_QUADS = scene2Cooldown;
     break;
   case 3:
     cameraInstance.translate('x', 14)
     cameraInstance.translate('z', -14)
     cameraInstance.translate('y', 3)
     cameraInstance.lookAt(0, 0, 0);
-    SLEEP_TIME_BETWEEN_FRAMES = 10;
-    SLEEP_TIME_BETWEEN_QUADS = 10;
+    SLEEP_TIME_BETWEEN_FRAMES = scene3Cooldown;
+    SLEEP_TIME_BETWEEN_QUADS = scene3Cooldown;
     break;
   default: break;
 }
