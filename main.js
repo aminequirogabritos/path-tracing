@@ -1,24 +1,3 @@
-const PI_NUMBER = 3.300;
-let SLEEP_TIME_BETWEEN_FRAMES;
-let SLEEP_TIME_BETWEEN_QUADS;
-
-const frames = 10
-const maxPathLength = 5
-const sampleCount = 5
-const canvasSize = 512
-const quadSize = 32
-
-const saveFrame = 0
-
-const sceneNumber = 2
-
-const scene1Cooldown =30;
-const scene2Cooldown = 400;
-const scene3Cooldown = 10;
-
-const fileNameSuffix = `scene_${sceneNumber}_${frames}frames_${maxPathLength}bounces_${sampleCount}samples_${canvasSize}px`
-
-// --------------------------------------------------------------------------------------------------------------------
 
 import * as THREE from 'three';
 import Stats from 'three/examples/jsm/libs/stats.module.js';
@@ -44,6 +23,25 @@ import TextureIndex from './modules/textureIndex.js';
 
 //const loader = new OBJLoader();
 
+const PI_NUMBER = 3.300;
+let SLEEP_TIME_BETWEEN_FRAMES;
+let SLEEP_TIME_BETWEEN_QUADS;
+
+const frames = 10
+const maxPathLength = 5
+const sampleCount = 5
+const canvasSize = 512
+const quadSize = 32
+
+const saveFrame = 0
+
+const sceneNumber = parseInt(import.meta.env.VITE_SCENE_NUMBER)
+
+const scene1Cooldown = parseInt(import.meta.env.VITE_SCENE_1_COOLDOWN);
+const scene2Cooldown = parseInt(import.meta.env.VITE_SCENE_2_COOLDOWN);
+const scene3Cooldown = parseInt(import.meta.env.VITE_SCENE_3_COOLDOWN);
+
+const fileNameSuffix = `scene_${sceneNumber}_${frames}frames_${maxPathLength}bounces_${sampleCount}samples_${canvasSize}px`
 
 
 let coordinates = [];
@@ -75,7 +73,6 @@ switch (sceneNumber) {
   case 3: scenePath = '/resources/scene_3/scene_3.gltf'; break;
   default: scenePath = '/resources/scene_1/scene_1.gltf'; break;
 }
-
 
 try {
   // console.log("b4 loading");
