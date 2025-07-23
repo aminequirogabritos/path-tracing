@@ -27,11 +27,11 @@ const PI_NUMBER = 3.300;
 let SLEEP_TIME_BETWEEN_FRAMES;
 let SLEEP_TIME_BETWEEN_QUADS;
 
-const frames = 10
-const maxPathLength = 5
-const sampleCount = 5
-const canvasSize = 512
-const quadSize = 32
+const frames = 1
+const maxPathLength = 3
+const sampleCount = 3
+const canvasSize = 128
+const quadSize = 16
 
 const saveFrame = 0
 
@@ -142,26 +142,20 @@ let camera = cameraInstance.getCamera();
 
 
 let bvh = new BVH(trianglesArray);
-// console.log("🚀 ~ bvh:", bvh)
 newPropertiesArray = mapTrianglesArrayToTexturizedArray(trianglesArray);
 console.log("🚀 ~ newPropertiesArray:", newPropertiesArray)
 
-console.log("🚀 ~ coordinates.length", newPropertiesArray.coordinates.length / 3)
-console.log("🚀 ~ lights count", newPropertiesArray.lightIndices.length / 3)
+console.log("🚀 ~ coordinates.length", newPropertiesArray.coordinates.length)
+console.log("🚀 ~ lights count", newPropertiesArray.lightIndices.length)
 
 let texturizableTreeProperties = bvh.convertToTexturizableArrays();
-// console.log("🚀 ~ texturizableTreeProperties:", texturizableTreeProperties)
 
 let texturizableInorderTrianglesIndices = [];
 bvh.inorderTrianglesIndicesArray.forEach(element => {
-  texturizableInorderTrianglesIndices.push(...[element, element, element])
+  texturizableInorderTrianglesIndices.push(element)
 });
-// console.log("🚀 ~ texturizableInorderTr ianglesIndices:", texturizableInorderTrianglesIndices)
 
 
-// const fpsElem = document.querySelector("#fps");
-
-// let then = 0;
 
 BufferManager.createFramebufferAndTexture(gl, width, height);
 BufferManager.createFramebufferAndTexture(gl, width, height);
@@ -185,9 +179,6 @@ const fragmentShaderOutputSource = createShader(gl, gl.FRAGMENT_SHADER, fragment
 
 const programPathTracing = createProgram(gl, vertexShaderPathTracingSource, fragmentShaderPathTracingSource);
 const programOutput = createProgram(gl, vertexShaderOutputSource, fragmentShaderOutputSource);
-
-
-// gl.useProgram(programPathTracing);
 
 // Full screen quad vertices (triangle strip)
 const vertices = new Float32Array([
@@ -237,29 +228,26 @@ async function render(now, frameNumber) {
 
 
   //function uploadTexture(gl, program, data, name, width, height, index)
-  uploadTexture(gl, programPathTracing, newPropertiesArray.coordinates, 'coordinatesTexture', TextureIndex.getNextTextureIndex());
-  uploadTexture(gl, programPathTracing, newPropertiesArray.normals, 'normalsTexture', TextureIndex.getNextTextureIndex());
-  uploadTexture(gl, programPathTracing, newPropertiesArray.colors, 'colorsTexture', TextureIndex.getNextTextureIndex());
-  uploadTexture(gl, programPathTracing, newPropertiesArray.emissions, 'emissionsTexture', TextureIndex.getNextTextureIndex());
-  uploadTexture(gl, programPathTracing, newPropertiesArray.lightIndices, 'lightIndicesTexture', TextureIndex.getNextTextureIndex());
-  uploadTexture(gl, programPathTracing, newPropertiesArray.iors, 'iorsTexture', TextureIndex.getNextTextureIndex());
-  uploadTexture(gl, programPathTracing, newPropertiesArray.metallics, 'metallicsTexture', TextureIndex.getNextTextureIndex());
-  uploadTexture(gl, programPathTracing, newPropertiesArray.roughnesses, 'roughnessesTexture', TextureIndex.getNextTextureIndex());
-  uploadTexture(gl, programPathTracing, newPropertiesArray.speculars, 'specularsTexture', TextureIndex.getNextTextureIndex());
-  uploadTexture(gl, programPathTracing, newPropertiesArray.transmissions, 'transmissionsTexture', TextureIndex.getNextTextureIndex());
-  uploadTexture(gl, programPathTracing, texturizableTreeProperties.nodesBoundingBoxesMins, 'nodesBoundingBoxesMins', TextureIndex.getNextTextureIndex());
-  uploadTexture(gl, programPathTracing, texturizableTreeProperties.nodesBoundingBoxesMaxs, 'nodesBoundingBoxesMaxs', TextureIndex.getNextTextureIndex());
-  uploadTexture(gl, programPathTracing, texturizableTreeProperties.nodesMissLinkIndices, 'nodesMissLinkIndices', TextureIndex.getNextTextureIndex());
-  uploadTexture(gl, programPathTracing, texturizableTreeProperties.nodesTrianglesCount, 'nodesTrianglesCount', TextureIndex.getNextTextureIndex());
-  uploadTexture(gl, programPathTracing, texturizableTreeProperties.nodesInorderTrianglesIndices, 'nodesInorderTrianglesIndices', TextureIndex.getNextTextureIndex());
-  uploadTexture(gl, programPathTracing, texturizableInorderTrianglesIndices, 'inorderTrianglesIndicesArray', TextureIndex.getNextTextureIndex());
+  uploadTexture(gl, programPathTracing, newPropertiesArray.coordinates, 'coordinatesTexture', TextureIndex.getNextTextureIndex(), 3, gl.RGB32F, gl.RGB);
+  uploadTexture(gl, programPathTracing, newPropertiesArray.normals, 'normalsTexture', TextureIndex.getNextTextureIndex(), 3, gl.RGB32F, gl.RGB);
+  uploadTexture(gl, programPathTracing, newPropertiesArray.colors, 'colorsTexture', TextureIndex.getNextTextureIndex(), 3, gl.RGB32F, gl.RGB);
+  uploadTexture(gl, programPathTracing, newPropertiesArray.emissions, 'emissionsTexture', TextureIndex.getNextTextureIndex(), 3, gl.RGB32F, gl.RGB);
+  uploadTexture(gl, programPathTracing, newPropertiesArray.lightIndices, 'lightIndicesTexture', TextureIndex.getNextTextureIndex(), 1, gl.R32F, gl.RED);
+  uploadTexture(gl, programPathTracing, newPropertiesArray.metallics, 'metallicsTexture', TextureIndex.getNextTextureIndex(), 1, gl.R32F, gl.RED);
+  uploadTexture(gl, programPathTracing, newPropertiesArray.roughnesses, 'roughnessesTexture', TextureIndex.getNextTextureIndex(), 1, gl.R32F, gl.RED);
+  uploadTexture(gl, programPathTracing, newPropertiesArray.speculars, 'specularsTexture', TextureIndex.getNextTextureIndex(), 1, gl.R32F, gl.RED);
+  uploadTexture(gl, programPathTracing, newPropertiesArray.transmissions, 'transmissionsTexture', TextureIndex.getNextTextureIndex(), 1, gl.R32F, gl.RED);
+  uploadTexture(gl, programPathTracing, texturizableTreeProperties.nodesBoundingBoxesMins, 'nodesBoundingBoxesMins', TextureIndex.getNextTextureIndex(), 3, gl.RGB32F, gl.RGB);
+  uploadTexture(gl, programPathTracing, texturizableTreeProperties.nodesBoundingBoxesMaxs, 'nodesBoundingBoxesMaxs', TextureIndex.getNextTextureIndex(), 3, gl.RGB32F, gl.RGB);
+  uploadTexture(gl, programPathTracing, texturizableTreeProperties.nodesMissLinkIndices, 'nodesMissLinkIndices', TextureIndex.getNextTextureIndex(), 1, gl.R32F, gl.RED);
+  uploadTexture(gl, programPathTracing, texturizableTreeProperties.nodesTrianglesCount, 'nodesTrianglesCount', TextureIndex.getNextTextureIndex(), 1, gl.R32F, gl.RED);
+  uploadTexture(gl, programPathTracing, texturizableTreeProperties.nodesInorderTrianglesIndices, 'nodesInorderTrianglesIndices', TextureIndex.getNextTextureIndex(), 1, gl.R32F, gl.RED);
+  uploadTexture(gl, programPathTracing, texturizableInorderTrianglesIndices, 'inorderTrianglesIndicesArray', TextureIndex.getNextTextureIndex(), 1, gl.R32F, gl.RED);
 
 
   // Set uniforms
   const quadXLocation = gl.getUniformLocation(programPathTracing, 'quadX');
   const quadYLocation = gl.getUniformLocation(programPathTracing, 'quadY');
-
-
   gl.uniform2f(gl.getUniformLocation(programPathTracing, 'windowSize'), width, height);
   gl.uniform1f(gl.getUniformLocation(programPathTracing, 'aspectRatio'), width / height);
   gl.uniform3f(gl.getUniformLocation(programPathTracing, 'cameraSource'), camera.cameraSource.x, camera.cameraSource.y, camera.cameraSource.z);
@@ -267,9 +255,9 @@ async function render(now, frameNumber) {
   gl.uniform3f(gl.getUniformLocation(programPathTracing, 'cameraUp'), camera.cameraUp.x, camera.cameraUp.y, camera.cameraUp.z);
   gl.uniform3f(gl.getUniformLocation(programPathTracing, 'cameraRight'), camera.cameraRight.x, camera.cameraRight.y, camera.cameraRight.z);
   gl.uniform3f(gl.getUniformLocation(programPathTracing, 'cameraLeftBottom'), camera.cameraLeftBottom.x, camera.cameraLeftBottom.y, camera.cameraLeftBottom.z);
-  gl.uniform1i(gl.getUniformLocation(programPathTracing, 'vertexCount'), parseInt(newPropertiesArray.coordinates.length / 3));
+  gl.uniform1i(gl.getUniformLocation(programPathTracing, 'vertexCount'), parseInt(newPropertiesArray.coordinates.length));
   gl.uniform1i(gl.getUniformLocation(programPathTracing, 'triangleCount'), triangleCount);
-  gl.uniform1i(gl.getUniformLocation(programPathTracing, 'lightIndicesCount'), parseInt(newPropertiesArray.lightIndices.length / 3));
+  gl.uniform1i(gl.getUniformLocation(programPathTracing, 'lightIndicesCount'), parseInt(newPropertiesArray.lightIndices.length));
   gl.uniform1i(gl.getUniformLocation(programPathTracing, 'timestamp'), now);
   gl.uniform1i(gl.getUniformLocation(programPathTracing, 'maxPathLength'), maxPathLength);
   gl.uniform1i(gl.getUniformLocation(programPathTracing, 'sampleCount'), sampleCount);

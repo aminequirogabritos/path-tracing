@@ -281,16 +281,16 @@ class BVH {
 
             nodesBoundingBoxesMins.push(...[node.boundingBox.min.x, node.boundingBox.min.y, node.boundingBox.min.z]);
             nodesBoundingBoxesMaxs.push(...[node.boundingBox.max.x, node.boundingBox.max.y, node.boundingBox.max.z]);
-            nodesMissLinkIndices.push(...[node.missLink, node.missLink, node.missLink]);
+            nodesMissLinkIndices.push(node.missLink);
             if (node.triangleIndicesArray[0] >= 0)
-                nodesInorderTrianglesIndices.push(...[node.firstIndexInInorderTriangleIndicesArray, node.firstIndexInInorderTriangleIndicesArray, node.firstIndexInInorderTriangleIndicesArray])
+                nodesInorderTrianglesIndices.push(node.firstIndexInInorderTriangleIndicesArray)
             else
-                nodesInorderTrianglesIndices.push(...[node.triangleIndicesArray[0], node.triangleIndicesArray[0], node.triangleIndicesArray[0]]);
+                nodesInorderTrianglesIndices.push(node.triangleIndicesArray[0]);
 
             if (node.triangleCount)
-                nodesTrianglesCount.push(...[node.triangleCount, node.triangleCount, node.triangleCount]);
+                nodesTrianglesCount.push(node.triangleCount);
             else
-                nodesTrianglesCount.push(...[0, 0, 0]);
+                nodesTrianglesCount.push(0);
 
         });
 

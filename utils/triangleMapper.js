@@ -70,13 +70,13 @@ export function mapTrianglesArrayToTexturizedArray(trianglesArray) {
         colors.push(...[triangle.color.r, triangle.color.g, triangle.color.b]);
         emissions.push(...[triangle.emission.r * emissionConstant, triangle.emission.g * emissionConstant, triangle.emission.b * emissionConstant]);
         if (triangle.emission.r > 0 || triangle.emission.g > 0 || triangle.emission.b > 0) {
-            lightIndices.push(...[triangleIndex, triangleIndex, triangleIndex]);
+            lightIndices.push(triangleIndex);
         }
-        iors.push(...[triangle.ior, triangle.ior, triangle.ior]);
-        metallics.push(...[triangle.metallic, triangle.metallic, triangle.metallic]);
-        roughnesses.push(...[triangle.roughness, triangle.roughness, triangle.roughness]);
-        speculars.push(...[triangle.specular, triangle.specular, triangle.specular]);
-        transmissions.push(...[triangle.transmission, triangle.transmission, triangle.transmission]);
+        iors.push(triangle.ior);
+        metallics.push(triangle.metallic);
+        roughnesses.push(triangle.roughness);
+        speculars.push(triangle.specular);
+        transmissions.push(triangle.transmission);
 
 
     });
