@@ -212,7 +212,7 @@ gl.enableVertexAttribArray(positionLocationPathTracing);
 gl.vertexAttribPointer(positionLocationPathTracing, 2, gl.FLOAT, false, 0, 0);
 
 
-// Create and bind VAO for simple program
+// Create and bind VAO for output
 const vaoOutput = gl.createVertexArray();
 gl.bindVertexArray(vaoOutput);
 
