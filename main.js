@@ -1,69 +1,43 @@
-
-import * as THREE from 'three';
-import Stats from 'three/examples/jsm/libs/stats.module.js';
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-
 // Load vertex and fragment shaders
 import vertexShaderPathTracing from './shaders/vertexShader.glsl';
 import vertexShaderOutput from './shaders/vertexShader.glsl';
 import fragmentShaderPathTracing from './shaders/fragmentShaderPathTracing.glsl';
 import fragmentShaderOutput from './shaders/fragmentShaderOutput.glsl';
-import { mapTrianglesArrayToTexturizedArray } from './utils/triangleMapper.js';
-import { shuffleArray, sortTrianglesByBVHInorderIndices, sortTrianglesByDistanceToCamera } from './utils/triangleSorter.js';
-import uploadTexture from './utils/textureUploader.js';
 
-// classes
+// Utility functions
+import mapTrianglesArrayToTexturizableArray from './utils/triangleMapper.js';
+import uploadTexture from './utils/textureUploader.js';
+import loadModel from './utils/modelLoader.js';
+import createShader from './utils/shaderCreator.js';
+import createProgram from './utils/programCreator.js';
+import saveImage from './utils/imageSaver.js';
+
+// Classes
 import Camera from './classes/camera.js';
 import BVH from './classes/bvh.js';
-import Triangle from './classes/triangle.js';
 
-// modules
+// Modules
 import BufferManager from './modules/bufferManager.js';
 import TextureIndex from './modules/textureIndex.js';
 
-//const loader = new OBJLoader();
+let cooldown;
 
-const PI_NUMBER = 3.300;
-let SLEEP_TIME_BETWEEN_FRAMES;
-let SLEEP_TIME_BETWEEN_QUADS;
-
-const frames = 1
+const samples = 10
 const maxPathLength = 3
-const sampleCount = 3
-const canvasSize = 128
-const quadSize = 16
+const sampleCount = 5
+const canvasSize = 200
+const quadSize = 50
 
-const saveFrame = 0
+const saveFrame = 1
 
 const sceneNumber = parseInt(import.meta.env.VITE_SCENE_NUMBER)
-
 const scene1Cooldown = parseInt(import.meta.env.VITE_SCENE_1_COOLDOWN);
 const scene2Cooldown = parseInt(import.meta.env.VITE_SCENE_2_COOLDOWN);
 const scene3Cooldown = parseInt(import.meta.env.VITE_SCENE_3_COOLDOWN);
 
-const fileNameSuffix = `scene_${sceneNumber}_${frames}frames_${maxPathLength}bounces_${sampleCount}samples_${canvasSize}px`
+const fileNameSuffix = `scene_${sceneNumber}_${samples}samples_${maxPathLength}bounces_${sampleCount}samples_${canvasSize}px`
 
-
-let coordinates = [];
-let trianglesIndices = [];
-let normals = [];
-let colors = [];
-let emissions = [];
-let lightIndices = [];
-let lightTotalArea;
-
-let newPropertiesArray;
-
-let trianglesArray = [];
-
-
-let startTime, endTime;
-
-let objects = 0;
-let triangleCount = 0;
-let vertexCount = 0;
-
-let model, scene;
+let trianglesArray;
 
 let scenePath;
 
@@ -75,17 +49,12 @@ switch (sceneNumber) {
 }
 
 try {
-  // console.log("b4 loading");
-  model = await loadModel(
+  trianglesArray = await loadModel(
     scenePath
   );
-
-
-  scene = model.scene;
 } catch (e) {
   console.log(e);
 }
-
 
 const canvas = document.createElement('canvas');
 
@@ -108,13 +77,11 @@ gl.canvas.height = height;
 
 let cameraInstance = new Camera(50, width / height, 0.1, 1000);
 
-
 switch (sceneNumber) {
   case 1:
     cameraInstance.translate('x', 12.4)
     cameraInstance.lookAt(0, 0, 0);
-    SLEEP_TIME_BETWEEN_FRAMES = scene1Cooldown;
-    SLEEP_TIME_BETWEEN_QUADS = scene1Cooldown;
+    cooldown = scene1Cooldown;
     break;
   case 2:
     cameraInstance.lookAt(0, 0, 0);
@@ -122,47 +89,51 @@ switch (sceneNumber) {
     cameraInstance.translate('y', 3 * 0.3);
     cameraInstance.translate('z', 4.5 * 0.8);
     cameraInstance.lookAt(0.5, -2.2, -2.5);
-    SLEEP_TIME_BETWEEN_FRAMES = scene2Cooldown;
-    SLEEP_TIME_BETWEEN_QUADS = scene2Cooldown;
+    cooldown = scene2Cooldown;
     break;
   case 3:
     cameraInstance.translate('x', 14)
     cameraInstance.translate('z', -14)
     cameraInstance.translate('y', 3)
     cameraInstance.lookAt(0, 0, 0);
-    SLEEP_TIME_BETWEEN_FRAMES = scene3Cooldown;
-    SLEEP_TIME_BETWEEN_QUADS = scene3Cooldown;
+    cooldown = scene3Cooldown;
     break;
   default: break;
 }
 
 
 let camera = cameraInstance.getCamera();
-
+console.log("🌸 ~ camera:", camera)
 
 
 let bvh = new BVH(trianglesArray);
-newPropertiesArray = mapTrianglesArrayToTexturizedArray(trianglesArray);
-console.log("🚀 ~ newPropertiesArray:", newPropertiesArray)
+console.log("🌸 ~ bvh:", bvh)
 
-console.log("🚀 ~ coordinates.length", newPropertiesArray.coordinates.length)
-console.log("🚀 ~ lights count", newPropertiesArray.lightIndices.length)
+let {
+  coordinates,
+  normals,
+  colors,
+  emissions,
+  metallics,
+  roughnesses,
+  lightIndices,
+} = mapTrianglesArrayToTexturizableArray(trianglesArray);
 
-let texturizableTreeProperties = bvh.convertToTexturizableArrays();
+console.log("🚀 ~ coordinates.length", coordinates.length / 3)
+console.log("🚀 ~ lights count", lightIndices.length)
 
-let texturizableInorderTrianglesIndices = [];
-bvh.inorderTrianglesIndicesArray.forEach(element => {
-  texturizableInorderTrianglesIndices.push(element)
-});
-
-
+let {
+  nodesBoundingBoxesMins,
+  nodesBoundingBoxesMaxs,
+  nodesTrianglesCount,
+  nodesFirstTriangleIndex,
+  nodesMissLinkIndices,
+  inorderTrianglesIndicesArray,
+} = bvh.getTexturizableArrays();
 
 BufferManager.createFramebufferAndTexture(gl, width, height);
 BufferManager.createFramebufferAndTexture(gl, width, height);
-// set textureOutput
 
-
-////////
 
 gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 
@@ -185,16 +156,16 @@ const vertices = new Float32Array([
   -1.0, -1.0, // Bottom-left
   1.0, -1.0, // Bottom-right
   -1.0, 1.0, // Top-left
-  1.0, 1.0  // Top-right
+  1.0, 1.0    // Top-right
 ]);
 
-// Create and bind vertex array object (VAO)
+// Create and bind vertex array object (VAO) for path tracing
 const vaoPathTracing = gl.createVertexArray();
 gl.bindVertexArray(vaoPathTracing);
 
 // Create vertex buffer
-const vertexBuffer = gl.createBuffer();
-gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+const vertexBufferPathTracing = gl.createBuffer();
+gl.bindBuffer(gl.ARRAY_BUFFER, vertexBufferPathTracing);
 gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
 
 // Bind vertex attributes
@@ -207,8 +178,8 @@ gl.vertexAttribPointer(positionLocationPathTracing, 2, gl.FLOAT, false, 0, 0);
 const vaoOutput = gl.createVertexArray();
 gl.bindVertexArray(vaoOutput);
 
-const simpleVertexBuffer = gl.createBuffer();
-gl.bindBuffer(gl.ARRAY_BUFFER, simpleVertexBuffer);
+const vertexBufferOutput = gl.createBuffer();
+gl.bindBuffer(gl.ARRAY_BUFFER, vertexBufferOutput);
 gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
 
 const positionLocationOutput = gl.getAttribLocation(programOutput, 'position');
@@ -217,8 +188,20 @@ gl.vertexAttribPointer(positionLocationOutput, 2, gl.FLOAT, false, 0, 0);
 
 gl.bindVertexArray(null);
 
+
+const fpsElem = document.querySelector("#fps");
+const avgFpsElem = document.querySelector("#avg-fps");
+
+document.querySelector("#startButton").addEventListener("click", async () => {
+  await renderAsync(samples);
+})
+
+
+
+//------------------------------------------------------------------------------------
+
 // Render
-async function render(now, frameNumber) {
+async function render(now, sampleNumber) {
 
   gl.useProgram(programPathTracing);
 
@@ -226,24 +209,20 @@ async function render(now, frameNumber) {
   const numQuadsX = Math.ceil(width / quadSize);
   const numQuadsY = Math.ceil(height / quadSize);
 
-
   //function uploadTexture(gl, program, data, name, width, height, index)
-  uploadTexture(gl, programPathTracing, newPropertiesArray.coordinates, 'coordinatesTexture', TextureIndex.getNextTextureIndex(), 3, gl.RGB32F, gl.RGB);
-  uploadTexture(gl, programPathTracing, newPropertiesArray.normals, 'normalsTexture', TextureIndex.getNextTextureIndex(), 3, gl.RGB32F, gl.RGB);
-  uploadTexture(gl, programPathTracing, newPropertiesArray.colors, 'colorsTexture', TextureIndex.getNextTextureIndex(), 3, gl.RGB32F, gl.RGB);
-  uploadTexture(gl, programPathTracing, newPropertiesArray.emissions, 'emissionsTexture', TextureIndex.getNextTextureIndex(), 3, gl.RGB32F, gl.RGB);
-  uploadTexture(gl, programPathTracing, newPropertiesArray.lightIndices, 'lightIndicesTexture', TextureIndex.getNextTextureIndex(), 1, gl.R32F, gl.RED);
-  uploadTexture(gl, programPathTracing, newPropertiesArray.metallics, 'metallicsTexture', TextureIndex.getNextTextureIndex(), 1, gl.R32F, gl.RED);
-  uploadTexture(gl, programPathTracing, newPropertiesArray.roughnesses, 'roughnessesTexture', TextureIndex.getNextTextureIndex(), 1, gl.R32F, gl.RED);
-  uploadTexture(gl, programPathTracing, newPropertiesArray.speculars, 'specularsTexture', TextureIndex.getNextTextureIndex(), 1, gl.R32F, gl.RED);
-  uploadTexture(gl, programPathTracing, newPropertiesArray.transmissions, 'transmissionsTexture', TextureIndex.getNextTextureIndex(), 1, gl.R32F, gl.RED);
-  uploadTexture(gl, programPathTracing, texturizableTreeProperties.nodesBoundingBoxesMins, 'nodesBoundingBoxesMins', TextureIndex.getNextTextureIndex(), 3, gl.RGB32F, gl.RGB);
-  uploadTexture(gl, programPathTracing, texturizableTreeProperties.nodesBoundingBoxesMaxs, 'nodesBoundingBoxesMaxs', TextureIndex.getNextTextureIndex(), 3, gl.RGB32F, gl.RGB);
-  uploadTexture(gl, programPathTracing, texturizableTreeProperties.nodesMissLinkIndices, 'nodesMissLinkIndices', TextureIndex.getNextTextureIndex(), 1, gl.R32F, gl.RED);
-  uploadTexture(gl, programPathTracing, texturizableTreeProperties.nodesTrianglesCount, 'nodesTrianglesCount', TextureIndex.getNextTextureIndex(), 1, gl.R32F, gl.RED);
-  uploadTexture(gl, programPathTracing, texturizableTreeProperties.nodesInorderTrianglesIndices, 'nodesInorderTrianglesIndices', TextureIndex.getNextTextureIndex(), 1, gl.R32F, gl.RED);
-  uploadTexture(gl, programPathTracing, texturizableInorderTrianglesIndices, 'inorderTrianglesIndicesArray', TextureIndex.getNextTextureIndex(), 1, gl.R32F, gl.RED);
-
+  uploadTexture(gl, programPathTracing, coordinates, 'coordinatesTexture', TextureIndex.getNextTextureIndex(), 3, gl.RGB32F, gl.RGB);
+  uploadTexture(gl, programPathTracing, normals, 'normalsTexture', TextureIndex.getNextTextureIndex(), 3, gl.RGB32F, gl.RGB);
+  uploadTexture(gl, programPathTracing, colors, 'colorsTexture', TextureIndex.getNextTextureIndex(), 3, gl.RGB32F, gl.RGB);
+  uploadTexture(gl, programPathTracing, emissions, 'emissionsTexture', TextureIndex.getNextTextureIndex(), 3, gl.RGB32F, gl.RGB);
+  uploadTexture(gl, programPathTracing, metallics, 'metallicsTexture', TextureIndex.getNextTextureIndex(), 1, gl.R32F, gl.RED);
+  uploadTexture(gl, programPathTracing, roughnesses, 'roughnessesTexture', TextureIndex.getNextTextureIndex(), 1, gl.R32F, gl.RED);
+  uploadTexture(gl, programPathTracing, lightIndices, 'lightIndicesTexture', TextureIndex.getNextTextureIndex(), 1, gl.R32F, gl.RED);
+  uploadTexture(gl, programPathTracing, nodesBoundingBoxesMins, 'nodesBoundingBoxesMins', TextureIndex.getNextTextureIndex(), 3, gl.RGB32F, gl.RGB);
+  uploadTexture(gl, programPathTracing, nodesBoundingBoxesMaxs, 'nodesBoundingBoxesMaxs', TextureIndex.getNextTextureIndex(), 3, gl.RGB32F, gl.RGB);
+  uploadTexture(gl, programPathTracing, nodesMissLinkIndices, 'nodesMissLinkIndices', TextureIndex.getNextTextureIndex(), 1, gl.R32F, gl.RED);
+  uploadTexture(gl, programPathTracing, nodesTrianglesCount, 'nodesTrianglesCount', TextureIndex.getNextTextureIndex(), 1, gl.R32F, gl.RED);
+  uploadTexture(gl, programPathTracing, nodesFirstTriangleIndex, 'nodesFirstTriangleIndex', TextureIndex.getNextTextureIndex(), 1, gl.R32F, gl.RED);
+  uploadTexture(gl, programPathTracing, inorderTrianglesIndicesArray, 'inorderTrianglesIndicesArray', TextureIndex.getNextTextureIndex(), 1, gl.R32F, gl.RED);
 
   // Set uniforms
   const quadXLocation = gl.getUniformLocation(programPathTracing, 'quadX');
@@ -255,33 +234,28 @@ async function render(now, frameNumber) {
   gl.uniform3f(gl.getUniformLocation(programPathTracing, 'cameraUp'), camera.cameraUp.x, camera.cameraUp.y, camera.cameraUp.z);
   gl.uniform3f(gl.getUniformLocation(programPathTracing, 'cameraRight'), camera.cameraRight.x, camera.cameraRight.y, camera.cameraRight.z);
   gl.uniform3f(gl.getUniformLocation(programPathTracing, 'cameraLeftBottom'), camera.cameraLeftBottom.x, camera.cameraLeftBottom.y, camera.cameraLeftBottom.z);
-  gl.uniform1i(gl.getUniformLocation(programPathTracing, 'vertexCount'), parseInt(newPropertiesArray.coordinates.length));
-  gl.uniform1i(gl.getUniformLocation(programPathTracing, 'triangleCount'), triangleCount);
-  gl.uniform1i(gl.getUniformLocation(programPathTracing, 'lightIndicesCount'), parseInt(newPropertiesArray.lightIndices.length));
+  gl.uniform1i(gl.getUniformLocation(programPathTracing, 'vertexCount'), parseInt(coordinates.length));
+  gl.uniform1i(gl.getUniformLocation(programPathTracing, 'triangleCount'), coordinates.length / 3);
+  gl.uniform1i(gl.getUniformLocation(programPathTracing, 'lightIndicesCount'), parseInt(lightIndices.length));
   gl.uniform1i(gl.getUniformLocation(programPathTracing, 'timestamp'), now);
   gl.uniform1i(gl.getUniformLocation(programPathTracing, 'maxPathLength'), maxPathLength);
   gl.uniform1i(gl.getUniformLocation(programPathTracing, 'sampleCount'), sampleCount);
-  gl.uniform1i(gl.getUniformLocation(programPathTracing, 'frameNumber'), frameNumber);
-  gl.uniform1i(gl.getUniformLocation(programPathTracing, 'totalFrames'), frames);
+  gl.uniform1i(gl.getUniformLocation(programPathTracing, 'sampleNumber'), sampleNumber);
+  gl.uniform1i(gl.getUniformLocation(programPathTracing, 'totalSamples'), samples);
   gl.uniform1i(gl.getUniformLocation(programPathTracing, 'bvhNodeCount'), bvh.nodeCount);
   gl.uniform1i(gl.getUniformLocation(programPathTracing, 'maxTextureSize'), maxTextureSize);
 
-  gl.uniform1i(gl.getUniformLocation(programPathTracing, 'quadSize'), quadSize);
+  // Determine the previous framebuffer texture
+  const previousFramebufferTexture = BufferManager.getTexture(sampleNumber - 1);
 
-  // Determine the current and previous framebuffers
-  // console.log('currentFramebuffer')
-  const currentFramebuffer = BufferManager.getFrameBuffer(frameNumber)
-  // console.log('previousTexture')
-  const previousTexture = BufferManager.getTexture(frameNumber + 1);
-
-  // Set the previous frame's texture as an input
-  const previousFrameTextureLocation = gl.getUniformLocation(programPathTracing, 'previousFrameTexture');
-  gl.activeTexture(gl.TEXTURE0 + BufferManager.getTextureIndex(frameNumber));
-  gl.bindTexture(gl.TEXTURE_2D, previousTexture);
-  gl.uniform1i(previousFrameTextureLocation, BufferManager.getTextureIndex(frameNumber));
-
+  // Set the previous sample's texture as an input
+  const previousFrameTextureIndex = BufferManager.getTextureIndex(sampleNumber);
+  gl.activeTexture(gl.TEXTURE0 + previousFrameTextureIndex);
+  gl.bindTexture(gl.TEXTURE_2D, previousFramebufferTexture);
+  gl.uniform1i(gl.getUniformLocation(programPathTracing, 'previousFrameTexture'), previousFrameTextureIndex);
 
   // Bind the current framebuffer for rendering
+  const currentFramebuffer = BufferManager.getFrameBuffer(sampleNumber)
   gl.bindFramebuffer(gl.FRAMEBUFFER, currentFramebuffer);
   gl.viewport(0, 0, width, height);
   gl.clearColor(0.0, 0.0, 0.0, 1.0);
@@ -290,7 +264,6 @@ async function render(now, frameNumber) {
   // Render each small quad sequentially
   for (let y = 0; y < numQuadsY; y++) {
     for (let x = 0; x < numQuadsX; x++) {
-      // console.log("quadX ", x, " quadY ", y);
       console.log("new quad");
 
       const offsetX = x * quadSize;
@@ -301,17 +274,14 @@ async function render(now, frameNumber) {
       gl.uniform1i(quadXLocation, x);
       gl.uniform1i(quadYLocation, y);
 
-      // Set the viewport to the current quad
       gl.viewport(offsetX, offsetY, viewportWidth, viewportHeight);
-      // gl.viewport(offsetX, offsetY, quadSize, quadSize);
 
       // Render the quad
       gl.useProgram(programPathTracing);
       gl.bindVertexArray(vaoPathTracing);
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-      // gl.finish();
       gl.flush();
-      await sleep(SLEEP_TIME_BETWEEN_QUADS);
+      await sleep(cooldown);
     }
   }
 
@@ -321,15 +291,14 @@ async function render(now, frameNumber) {
   gl.useProgram(programOutput);
   gl.bindVertexArray(vaoOutput);
 
-  const simpleTexture = BufferManager.getTexture(frameNumber);
-  const simpleTextureLocation = gl.getUniformLocation(programOutput, 'u_texture');
+  const outputTexture = BufferManager.getTexture(sampleNumber);
+  const outputTextureLocation = gl.getUniformLocation(programOutput, 'u_texture');
 
-  gl.activeTexture(gl.TEXTURE0 + BufferManager.getTextureIndex(frameNumber));
-  gl.bindTexture(gl.TEXTURE_2D, simpleTexture);
-  gl.uniform1i(simpleTextureLocation, BufferManager.getTextureIndex(frameNumber));
+  gl.activeTexture(gl.TEXTURE0 + previousFrameTextureIndex);
+  gl.bindTexture(gl.TEXTURE_2D, outputTexture);
+  gl.uniform1i(outputTextureLocation, previousFrameTextureIndex);
 
   gl.uniform2f(gl.getUniformLocation(programOutput, 'windowSize'), width, height);
-
 
   gl.viewport(0, 0, width, height);
   gl.clear(gl.COLOR_BUFFER_BIT);
@@ -339,16 +308,12 @@ async function render(now, frameNumber) {
 
   // Save the rendered image to a file
   if (saveFrame)
-    readPixelsAndSave(gl, width, height, `frame_${frameNumber}_${fileNameSuffix}.png`, urlSave);
+    saveImage(gl, width, height, `sample_${sampleNumber}_${fileNameSuffix}.png`, '');
 
   TextureIndex.setTextureIndex(2);
 
 }
 
-// console.log("🚀 ~ render ~ lightIndices:", lightIndices)
-
-const fpsElem = document.querySelector("#fps");
-const avgFpsElem = document.querySelector("#avg-fps");
 
 // ---------------------------------------------------------------------------------
 
@@ -357,21 +322,15 @@ async function renderAsync(times) {
   let previousTime = performance.now();
   let beforeRenderTime = performance.now();
 
-  var stats = new Stats();
-  // stats.showPanel(0); // 0: fps, 1: ms, 2: mb, 3+: custom
-  // document.body.appendChild(stats.dom);
-
   for (let i = 0; i < times; i++) {
-
-    // stats.begin();
 
     const startTime = performance.now();
     await render(performance.now(), i);
 
-    await new Promise(requestAnimationFrame); // Wait for the next animation frame
+    await new Promise(requestAnimationFrame);
     const endTime = performance.now();
 
-    const frameTime = (endTime - startTime) / 1000; // Convert to seconds
+    const sampleTime = (endTime - startTime) / 1000; // Convert to seconds
     const timeBetweenFrames = (endTime - previousTime) / 1000; // Convert to seconds
     const timePassed = (startTime - beforeRenderTime) / 1000;
 
@@ -381,17 +340,13 @@ async function renderAsync(times) {
     fpsElem.textContent = fps.toFixed(1);
     avgFpsElem.textContent = avgFps.toFixed(1);
 
-    console.log(
-      `frame ${i}: ${frameTime.toFixed(4)} seconds
-fps: ${fps}`);
+    console.log(`sample ${i}: ${sampleTime.toFixed(4)} seconds\nfps: ${fps}`);
 
     previousTime = endTime;
 
-    await sleep(SLEEP_TIME_BETWEEN_FRAMES);
-    // stats.end();
+    await sleep(cooldown);
 
   }
-
 
   let finishTimestamp = performance.now();
 
@@ -399,331 +354,3 @@ fps: ${fps}`);
 
 }
 
-
-
-document.querySelector("#startButton").addEventListener("click", async () => {
-  await renderAsync(frames);
-})
-
-
-// -------------------------------------------------------------------------------------
-// -------------------------------------------------------------------------------------
-// -------------------------------------------------------------------------------------
-// -------------------------------------------------------------------------------------
-// -------------------------------------------------------------------------------------
-// -------------------------------------------------------------------------------------
-// -------------------------------------------------------------------------------------
-// -------------------------------------------------------------------------------------
-// -------------------------------------------------------------------------------------
-// -------------------------------------------------------------------------------------
-
-
-function readPixelsAndSave(gl, width, height, filename, urlSave) {
-  // Create a buffer to store the pixel data
-  const pixels = new Uint8Array(width * height * 4);
-
-  // Read the pixels from the framebuffer
-  gl.readPixels(0, 0, width, height, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
-
-  // Create a new buffer to store the flipped pixel data
-  const flippedPixels = new Uint8Array(width * height * 4);
-
-  for (let y = 0; y < height; y++) {
-    for (let x = 0; x < width; x++) {
-      const srcIndex = (y * width + x) * 4;
-      const destIndex = ((height - y - 1) * width + x) * 4;
-      flippedPixels[destIndex] = pixels[srcIndex];        // Red
-      flippedPixels[destIndex + 1] = pixels[srcIndex + 1];  // Green
-      flippedPixels[destIndex + 2] = pixels[srcIndex + 2];  // Blue
-      flippedPixels[destIndex + 3] = pixels[srcIndex + 3];  // Alpha
-    }
-  }
-
-  // Convert the pixel data to an image
-  const canvas = document.createElement('canvas');
-  canvas.width = width;
-  canvas.height = height;
-  const context = canvas.getContext('2d');
-  const imageData = context.createImageData(width, height);
-
-  // Copy the flipped pixels into the imageData object
-  for (let i = 0; i < flippedPixels.length; i++) {
-    imageData.data[i] = flippedPixels[i];
-  }
-
-  // Put the imageData into the canvas
-  context.putImageData(imageData, 0, 0);
-
-  // Create an image from the canvas
-  const img = new Image();
-  img.src = canvas.toDataURL(urlSave);
-
-  // Download the image
-  const link = document.createElement('a');
-  link.href = img.src;
-  link.download = filename;
-  link.click();
-}
-
-
-
-
-function createShader(gl, type, source) {
-  const shader = gl.createShader(type);
-  gl.shaderSource(shader, source);
-  gl.compileShader(shader);
-
-  if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-    console.error('An error occurred compiling the shaders: ' + gl.getShaderInfoLog(shader));
-    gl.deleteShader(shader);
-    return null;
-  }
-
-  return shader;
-}
-
-function createProgram(gl, vertexShader, fragmentShader) {
-  const program = gl.createProgram();
-  gl.attachShader(program, vertexShader);
-  gl.attachShader(program, fragmentShader);
-  gl.linkProgram(program);
-
-  if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-    console.error('Unable to initialize the shader program: ' + gl.getProgramInfoLog(program));
-    return null;
-  }
-
-  return program;
-}
-
-
-
-
-
-async function loadModel(url) {
-
-  return new Promise((resolve, reject) => {
-    const loader = new GLTFLoader();
-    let triangleIndex = 0;
-
-    loader.load(
-      url,
-
-      function (model) {
-        var materialModelColor;
-        //var obj = model;//.scene;
-        // console.log("🚀 ~ returnnewPromise ~ model:", model)
-        var obj = model.scene;
-        // console.log("🚀 ~ returnnewPromise ~ obj:", obj)
-        obj.updateMatrixWorld(true);
-
-        const boundingBox = new THREE.Box3().setFromObject(obj);
-        // console.log("🚀 ~ returnnewPromise ~ boundingBox:", boundingBox)
-
-        const center = boundingBox.getCenter(new THREE.Vector3());
-        // console.log("🚀 ~ returnnewPromise ~ center:", center)
-
-        // const translation = new THREE.Vector3(-center.x / 2, -center.y / 2, -center.z / 2);
-        const translation = new THREE.Vector3(-center.x, -center.y, -center.z);
-        // obj.geometry.center();
-
-        obj.traverse((child) => {
-          if (child.isMesh) {
-            child.position.add(translation);
-            // child.geometry.center();
-          }
-        });
-
-        // Update matrixWorld for each child
-        obj.traverse((child) => {
-          if (child.isMesh) {
-            child.updateMatrix();
-            child.updateMatrixWorld(true);
-          }
-        });
-
-        // Now we find each Mesh...
-        obj.traverseVisible(function (child) {
-
-          // child.updateMatrixWorld(true);
-
-          // child.position.add(translation);
-
-          // Check if the child is a Mesh and has a material
-          if (child instanceof THREE.Mesh) {
-            // console.log("-------------------------------------------------------------------------------")
-            // console.log("🌸 ~ child:", child)
-            // console.log("🌸 ~ child:", child.material)
-
-            // getCenterPoint(child);
-            // console.log("🚀 ~ getCenterPoint(child):", getCenterPoint(child))
-
-
-            // console.log(child.name);
-            const geometry = child.geometry;
-
-            // Ensure the geometry is not indexed, for simplicity
-            child.geometry = child.geometry.toNonIndexed();
-
-            // Apply matrixWorld to geometry vertices
-            const positionAttribute = child.geometry.attributes.position;
-            const worldMatrix = child.matrixWorld;
-            let vertex;
-
-            let mappedMeshVertexCoordinatesArray = [];
-
-            let mappedTrianglesArray = [];
-
-
-            for (let i = 0; i < positionAttribute.count; i++) {
-              vertex = new THREE.Vector3().fromBufferAttribute(positionAttribute, i);
-              vertex.applyMatrix4(worldMatrix);
-              // console.log("🚀 ~ vertex:", vertex)
-              // positionAttribute.setXYZ(i, vertex.x, vertex.y, vertex.z);
-              mappedMeshVertexCoordinatesArray.push(...[vertex.x, vertex.y, vertex.z])
-              trianglesIndices.push(triangleIndex);
-              triangleIndex++;
-            }
-            // console.log("🚀 ~ mappedMeshVertexCoordinatesArray:", (mappedMeshVertexCoordinatesArray.length))
-
-
-            for (let i = 0; i < mappedMeshVertexCoordinatesArray.length / 9; i++) {
-
-              let newTriangle = new Triangle(
-                new THREE.Triangle(
-                  new THREE.Vector3(mappedMeshVertexCoordinatesArray[9 * i], mappedMeshVertexCoordinatesArray[9 * i + 1], mappedMeshVertexCoordinatesArray[9 * i + 2]),
-                  new THREE.Vector3(mappedMeshVertexCoordinatesArray[9 * i + 3], mappedMeshVertexCoordinatesArray[9 * i + 4], mappedMeshVertexCoordinatesArray[9 * i + 5]),
-                  new THREE.Vector3(mappedMeshVertexCoordinatesArray[9 * i + 6], mappedMeshVertexCoordinatesArray[9 * i + 7], mappedMeshVertexCoordinatesArray[9 * i + 8])))
-
-              mappedTrianglesArray.push(newTriangle);
-              triangleCount++;
-              vertexCount += 3;
-
-
-            }
-
-
-            // console.log("🚀 ~ mappedTrianglesArray:", mappedTrianglesArray)
-
-            //  push the array of mapped coordinates of the mesh into coordinates
-            // coordinates.push(...mappedMeshVertexCoordinatesArray);
-
-            // vertexCount += mappedMeshVertexCoordinatesArray.length / 3;
-            // console.log("😡 ~ vertexCount adding mesh " + child.name + ": " + vertexCount)
-            // triangleCount += mappedMeshVertexCoordinatesArray.length / 9;
-            // console.log("😡 ~ triangleCount adding mesh " + child.name + ": " + triangleCount)
-
-
-            // for each triangle
-            for (let i = 0; i < mappedTrianglesArray.length; i++) {
-              // get triangle's normal
-              /*               let vertex0 = new THREE.Vector3(mappedMeshVertexCoordinatesArray[9 * i], mappedMeshVertexCoordinatesArray[9 * i + 1], mappedMeshVertexCoordinatesArray[9 * i + 2]);
-                            let vertex1 = new THREE.Vector3(mappedMeshVertexCoordinatesArray[9 * i + 3], mappedMeshVertexCoordinatesArray[9 * i + 4], mappedMeshVertexCoordinatesArray[9 * i + 5]);
-                            let vertex2 = new THREE.Vector3(mappedMeshVertexCoordinatesArray[9 * i + 6], mappedMeshVertexCoordinatesArray[9 * i + 7], mappedMeshVertexCoordinatesArray[9 * i + 8]); */
-
-              // var triangle = new THREE.Triangle(vertex0, vertex1, vertex2);
-              mappedTrianglesArray[i].normal = new THREE.Vector3();
-              mappedTrianglesArray[i].triangle.getNormal(mappedTrianglesArray[i].normal);
-              // let triangleNormal = new THREE.Vector3();
-              // triangle.getNormal(triangleNormal);
-
-              // normals.push(...[mappedTrianglesArray[i].normal.x, mappedTrianglesArray[i].normal.y, mappedTrianglesArray[i].normal.z]);
-
-              // get triangle's color
-              const color = child.material.color;
-              mappedTrianglesArray[i].color = color;
-
-
-              const emission = new THREE.Color(
-                child.material.emissive.r * child.material.emissiveIntensity,
-                child.material.emissive.g * child.material.emissiveIntensity,
-                child.material.emissive.b * child.material.emissiveIntensity
-              )
-              mappedTrianglesArray[i].emission = emission /// new THREE.Vector3(2.0);
-              // console.log("🚀 ~ emission:", emission)
-              // emissions.push(...[emission.r * 50, emission.g * 50, emission.b * 50]);
-              // emissions.push(...[emission.r, emission.g, emission.b]);
-
-              mappedTrianglesArray[i].ior = child.material.ior || 1.5;
-              mappedTrianglesArray[i].metallic = /* 0.0;// */child.material.metalness || 0.0;
-              mappedTrianglesArray[i].roughness = /* 1;// */ /* child.material.roughness || 1.0;*/(child.material.roughness < 0.03 ? 0.03 : child.material.roughness);
-              mappedTrianglesArray[i].specular = /* 0;// */child.material.specularIntensity || 0.0;
-              mappedTrianglesArray[i].transmission = /* 0;// */child.material._transmission || 0.0;
-
-
-            }
-
-            trianglesArray.push(...mappedTrianglesArray)
-
-          }
-        });
-
-        // console.log("🌸 ~ coordinates.length:", coordinates.length)
-        for (let i = 0; i < trianglesArray.length; i++) {
-          if (trianglesArray[i].emission.r > 0.0 || trianglesArray[i].emission.g > 0.0 || trianglesArray[i].emission.b > 0.0) {
-            lightIndices.push(...[i, i, i]);
-          }
-        }
-
-        // calcular area total luces
-
-
-        // console.log("🚀 lightIndices:", lightIndices)
-        // console.log("🌸 ~ triangleCount:", triangleCount)
-        // console.log("🚀 ~ colors:", colors)
-
-
-        resolve(model);
-      },
-      function (xhr) {
-        console.log((xhr.loaded / xhr.total * 100) + '% loaded');
-      },
-      function (error) {
-        console.error(error);
-        reject(error);
-      });
-  })
-}
-
-
-
-
-// Adjust canvas size
-function resizeCanvasToDisplaySize() {
-  var width = gl.canvas.clientWidth;
-  var height = gl.canvas.clientHeight;
-  if (gl.canvas.width != width ||
-    gl.canvas.height != height) {
-    gl.canvas.width = width;
-    gl.canvas.height = height;
-  }
-}
-
-function createFramebuffer(gl, width, height) {
-  const framebuffer = gl.createFramebuffer();
-  gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
-
-  const texture = gl.createTexture();
-  gl.bindTexture(gl.TEXTURE_2D, texture);
-  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0);
-
-  return { framebuffer, texture };
-}
-
-
-function getCenterPoint(mesh) {
-  var middle = new THREE.Vector3();
-  var geometry = mesh.geometry;
-
-  geometry.computeBoundingBox();
-
-  middle.x = (geometry.boundingBox.max.x + geometry.boundingBox.min.x) / 2;
-  middle.y = (geometry.boundingBox.max.y + geometry.boundingBox.min.y) / 2;
-  middle.z = (geometry.boundingBox.max.z + geometry.boundingBox.min.z) / 2;
-
-  mesh.localToWorld(middle);
-  return middle;
-}

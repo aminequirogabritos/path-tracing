@@ -74,17 +74,27 @@ class Camera {
         this.camera.cameraMiddle = this.camera.cameraSource.clone().add(this.camera.cameraDirection.clone()/* .multiplyScalar(1.2) */); // multiplicar por escalar para cambiar posicion near plano frustum
         // console.log("🚀 ~ cameraSource:", this.camera.cameraSource)
 
+        // --- Aspect ratio correction ---
+        // Assume near plane size = 1.0, scale width by aspect ratio
+        let planeHeight = 1.0;
+        let planeWidth = planeHeight;
 
-        // const cameraLeftBottom = getLeftBottomCorner(camera, planeDimensions.width, planeDimensions.height);
+        if (this.threeCamera.aspect > 1.0) {
+            planeWidth *= this.threeCamera.aspect;
+        } else if (this.threeCamera.aspect < 1.0) {
+            planeHeight /= this.threeCamera.aspect;
+        }
+
+        // Scale right and up vectors
+        const halfWidth = planeWidth * 0.5;
+        const halfHeight = planeHeight * 0.5;
+
         this.camera.cameraLeftBottom = this.camera.cameraMiddle.clone()
-            .sub(this.camera.cameraRight.clone().multiplyScalar(0.5))
-            .sub(this.camera.cameraUp.clone().multiplyScalar(0.5));
-        // console.log("🚀 ~ cameraLeftBottom:", this.camera.cameraLeftBottom)
-        // (?) cameraLeftBottom.x += -0.5; // esta escala se hace para que el plano "near" no esté tan pegado a la cámara
+            .sub(this.camera.cameraRight.clone().multiplyScalar(halfWidth))
+            .sub(this.camera.cameraUp.clone().multiplyScalar(halfHeight));
 
-        // console.log('Camera.update - end');
     };
-    
+
     getCamera() {
         return this.camera;
     };

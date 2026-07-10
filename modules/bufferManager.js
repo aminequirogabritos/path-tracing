@@ -1,4 +1,3 @@
-import * as THREE from 'three';
 import TextureIndex from './textureIndex';
 
 const BufferManager = (() => {
@@ -13,6 +12,7 @@ const BufferManager = (() => {
 
         let texture = gl.createTexture();
         let textureIndex = TextureIndex.getNextTextureIndex();
+        
         gl.activeTexture(gl.TEXTURE0 + textureIndex);
         gl.bindTexture(gl.TEXTURE_2D, texture);
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
@@ -30,16 +30,16 @@ const BufferManager = (() => {
         textureIndices.push(textureIndex);
     };
 
-    const getFrameBuffer = (frameNumber) => {
-        return frameBuffers[frameNumber % 2];
+    const getFrameBuffer = (sampleNumber) => {
+        return frameBuffers[sampleNumber % 2];
     };
 
-    const getTexture = (frameNumber) => {
-        return textures[frameNumber % 2];
+    const getTexture = (sampleNumber) => {
+        return textures[sampleNumber % 2];
     };
 
-    const getTextureIndex = (frameNumber) => {
-        return textureIndices[frameNumber % 2];
+    const getTextureIndex = (sampleNumber) => {
+        return textureIndices[sampleNumber % 2];
     };
 
 

@@ -34,7 +34,6 @@ function calculateRGBTextureDimensions(gl, data, channels) {
     const height = Math.ceil(texelCount / maxTextureSize);
 
     const neededLength = width * height * channels;
-    console.log("🌸 ~ calculateRGBTextureDimensions ~ neededLength:", neededLength)
     if (data.length < neededLength) {
         const additionalZeroes = new Array(neededLength - data.length).fill(0.0);
         data.push(...additionalZeroes);
