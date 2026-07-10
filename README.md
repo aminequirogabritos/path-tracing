@@ -40,3 +40,7 @@ venv\Scripts\activate
 pip install nvidia-ml-py3 (first time)
 python profiler/windows/profiler.py --scene [scene name] --interval [interval in seconds]
 venv\Scripts\deactivate
+
+<img width="512" height="512" alt="sample_9_scene_1_10samples_5bounces_5spp_512px" src="https://github.com/user-attachments/assets/d82d393e-0ef5-46ca-84c4-f15ba0bdcfd7" />
+<img width="512" height="512" alt="sample_9_scene_2_10samples_5bounces_5spp_512px" src="https://github.com/user-attachments/assets/742fc5de-903f-4ec1-9ee9-dc2cab436b4b" />
+<img width="512" height="512" alt="sample_9_scene_3_10samples_5bounces_5spp_512px" src="https://github.com/user-attachments/assets/c42a6156-3415-4a36-be91-68f6fae1bd6f" />
