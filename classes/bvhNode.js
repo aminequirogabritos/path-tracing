@@ -3,9 +3,11 @@ import * as THREE from 'three';
 
 class BVHNode {
     static nodeId = 0;
-    constructor(boundingBox, leftChild = null, rightChild = null, trianglesArray = [], triangleIndicesArray = [-1]) {
-        const centroid = new THREE.Vector3();
-        boundingBox.getCenter(centroid);
+    constructor(boundingBox, leftChild = null, rightChild = null, trianglesArray = [], triangleIndicesArray = [-1], depth) {
+
+        // computed values
+        this.centroid = new THREE.Vector3();
+        boundingBox.getCenter(this.centroid);
 
         // values passed through parameter
         this.nodeId = BVHNode.nodeId++;
@@ -14,10 +16,8 @@ class BVHNode {
         this.rightChild = rightChild;
         this.trianglesArray = trianglesArray;
         this.triangleIndicesArray = triangleIndicesArray;
-        
-        // computed values
-        this.centroid = centroid;
-        
+        this.depth = depth;
+
         //to be filled later
         this.missLink = null;
         this.triangleCount = 0;
