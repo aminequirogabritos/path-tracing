@@ -9,6 +9,27 @@
 precision highp float;
 #endif
 
+// ============================================================================
+//  TÉCNICAS ACTIVABLES (uniforms bool, se setean desde JS con gl.uniform1i)
+//
+//   useNEE | useImportanceSampling | useMIS | Resultado
+//   -------+------------------------+--------+-----------------------------------------------
+//     0    |          0             | (ign.) | Path tracing puro: hemisferio uniforme, la luz
+//          |                        |        | sólo se encuentra por azar          (imagen 1)
+//     1    |          0             |   0    | NEE + muestreo uniforme             (imagen 2)
+//     1    |          1             |   0    | NEE + importance sampling           (imagen 3)
+//     1    |          1             |   1    | NEE + importance sampling + MIS     (imagen 4)
+//     0    |          1             | (ign.) | Sólo importance sampling
+//     1    |          0             |   1    | NEE + MIS (luz vs. muestreo uniforme)
+//
+//  MIS combina dos estrategias (muestreo de luz = NEE, y muestreo por BRDF),
+//  por lo que NO tiene sentido sin NEE: useMIS se ignora si useNEE = false.
+//  Si cambiás un flag, reiniciá la acumulación (sampleNumber = 0).
+// ============================================================================
+uniform bool useNEE;                 // Next Event Estimation (muestreo directo de luces)
+uniform bool useImportanceSampling;  // true: GGX / coseno según el material | false: hemisferio uniforme
+uniform bool useMIS;                 // Multiple Importance Sampling (requiere useNEE)
+
 struct Triangle {
   vec3 vertex0;
   vec3 vertex1;
@@ -312,7 +333,9 @@ void sample_random_light(inout uvec2 seed, inout Triangle lightTriangle, inout v
 float power_heuristic(float pdfDirect, float pdfIndirect) {
   float f1 = pdfDirect * pdfDirect;
   float f2 = pdfIndirect * pdfIndirect;
-  return f1 / (f1 + f2);
+  float denom = f1 + f2;
+  // Protección contra 0/0 (un NaN contaminaría para siempre la textura de acumulación)
+  return denom > 0.0f ? f1 / denom : 0.0f;
 }
 
 vec3 sample_hemisphere_cosine_weighted(vec2 random_numbers, vec3 normal) {
@@ -340,6 +363,26 @@ vec3 sample_hemisphere_cosine_weighted(vec2 random_numbers, vec3 normal) {
   return normalize(sample_dir);
 }
 
+// [NUEVO] Muestreo uniforme del hemisferio: pdf = 1 / (2*pi).
+// No tiene en cuenta ni la BRDF ni el coseno. Se usa cuando useImportanceSampling = false.
+vec3 sample_hemisphere_uniform(vec2 random_numbers, vec3 normal) {
+  float phi = 2.0f * M_PI * random_numbers[0];   // Azimuthal angle
+  float z = random_numbers[1];                   // cos(theta) uniforme en [0, 1)
+  float r = sqrt(max(0.0f, 1.0f - z * z));       // sin(theta)
+
+  float x = r * cos(phi);
+  float y = r * sin(phi);
+
+  // Misma base ortonormal que en el muestreo coseno
+  vec3 majorAxis = abs(normal.x) < 0.57735026919f ? vec3(1.0f, 0.0f, 0.0f) : abs(normal.y) < 0.57735026919f ? vec3(0.0f, 1.0f, 0.0f) : vec3(0.0f, 0.0f, 1.0f);
+
+  vec3 u = normalize(cross(normal, majorAxis));
+  vec3 v = cross(normal, u);
+  vec3 w = normal;
+
+  return normalize(x * u + y * v + z * w);
+}
+
 vec3 sample_ggx(vec2 random, vec3 normal, vec3 incomingDir, float roughness) {
 
   float alpha = max(roughness * roughness, 0.001f);
@@ -359,6 +402,13 @@ vec3 sample_ggx(vec2 random, vec3 normal, vec3 incomingDir, float roughness) {
 }
 
 float calculate_pdf(vec3 incomingDir, vec3 selectedDir, vec3 normal, Triangle triangle, float rand) {
+
+  // [NUEVO] Sin importance sampling la dirección sale del hemisferio uniforme: pdf = 1 / (2*pi).
+  // Tiene que ser coherente con sample_direction, porque esta pdf también la usa NEE/MIS.
+  if (!useImportanceSampling) {
+    return dot(normal, selectedDir) > 0.0f ? 0.5f * M_1_PI : 0.0f;
+  }
+
   float pdf = 0.0f;
 
   vec3 halfwayDir = normalize(incomingDir + selectedDir);
@@ -396,8 +446,12 @@ vec3 sample_direction(Triangle triangle, vec3 normal, vec3 incomingDir, inout uv
 
   vec3 selectedDir;
 
-  // Apply GGX sampling for rough reflections
-  if (rand.x < reflect_prob) {  // Specular reflection case
+  if (!useImportanceSampling) {
+    // [NUEVO] Sin importance sampling: hemisferio uniforme, ignora el material
+    selectedDir = sample_hemisphere_uniform(rand, normal);
+    isSpecular = false;
+  } else if (rand.x < reflect_prob) {  // Specular reflection case
+    // Apply GGX sampling for rough reflections
     selectedDir = sample_ggx(rand, normal, incomingDir, triangle.roughness);
     isSpecular = true;
   } else {
@@ -406,6 +460,7 @@ vec3 sample_direction(Triangle triangle, vec3 normal, vec3 incomingDir, inout uv
   }
 
   // Calculate the PDF for the selected direction
+  // (con useImportanceSampling = false devuelve la pdf uniforme)
   out_pdf = calculate_pdf(incomingDir, selectedDir, normal, triangle, rand.x);
 
   return selectedDir;
@@ -449,6 +504,11 @@ vec3 get_ray_radiance(vec3 origin, vec3 direction, inout uvec2 seed) {
   vec3 radiance = vec3(0.0f);
   vec3 throughput_weight = vec3(1.0f);
 
+  // [NUEVO] Flags efectivos. MIS necesita las dos estrategias (luz + BRDF),
+  // así que se ignora si NEE está apagado.
+  bool nee = useNEE;
+  bool mis = useNEE && useMIS;
+
   float tPrimaryTriangle;
   Triangle primaryTriangle;
   vec3 originPrimaryTriangle = origin;
@@ -471,10 +531,33 @@ vec3 get_ray_radiance(vec3 origin, vec3 direction, inout uvec2 seed) {
         // return radiance;
       }
 
-      // If the newfound primary triangle is emissive and the triangle from which the ray is coming from caused a specular bounce, add the emission to the radiance and return
-      if (primaryTriangle.emission != vec3(0.0f) && isSpecularBounce) {
-        vec3 safe_weight = clamp(throughput_weight, 0.0f, 1.0f);
-        radiance += safe_weight * primaryTriangle.emission;
+      // [NUEVO] El rayo del camino (muestreado por BRDF / uniforme) llegó a una luz.
+      // Cuánto cuenta esta contribución depende de qué técnicas estén activas:
+      //   - sin NEE:            es la única forma de iluminar -> cuenta completa (peso 1)
+      //   - NEE sin MIS:        NEE ya contó esta luz -> se ignora, salvo tras rebote especular
+      //                         (comportamiento original del shader)
+      //   - NEE con MIS:        se pondera con el peso MIS de la estrategia "muestreo por BRDF"
+      if (i > 0 && primaryTriangle.emission != vec3(0.0f)) {
+        float bsdfWeight = 1.0f;
+
+        if (mis) {
+          // pdf (en ángulo sólido) con la que NEE habría generado esta misma dirección:
+          //   pdf_area * dist^2 / cos(theta_luz)
+          float hitLightArea = 0.5f * length(cross(primaryTriangle.vertex1 - primaryTriangle.vertex0, primaryTriangle.vertex2 - primaryTriangle.vertex0));
+          float cosLight = max(dot(primaryTriangle.normal, -directionPrimaryTriangle), 1e-6f);
+          float hitLightPdfArea = 1.0f / (float(lightIndicesCount) * hitLightArea);
+          float hitLightPdfSolidAngle = hitLightPdfArea * (tPrimaryTriangle * tPrimaryTriangle) / cosLight;
+
+          // 'pdf' es la pdf (ángulo sólido) con la que se muestreó esta dirección en el rebote anterior
+          bsdfWeight = power_heuristic(pdf, hitLightPdfSolidAngle);
+        } else if (nee && !isSpecularBounce) {
+          bsdfWeight = 0.0f;
+        }
+
+        // Con muestreo uniforme el throughput puede ser legítimamente > 1 (brdf * cos / pdf ~ 2 * color),
+        // así que el clamp sesgaría la imagen hacia abajo: solo se aplica con importance sampling.
+        vec3 safe_weight = useImportanceSampling ? clamp(throughput_weight, 0.0f, 1.0f) : throughput_weight;
+        radiance += bsdfWeight * safe_weight * primaryTriangle.emission;
         return radiance;
       }
 
@@ -488,21 +571,24 @@ vec3 get_ray_radiance(vec3 origin, vec3 direction, inout uvec2 seed) {
       // This is necessary to avoid self-shadowing artifacts
       vec3 rayPrimaryTriangleIntersectionPoint = intersection + primaryTriangle.normal * EPSILON;
 
-      Triangle lightTriangle;
-      vec3 lightPoint = vec3(0.0f, 0.0f, 0.0f);
-      float lightPdf = 0.5f;
-      float lightArea = 0.0f;
-      bool hitsLight = false;
-
-      // Sample a random light
-      sample_random_light(seed, lightTriangle, lightPoint, lightPdf, lightArea, rayPrimaryTriangleIntersectionPoint, hitsLight);
-
-      vec3 directionToShadowRayLightIntersection = normalize(lightPoint - rayPrimaryTriangleIntersectionPoint);
-      float distanceToShadowRayLightIntersection = abs(length(lightPoint - rayPrimaryTriangleIntersectionPoint));
-
       vec3 direct_light = vec3(0.0f);
 
-      // Check visibility of the light source
+      // [NUEVO] Next Event Estimation: solo si está activado
+      if (nee) {
+
+        Triangle lightTriangle;
+        vec3 lightPoint = vec3(0.0f, 0.0f, 0.0f);
+        float lightPdf = 0.5f;
+        float lightArea = 0.0f;
+        bool hitsLight = false;
+
+        // Sample a random light
+        sample_random_light(seed, lightTriangle, lightPoint, lightPdf, lightArea, rayPrimaryTriangleIntersectionPoint, hitsLight);
+
+        vec3 directionToShadowRayLightIntersection = normalize(lightPoint - rayPrimaryTriangleIntersectionPoint);
+        float distanceToShadowRayLightIntersection = abs(length(lightPoint - rayPrimaryTriangleIntersectionPoint));
+
+        // Check visibility of the light source
 /*       if (dot(primaryTriangle.normal, directionToShadowRayLightIntersection) > 0.0f && dot(lightTriangle.normal, -directionToShadowRayLightIntersection) > 0.0f) { */
 
 /*         Triangle blockingTriangle;
@@ -511,24 +597,33 @@ vec3 get_ray_radiance(vec3 origin, vec3 direction, inout uvec2 seed) {
 
         // if the light is visible from the shadow ray's origin
         if (!hits || (hits && (blockingTriangle.emission != vec3(0.0f)))) { */
-      if (hitsLight) {
+        if (hitsLight) {
 
-        // Calculate direct light contribution
+          // Calculate direct light contribution
 
-        float solid_angle = max(dot(lightTriangle.normal, -directionToShadowRayLightIntersection), 0.0f) / (distanceToShadowRayLightIntersection * distanceToShadowRayLightIntersection);
+          float solid_angle = max(dot(lightTriangle.normal, -directionToShadowRayLightIntersection), 0.0f) / (distanceToShadowRayLightIntersection * distanceToShadowRayLightIntersection);
 
-        vec3 brdf = calculate_brdf(primaryTriangle, -directionPrimaryTriangle, directionToShadowRayLightIntersection, primaryTriangle.normal);
+          vec3 brdf = calculate_brdf(primaryTriangle, -directionPrimaryTriangle, directionToShadowRayLightIntersection, primaryTriangle.normal);
 
-        float brdfPdf = calculate_pdf(-directionPrimaryTriangle, directionToShadowRayLightIntersection, primaryTriangle.normal, primaryTriangle, get_random_numbers(seed).x);
+          // [NUEVO] Peso MIS de la estrategia "muestreo de luz". Solo con MIS; sin MIS el peso es 1.
+          float MISweight = 1.0f;
+          if (mis) {
+            // lightPdf está en medida de área: se pasa a ángulo sólido (la misma medida que brdfPdf)
+            // dividiendo por el término geométrico cos(theta_luz) / dist^2
+            float lightPdfSolidAngle = lightPdf / max(solid_angle, 1e-8f);
 
-        float MISweight = power_heuristic(lightPdf, brdfPdf);
-        float cos_theta_i = max(dot(primaryTriangle.normal, directionToShadowRayLightIntersection), 0.0f);
+            float brdfPdf = calculate_pdf(-directionPrimaryTriangle, directionToShadowRayLightIntersection, primaryTriangle.normal, primaryTriangle, get_random_numbers(seed).x);
 
-        // Compute direct light contribution
-        direct_light = float(lightIndicesCount) * (lightTriangle.emission) * solid_angle * brdf * cos_theta_i * vec3(MISweight) / lightPdf;
+            MISweight = power_heuristic(lightPdfSolidAngle, brdfPdf);
+          }
+          float cos_theta_i = max(dot(primaryTriangle.normal, directionToShadowRayLightIntersection), 0.0f);
+
+          // Compute direct light contribution
+          direct_light = float(lightIndicesCount) * (lightTriangle.emission) * solid_angle * brdf * cos_theta_i * vec3(MISweight) / lightPdf;
+        }
+
+        // }
       }
-
-      // }
 
       // Add to the radiance the direct light contribution weighted by the throughput weight factor
       // If the direct light is zero, the radiance consists only of indirect lighting

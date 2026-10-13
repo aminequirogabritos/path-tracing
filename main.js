@@ -28,6 +28,10 @@ const sampleCount = 5
 const canvasSize = 512
 const quadSize = 64
 
+const useNEE = 1
+const useImportanceSampling = 1
+const useMIS = 1
+
 const saveFrame = 0
 
 const sceneNumber = parseInt(import.meta.env.VITE_SCENE_NUMBER)
@@ -244,6 +248,9 @@ async function render(now, sampleNumber) {
   gl.uniform1i(gl.getUniformLocation(programPathTracing, 'totalSamples'), samples);
   gl.uniform1i(gl.getUniformLocation(programPathTracing, 'bvhNodeCount'), bvh.nodeCount);
   gl.uniform1i(gl.getUniformLocation(programPathTracing, 'maxTextureSize'), maxTextureSize);
+  gl.uniform1i(gl.getUniformLocation(programPathTracing, "useNEE"), useNEE)
+  gl.uniform1i(gl.getUniformLocation(programPathTracing, "useImportanceSampling"), useImportanceSampling)
+  gl.uniform1i(gl.getUniformLocation(programPathTracing, "useMIS"), useMIS)
 
   // Determine the previous framebuffer texture
   const previousFramebufferTexture = BufferManager.getTexture(sampleNumber - 1);
