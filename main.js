@@ -23,12 +23,12 @@ import TextureIndex from './modules/textureIndex.js';
 let cooldown;
 
 const samples = 10
-const maxPathLength = 3
+const maxPathLength = 5
 const sampleCount = 5
-const canvasSize = 200
-const quadSize = 50
+const canvasSize = 512
+const quadSize = 32
 
-const saveFrame = 1
+const saveFrame = 0
 
 const sceneNumber = parseInt(import.meta.env.VITE_SCENE_NUMBER)
 const scene1Cooldown = parseInt(import.meta.env.VITE_SCENE_1_COOLDOWN);
