@@ -26,7 +26,7 @@ const samples = 10
 const maxPathLength = 5
 const sampleCount = 5
 const canvasSize = 512
-const quadSize = 32
+const quadSize = 64
 
 const saveFrame = 0
 
