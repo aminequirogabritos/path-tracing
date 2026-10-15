@@ -30,7 +30,7 @@ const quadSize = 64
 
 const useNEE = 1
 const useImportanceSampling = 1
-const useMIS = 1
+const useMIS = 0
 
 const saveFrame = 0
 
@@ -39,7 +39,7 @@ const scene1Cooldown = parseInt(import.meta.env.VITE_SCENE_1_COOLDOWN);
 const scene2Cooldown = parseInt(import.meta.env.VITE_SCENE_2_COOLDOWN);
 const scene3Cooldown = parseInt(import.meta.env.VITE_SCENE_3_COOLDOWN);
 
-const fileNameSuffix = `scene_${sceneNumber}_${samples}samples_${maxPathLength}bounces_${sampleCount}samples_${canvasSize}px`
+const fileNameSuffix = `${useNEE}${useImportanceSampling}${useMIS}_scene_${sceneNumber}_${samples}samples_${maxPathLength}bounces_${sampleCount}samples_${canvasSize}px`
 
 let trianglesArray;
 
